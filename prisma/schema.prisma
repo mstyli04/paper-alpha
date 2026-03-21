@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  username  String   @unique
+  email     String   @unique
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  account   PaperAccount?
+  watchlist WatchlistItem[]
+}
+
+model PaperAccount {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cashBalance     Decimal  @db.Decimal(20, 8)
+  startingBalance Decimal  @db.Decimal(20, 8)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  holdings  Holding[]
+  trades    Trade[]
+  snapshots PortfolioSnapshot[]
+}
+
+model Holding {
+  id           String       @id @default(cuid())
+  accountId    String
+  account      PaperAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  symbol       String
+  assetType    AssetType
+  quantity     Decimal      @db.Decimal(20, 8)
+  avgCostBasis Decimal      @db.Decimal(20, 8)
+  realizedPnl  Decimal      @db.Decimal(20, 8) @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([accountId, symbol])
+  @@index([accountId])
+}
+
+model Trade {
+  id         String       @id @default(cuid())
+  accountId  String
+  account    PaperAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  symbol     String
+  assetType  AssetType
+  assetName  String
+  side       TradeSide
+  quantity   Decimal      @db.Decimal(20, 8)
+  price      Decimal      @db.Decimal(20, 8)
+  totalValue Decimal      @db.Decimal(20, 8)
+  createdAt  DateTime     @default(now())
+
+  @@index([accountId])
+  @@index([accountId, symbol])
+}
+
+model PortfolioSnapshot {
+  id          String       @id @default(cuid())
+  accountId   String
+  account     PaperAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  totalValue  Decimal      @db.Decimal(20, 8)
+  cashBalance Decimal      @db.Decimal(20, 8)
+  createdAt   DateTime     @default(now())
+
+  @@index([accountId])
+  @@index([accountId, createdAt])
+}
+
+model WatchlistItem {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol    String
+  assetType AssetType
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, symbol])
+  @@index([userId])
+}
+
+enum AssetType {
+  STOCK
+  CRYPTO
+}
+
+enum TradeSide {
+  BUY
+  SELL
+}
