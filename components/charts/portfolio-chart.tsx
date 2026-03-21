@@ -15,7 +15,8 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200 }: Por
   useEffect(() => {
     if (!containerRef.current || !snapshots.length) return
 
-    let chart: ReturnType<typeof import('lightweight-charts')['createChart']>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let chart: any
 
     async function init() {
       const { createChart, ColorType } = await import('lightweight-charts')
@@ -49,14 +50,14 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200 }: Por
         lineWidth: 2,
       })
 
-      // Add starting point
       const firstDate = new Date(snapshots[0]?.createdAt || Date.now())
       firstDate.setDate(firstDate.getDate() - 1)
 
-      const chartData = [
-        { time: Math.floor(firstDate.getTime() / 1000) as unknown as import('lightweight-charts').UTCTimestamp, value: startingBalance },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const chartData: any[] = [
+        { time: Math.floor(firstDate.getTime() / 1000), value: startingBalance },
         ...snapshots.map(s => ({
-          time: Math.floor(new Date(s.createdAt).getTime() / 1000) as unknown as import('lightweight-charts').UTCTimestamp,
+          time: Math.floor(new Date(s.createdAt).getTime() / 1000),
           value: s.totalValue,
         })),
       ]

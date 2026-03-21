@@ -11,12 +11,14 @@ interface PriceChartProps {
 
 export function PriceChart({ data, type = 'area', height = 300 }: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const chartRef = useRef<unknown>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chartRef = useRef<any>(null)
 
   useEffect(() => {
     if (!containerRef.current || !data.length) return
 
-    let chart: ReturnType<typeof import('lightweight-charts')['createChart']>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let chart: any
 
     async function init() {
       const { createChart, ColorType, CrosshairMode } = await import('lightweight-charts')
@@ -62,8 +64,9 @@ export function PriceChart({ data, type = 'area', height = 300 }: PriceChartProp
           wickUpColor: upColor,
           wickDownColor: downColor,
         })
-        series.setData(data.map(d => ({
-          time: d.time as unknown as import('lightweight-charts').UTCTimestamp,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        series.setData(data.map((d: any) => ({
+          time: d.time,
           open: d.open,
           high: d.high,
           low: d.low,
@@ -76,7 +79,8 @@ export function PriceChart({ data, type = 'area', height = 300 }: PriceChartProp
           bottomColor: 'transparent',
           lineWidth: 2,
         })
-        series.setData(data.map(d => ({ time: d.time as unknown as import('lightweight-charts').UTCTimestamp, value: d.close })))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        series.setData(data.map((d: any) => ({ time: d.time, value: d.close })))
       }
 
       chart.timeScale().fitContent()
@@ -86,18 +90,14 @@ export function PriceChart({ data, type = 'area', height = 300 }: PriceChartProp
 
     const observer = new ResizeObserver(() => {
       if (containerRef.current && chartRef.current) {
-        (chartRef.current as { applyOptions: (o: unknown) => void }).applyOptions({
-          width: containerRef.current.clientWidth,
-        })
+        chartRef.current.applyOptions({ width: containerRef.current.clientWidth })
       }
     })
     observer.observe(containerRef.current)
 
     return () => {
       observer.disconnect()
-      if (chartRef.current) {
-        (chartRef.current as { remove: () => void }).remove()
-      }
+      chartRef.current?.remove()
     }
   }, [data, type, height])
 
