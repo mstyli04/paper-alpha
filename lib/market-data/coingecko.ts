@@ -126,16 +126,14 @@ export async function searchCrypto(query: string): Promise<SearchResult[]> {
 }
 
 export async function getTrendingCrypto(): Promise<TrendingAsset[]> {
-  const data = await request<{
-    data: Array<{
-      id: string
-      symbol: string
-      name: string
-      image: string
-      current_price: number
-      price_change_percentage_24h: number
-    }>
-  }>('/coins/markets', {
+  const data = await request<Array<{
+    id: string
+    symbol: string
+    name: string
+    image: string
+    current_price: number
+    price_change_percentage_24h: number
+  }>>('/coins/markets', {
     vs_currency: 'usd',
     order: 'market_cap_desc',
     per_page: '10',
@@ -143,7 +141,7 @@ export async function getTrendingCrypto(): Promise<TrendingAsset[]> {
     sparkline: 'false',
   })
 
-  return (data.data || []).map(c => ({
+  return (Array.isArray(data) ? data : []).map(c => ({
     symbol: c.symbol.toUpperCase(),
     name: c.name,
     price: c.current_price,
