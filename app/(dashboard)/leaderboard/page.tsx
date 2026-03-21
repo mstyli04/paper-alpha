@@ -3,6 +3,7 @@
 import { useUser } from '@clerk/nextjs'
 import useSWR from 'swr'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Trophy, Medal, TrendingUp, TrendingDown } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatPercent } from '@/lib/utils'
@@ -31,9 +32,10 @@ export default function LeaderboardPage() {
             const rankColors = ['text-text-secondary', 'text-yellow-400', 'text-orange-400']
             const actualIndex = [1, 0, 2][i]
             return (
-              <div
+              <Link
                 key={entry.userId}
-                className={`card p-5 text-center ${isFirst ? 'border-yellow-400/30 bg-yellow-400/5' : ''}`}
+                href={`/profile/${entry.username}`}
+                className={`card p-5 text-center hover:border-border-2 transition-colors ${isFirst ? 'border-yellow-400/30 bg-yellow-400/5' : ''}`}
               >
                 <div className={`text-2xl font-bold mb-2 ${rankColors[actualIndex]}`}>
                   {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
@@ -50,7 +52,7 @@ export default function LeaderboardPage() {
                   {formatPercent(entry.returnPercent)}
                 </p>
                 <p className="text-xs text-text-muted">{formatCurrency(entry.totalValue)}</p>
-              </div>
+              </Link>
             )
           })}
         </div>
@@ -102,7 +104,7 @@ export default function LeaderboardPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-2.5">
+                      <Link href={`/profile/${entry.username}`} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
                         {entry.avatarUrl ? (
                           <Image src={entry.avatarUrl} alt={entry.username} width={32} height={32} className="rounded-full" />
                         ) : (
@@ -111,10 +113,10 @@ export default function LeaderboardPage() {
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-text-primary">{entry.username}</p>
+                          <p className="font-medium text-text-primary hover:text-brand transition-colors">{entry.username}</p>
                           {isMe && <span className="text-xs text-brand">You</span>}
                         </div>
-                      </div>
+                      </Link>
                     </td>
                     <td className="py-3 px-4 text-right font-mono text-text-primary">
                       {formatCurrency(entry.totalValue)}
