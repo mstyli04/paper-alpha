@@ -29,6 +29,8 @@ function dailyReturns(closes: number[]): number[] {
   return returns
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
 const DEFAULT_SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'AMD']
 
 export async function GET(req: Request) {
@@ -37,28 +39,34 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url)
   const symbolsParam = searchParams.get('symbols')
-  const symbols = symbolsParam ? symbolsParam.split(',').map(s => s.trim().toUpperCase()).slice(0, 10) : DEFAULT_SYMBOLS
+  const symbols = symbolsParam
+    ? symbolsParam.split(',').map(s => s.trim().toUpperCase()).slice(0, 10)
+    : DEFAULT_SYMBOLS
 
   const to = Math.floor(Date.now() / 1000)
-  const from = to - 90 * 86400 // 3 months
+  const from = to - 90 * 86400
 
-  // Fetch all candles in parallel
-  const results = await Promise.allSettled(
-    symbols.map(s => getStockCandles(s, 'D', from, to))
-  )
-
+  // Fetch sequentially to avoid Finnhub rate limits
   const returnsMap: Record<string, number[]> = {}
   const validSymbols: string[] = []
 
-  results.forEach((result, i) => {
-    if (result.status === 'fulfilled' && result.value.length > 10) {
-      const closes = result.value.map(c => c.close)
-      returnsMap[symbols[i]] = dailyReturns(closes)
-      validSymbols.push(symbols[i])
+  for (const symbol of symbols) {
+    try {
+      const candles = await getStockCandles(symbol, 'D', from, to)
+      if (candles.length > 10) {
+        returnsMap[symbol] = dailyReturns(candles.map(c => c.close))
+        validSymbols.push(symbol)
+      }
+    } catch {
+      // skip failed symbols
     }
-  })
+    await sleep(150) // 150ms between requests = ~6/sec, well under 60/min limit
+  }
 
-  // Build correlation matrix
+  if (validSymbols.length < 2) {
+    return NextResponse.json({ symbols: [], matrix: {} })
+  }
+
   const matrix: Record<string, Record<string, number>> = {}
   for (const a of validSymbols) {
     matrix[a] = {}
