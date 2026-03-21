@@ -9,6 +9,8 @@ import { useQuote } from '@/hooks/use-quote'
 import { OrderForm } from '@/components/trading/order-form'
 import { PriceChart } from '@/components/charts/price-chart'
 import { NewsFeed } from '@/components/markets/news-feed'
+import { VolatilityMetrics } from '@/components/markets/volatility-metrics'
+import { RedditActivity } from '@/components/markets/reddit-activity'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatPercent, formatMarketCap, pnlColor } from '@/lib/utils'
 import type { AssetType, CandleData } from '@/types'
@@ -160,8 +162,16 @@ export default function AssetDetailPage() {
         </div>
       </div>
 
-      {/* News feed */}
-      <NewsFeed symbol={symbol} assetType={assetType} />
+      {/* News + Reddit + Volatility */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <NewsFeed symbol={symbol} assetType={assetType} />
+          {assetType === 'STOCK' && <RedditActivity symbol={symbol} />}
+        </div>
+        <div className="space-y-4">
+          <VolatilityMetrics symbol={symbol} assetType={assetType} />
+        </div>
+      </div>
     </div>
   )
 }

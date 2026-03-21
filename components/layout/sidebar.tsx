@@ -10,6 +10,7 @@ import {
   History,
   Settings,
   Zap,
+  BarChart2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -18,6 +19,7 @@ const navItems = [
   { href: '/markets', label: 'Markets', icon: TrendingUp },
   { href: '/portfolio', label: 'Portfolio', icon: Briefcase },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { href: '/analysis', label: 'Analysis', icon: BarChart2 },
   { href: '/history', label: 'History', icon: History },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
