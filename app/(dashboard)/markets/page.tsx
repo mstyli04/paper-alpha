@@ -2,13 +2,20 @@
 
 import { useState } from 'react'
 import useSWR from 'swr'
+import { TrendingUp } from 'lucide-react'
 import { AssetRow } from '@/components/markets/asset-row'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { TrendingAsset } from '@/types'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
-type Tab = 'stocks' | 'crypto'
+type Tab = 'stocks' | 'crypto' | 'gainers'
+
+const TAB_LABELS: Record<Tab, string> = {
+  stocks: 'Stocks',
+  crypto: 'Crypto',
+  gainers: '🔥 Top Gainers',
+}
 
 export default function MarketsPage() {
   const [tab, setTab] = useState<Tab>('stocks')
@@ -18,7 +25,15 @@ export default function MarketsPage() {
     { refreshInterval: 30000 }
   )
 
-  const assets = tab === 'stocks' ? (data?.stocks ?? []) : (data?.crypto ?? [])
+  const allAssets = [...(data?.stocks ?? []), ...(data?.crypto ?? [])]
+  const gainers = [...allAssets]
+    .filter(a => a.changePercent > 0)
+    .sort((a, b) => b.changePercent - a.changePercent)
+
+  const assets =
+    tab === 'stocks' ? (data?.stocks ?? []) :
+    tab === 'crypto' ? (data?.crypto ?? []) :
+    gainers
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -30,17 +45,17 @@ export default function MarketsPage() {
       <div className="card overflow-hidden">
         {/* Tab bar */}
         <div className="flex border-b border-border">
-          {(['stocks', 'crypto'] as Tab[]).map(t => (
+          {(Object.keys(TAB_LABELS) as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-5 py-3.5 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+              className={`px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 tab === t
                   ? 'text-brand border-brand'
                   : 'text-text-muted border-transparent hover:text-text-primary'
               }`}
             >
-              {t}
+              {TAB_LABELS[t]}
             </button>
           ))}
         </div>
@@ -63,7 +78,8 @@ export default function MarketsPage() {
           </div>
         ) : assets.length === 0 ? (
           <div className="py-16 text-center text-text-muted text-sm">
-            Failed to load market data. Check your API keys.
+            <TrendingUp className="w-8 h-8 mx-auto mb-3 opacity-40" />
+            {tab === 'gainers' ? 'No gainers found right now.' : 'Failed to load market data. Check your API keys.'}
           </div>
         ) : (
           assets.map((asset, i) => (
