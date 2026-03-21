@@ -8,6 +8,7 @@ import { ArrowUpRight, ArrowDownRight, Star, StarOff } from 'lucide-react'
 import { useQuote } from '@/hooks/use-quote'
 import { OrderForm } from '@/components/trading/order-form'
 import { PriceChart } from '@/components/charts/price-chart'
+import { NewsFeed } from '@/components/markets/news-feed'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatPercent, formatMarketCap, pnlColor } from '@/lib/utils'
 import type { AssetType, CandleData } from '@/types'
@@ -101,7 +102,7 @@ export default function AssetDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 card p-5">
           {/* Range selector */}
-          <div className="flex gap-1 mb-4">
+          <div className="flex items-center gap-1 mb-4">
             {(['1D', '1W', '1M', '3M', '1Y'] as Range[]).map(r => (
               <button
                 key={r}
@@ -113,6 +114,11 @@ export default function AssetDetailPage() {
                 {r}
               </button>
             ))}
+            {range === '1D' && (
+              <span className="ml-2 text-xs text-text-muted bg-surface-2 border border-border px-2 py-0.5 rounded-full">
+                1-min intraday
+              </span>
+            )}
           </div>
 
           {candlesLoading ? (
@@ -153,6 +159,9 @@ export default function AssetDetailPage() {
           )}
         </div>
       </div>
+
+      {/* News feed */}
+      <NewsFeed symbol={symbol} assetType={assetType} />
     </div>
   )
 }

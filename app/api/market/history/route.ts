@@ -19,6 +19,10 @@ export async function GET(req: Request) {
   if (!symbol) return NextResponse.json({ error: 'symbol is required' }, { status: 400 })
 
   const to = Math.floor(Date.now() / 1000)
+
+  // For 1D, use 1-minute resolution starting from market open today
+  const resolvedResolution: CandleResolution = range === '1D' ? '1' : resolution
+
   const rangeMap: Record<string, number> = {
     '1D': 86400,
     '1W': 604800,
@@ -30,7 +34,7 @@ export async function GET(req: Request) {
   const from = to - (rangeMap[range] || rangeMap['1M'])
 
   try {
-    const candles = await getCandles(symbol, assetType, resolution, from, to)
+    const candles = await getCandles(symbol, assetType, resolvedResolution, from, to)
     return NextResponse.json(candles)
   } catch {
     return NextResponse.json([], { status: 200 })
