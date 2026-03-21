@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { getCandles } from '@/lib/market-data'
