@@ -54,9 +54,9 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200 }: Por
       firstDate.setDate(firstDate.getDate() - 1)
 
       const chartData = [
-        { time: Math.floor(firstDate.getTime() / 1000) as number, value: startingBalance },
+        { time: Math.floor(firstDate.getTime() / 1000) as unknown as import('lightweight-charts').UTCTimestamp, value: startingBalance },
         ...snapshots.map(s => ({
-          time: Math.floor(new Date(s.createdAt).getTime() / 1000) as number,
+          time: Math.floor(new Date(s.createdAt).getTime() / 1000) as unknown as import('lightweight-charts').UTCTimestamp,
           value: s.totalValue,
         })),
       ]

@@ -63,7 +63,7 @@ export function PriceChart({ data, type = 'area', height = 300 }: PriceChartProp
           wickDownColor: downColor,
         })
         series.setData(data.map(d => ({
-          time: d.time as number,
+          time: d.time as unknown as import('lightweight-charts').UTCTimestamp,
           open: d.open,
           high: d.high,
           low: d.low,
@@ -76,7 +76,7 @@ export function PriceChart({ data, type = 'area', height = 300 }: PriceChartProp
           bottomColor: 'transparent',
           lineWidth: 2,
         })
-        series.setData(data.map(d => ({ time: d.time as number, value: d.close })))
+        series.setData(data.map(d => ({ time: d.time as unknown as import('lightweight-charts').UTCTimestamp, value: d.close })))
       }
 
       chart.timeScale().fitContent()
