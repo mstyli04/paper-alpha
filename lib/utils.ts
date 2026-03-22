@@ -1,70 +1,56 @@
-import { clsx, type ClassValue } from 'clsx'
+import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(value: number | undefined | null, compact = false): string {
-  const v = value ?? 0
-  if (compact && Math.abs(v) >= 1_000_000) {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      notation: 'compact',
-      maximumFractionDigits: 2,
-    }).format(v)
-  }
+export function formatCurrency(value: number | undefined | null): string {
+  const n = value ?? 0
+  if (Math.abs(n) >= 1e12) return `$${(n / 1e12).toFixed(2)}T`
+  if (Math.abs(n) >= 1e9) return `$${(n / 1e9).toFixed(2)}B`
+  if (Math.abs(n) >= 1e6) return `$${(n / 1e6).toFixed(2)}M`
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(v)
+    maximumFractionDigits: n < 1 && n > -1 ? 6 : 2,
+  }).format(n)
 }
 
 export function formatPercent(value: number | undefined | null): string {
-  const v = value ?? 0
-  const sign = v >= 0 ? '+' : ''
-  return `${sign}${v.toFixed(2)}%`
+  const n = value ?? 0
+  return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`
 }
 
-export function formatNumber(value: number | undefined | null, decimals = 6): string {
-  const v = value ?? 0
-  if (v >= 1000) return v.toLocaleString('en-US', { maximumFractionDigits: 2 })
-  return v.toFixed(decimals).replace(/\.?0+$/, '')
-}
-
-export function formatQuantity(value: number | undefined | null, assetType: 'STOCK' | 'CRYPTO'): string {
-  if (assetType === 'CRYPTO') return formatNumber(value, 6)
-  return formatNumber(value, 4)
+export function formatQuantity(value: number | undefined | null, assetType: 'STOCK' | 'CRYPTO' | 'COMMODITY'): string {
+  const n = value ?? 0
+  if (assetType === 'CRYPTO') return n.toFixed(6)
+  return n.toFixed(4)
 }
 
 export function formatMarketCap(value: number | undefined | null): string {
-  const v = value ?? 0
-  if (v >= 1e12) return `$${(v / 1e12).toFixed(2)}T`
-  if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`
-  if (v >= 1e6) return `$${(v / 1e6).toFixed(2)}M`
-  return formatCurrency(v)
+  return formatCurrency(value)
 }
 
 export function pnlColor(value: number | undefined | null): string {
-  if ((value ?? 0) > 0) return 'text-green'
-  if ((value ?? 0) < 0) return 'text-red'
-  return 'text-text-secondary'
+  const n = value ?? 0
+  if (n > 0) return 'text-green'
+  if (n < 0) return 'text-red'
+  return 'text-text-muted'
 }
 
-export function pnlBg(value: number | undefined | null): string {
-  if ((value ?? 0) > 0) return 'bg-green/10 text-green'
-  if ((value ?? 0) < 0) return 'bg-red/10 text-red'
-  return 'bg-text-muted/10 text-text-secondary'
+export function timeAgo(dateStr: string | Date): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  return `${days}d ago`
 }
 
-export function timeAgo(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-  const seconds = Math.floor((Date.now() - d.getTime()) / 1000)
-  if (seconds < 60) return `${seconds}s ago`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+export function timeAgoDate(date: Date | string): string {
+  return timeAgo(typeof date === 'string' ? date : date.toISOString())
 }

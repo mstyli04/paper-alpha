@@ -47,7 +47,7 @@ function MetricRow({
   )
 }
 
-export function VolatilityMetrics({ symbol, assetType }: { symbol: string; assetType: 'STOCK' | 'CRYPTO' }) {
+export function VolatilityMetrics({ symbol, assetType }: { symbol: string; assetType: 'STOCK' | 'CRYPTO' | 'COMMODITY' }) {
   const { data, isLoading } = useSWR<Metrics>(
     `/api/market/metrics?symbol=${symbol}&assetType=${assetType}`,
     fetcher

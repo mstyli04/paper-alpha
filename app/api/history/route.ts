@@ -47,6 +47,7 @@ export async function GET(req: Request) {
       quantity: Number(t.quantity),
       price: Number(t.price),
       totalValue: Number(t.totalValue),
+      note: t.note ?? null,
       createdAt: t.createdAt.toISOString(),
     })),
     total,

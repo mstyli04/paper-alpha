@@ -1,6 +1,6 @@
 import { db } from './db'
 import { getQuote } from './market-data'
-import type { Portfolio, Holding } from '@/types'
+import type { Portfolio, Holding, AssetType } from '@/types'
 
 export async function getPortfolio(accountId: string): Promise<Portfolio> {
   const account = await db.paperAccount.findUnique({
@@ -13,9 +13,8 @@ export async function getPortfolio(accountId: string): Promise<Portfolio> {
   const cashBalance = Number(account.cashBalance)
   const startingBalance = Number(account.startingBalance)
 
-  // Fetch live prices for all holdings in parallel
   const priceResults = await Promise.allSettled(
-    account.holdings.map(h => getQuote(h.symbol, h.assetType as 'STOCK' | 'CRYPTO'))
+    account.holdings.map(h => getQuote(h.symbol, h.assetType as AssetType))
   )
 
   const holdings: Holding[] = account.holdings.map((h, i) => {
@@ -23,14 +22,28 @@ export async function getPortfolio(accountId: string): Promise<Portfolio> {
     const currentPrice = priceResult.status === 'fulfilled' ? priceResult.value.price : Number(h.avgCostBasis)
     const quantity = Number(h.quantity)
     const avgCostBasis = Number(h.avgCostBasis)
-    const currentValue = currentPrice * quantity
-    const unrealizedPnl = (currentPrice - avgCostBasis) * quantity
-    const unrealizedPnlPercent = avgCostBasis > 0 ? ((currentPrice - avgCostBasis) / avgCostBasis) * 100 : 0
+    const isShort = quantity < 0
+    const absQty = Math.abs(quantity)
+
+    // For shorts: value = -(current price * qty) — it's a liability
+    // For longs: value = current price * qty
+    const currentValue = isShort
+      ? -(currentPrice * absQty)
+      : currentPrice * quantity
+
+    // For shorts: profit when price falls below short entry
+    const unrealizedPnl = isShort
+      ? (avgCostBasis - currentPrice) * absQty
+      : (currentPrice - avgCostBasis) * quantity
+
+    const unrealizedPnlPercent = avgCostBasis > 0
+      ? (unrealizedPnl / (avgCostBasis * absQty)) * 100
+      : 0
 
     return {
       id: h.id,
       symbol: h.symbol,
-      assetType: h.assetType as 'STOCK' | 'CRYPTO',
+      assetType: h.assetType as AssetType,
       quantity,
       avgCostBasis,
       realizedPnl: Number(h.realizedPnl),
@@ -41,9 +54,11 @@ export async function getPortfolio(accountId: string): Promise<Portfolio> {
     }
   })
 
-  const totalInvested = holdings.reduce((sum, h) => sum + h.avgCostBasis * h.quantity, 0)
   const holdingsValue = holdings.reduce((sum, h) => sum + (h.currentValue ?? 0), 0)
   const totalValue = cashBalance + holdingsValue
+  const totalInvested = holdings
+    .filter(h => h.quantity > 0)
+    .reduce((sum, h) => sum + h.avgCostBasis * h.quantity, 0)
   const unrealizedPnl = holdings.reduce((sum, h) => sum + (h.unrealizedPnl ?? 0), 0)
   const realizedPnl = holdings.reduce((sum, h) => sum + h.realizedPnl, 0)
   const totalPnl = totalValue - startingBalance

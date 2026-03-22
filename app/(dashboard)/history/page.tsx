@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import useSWR from 'swr'
-import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, FileText } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatQuantity, timeAgo } from '@/lib/utils'
 import type { TradeRecord, TradeSide } from '@/types'
@@ -90,9 +90,12 @@ export default function HistoryPage() {
                     </td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
-                        trade.side === 'BUY' ? 'bg-green/10 text-green' : 'bg-red/10 text-red'
+                        trade.side === 'BUY' ? 'bg-green/10 text-green' :
+                        trade.side === 'SELL' ? 'bg-red/10 text-red' :
+                        trade.side === 'SHORT' ? 'bg-orange-500/10 text-orange-500' :
+                        'bg-blue-500/10 text-blue-500'
                       }`}>
-                        {trade.side === 'BUY'
+                        {(trade.side === 'BUY' || trade.side === 'COVER')
                           ? <ArrowUpRight className="w-3 h-3" />
                           : <ArrowDownRight className="w-3 h-3" />
                         }
@@ -109,7 +112,13 @@ export default function HistoryPage() {
                       {formatCurrency(trade.totalValue)}
                     </td>
                     <td className="py-3 px-5 text-right text-text-muted text-xs">
-                      {timeAgo(trade.createdAt)}
+                      <p>{timeAgo(trade.createdAt)}</p>
+                      {trade.note && (
+                        <p className="flex items-center gap-1 justify-end text-text-muted mt-0.5 max-w-[160px] ml-auto">
+                          <FileText className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{trade.note}</span>
+                        </p>
+                      )}
                     </td>
                   </tr>
                 ))}

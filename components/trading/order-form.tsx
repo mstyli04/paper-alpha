@@ -12,9 +12,12 @@ interface OrderFormProps {
   onSuccess?: () => void
 }
 
+type Tab = 'BUY' | 'SELL' | 'SHORT' | 'COVER'
+
 export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderFormProps) {
-  const [side, setSide] = useState<TradeSide>('BUY')
+  const [tab, setTab] = useState<Tab>('BUY')
   const [quantity, setQuantity] = useState('')
+  const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -25,14 +28,25 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
   const cashBalance = portfolio?.cashBalance ?? 0
   const holding = portfolio?.holdings.find(h => h.symbol === symbol)
   const heldQty = holding?.quantity ?? 0
+  const isShort = heldQty < 0
+  const shortQty = Math.abs(Math.min(heldQty, 0))
+  const longQty = Math.max(heldQty, 0)
 
   function setQuickAmount(fraction: number) {
-    if (side === 'BUY') {
-      const maxQty = cashBalance / currentPrice
-      setQuantity(String(+(maxQty * fraction).toFixed(assetType === 'CRYPTO' ? 6 : 4)))
-    } else {
-      setQuantity(String(+(heldQty * fraction).toFixed(assetType === 'CRYPTO' ? 6 : 4)))
-    }
+    let max = 0
+    if (tab === 'BUY') max = cashBalance / currentPrice
+    else if (tab === 'SELL') max = longQty
+    else if (tab === 'SHORT') max = cashBalance / currentPrice
+    else if (tab === 'COVER') max = shortQty
+    setQuantity(String(+(max * fraction).toFixed(assetType === 'CRYPTO' ? 6 : 4)))
+  }
+
+  function switchTab(t: Tab) {
+    setTab(t)
+    setError('')
+    setQuantity('')
+    setNote('')
+    setSuccess('')
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -50,7 +64,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
       const res = await fetch('/api/trades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, assetType, side, quantity: qty }),
+        body: JSON.stringify({ symbol, assetType, side: tab, quantity: qty, note: note.trim() || undefined }),
       })
 
       const data = await res.json()
@@ -58,10 +72,17 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
       if (!res.ok) {
         setError(data.error || 'Trade failed')
       } else {
+        const labels: Record<Tab, string> = {
+          BUY: 'Bought',
+          SELL: 'Sold',
+          SHORT: 'Shorted',
+          COVER: 'Covered',
+        }
         setSuccess(
-          `${side === 'BUY' ? 'Bought' : 'Sold'} ${formatQuantity(qty, assetType)} ${symbol} @ ${formatCurrency(data.price)}`
+          `${labels[tab]} ${formatQuantity(qty, assetType)} ${symbol} @ ${formatCurrency(data.price)}`
         )
         setQuantity('')
+        setNote('')
         refresh()
         onSuccess?.()
         setTimeout(() => setSuccess(''), 5000)
@@ -73,38 +94,57 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
     }
   }
 
+  const tabs: { id: Tab; label: string; color: string; activeColor: string }[] = [
+    { id: 'BUY', label: 'Buy', color: 'hover:text-green', activeColor: 'bg-green text-white' },
+    { id: 'SELL', label: 'Sell', color: 'hover:text-red', activeColor: 'bg-red text-white' },
+    { id: 'SHORT', label: 'Short', color: 'hover:text-orange-400', activeColor: 'bg-orange-500 text-white' },
+    { id: 'COVER', label: 'Cover', color: 'hover:text-blue-400', activeColor: 'bg-blue-500 text-white' },
+  ]
+
+  const activeTab = tabs.find(t => t.id === tab)!
+
   return (
     <div className="card p-5">
       <h3 className="text-sm font-semibold text-text-primary mb-4">Place Order</h3>
 
-      {/* Side toggle */}
-      <div className="flex rounded-lg overflow-hidden border border-border mb-4">
-        <button
-          onClick={() => { setSide('BUY'); setError(''); setQuantity('') }}
-          className={`flex-1 py-2 text-sm font-medium transition-colors ${
-            side === 'BUY' ? 'bg-green text-white' : 'text-text-secondary hover:text-text-primary'
-          }`}
-        >
-          Buy
-        </button>
-        <button
-          onClick={() => { setSide('SELL'); setError(''); setQuantity('') }}
-          className={`flex-1 py-2 text-sm font-medium transition-colors ${
-            side === 'SELL' ? 'bg-red text-white' : 'text-text-secondary hover:text-text-primary'
-          }`}
-        >
-          Sell
-        </button>
+      {/* Tab bar */}
+      <div className="flex rounded-lg overflow-hidden border border-border mb-4 text-sm font-medium">
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => switchTab(t.id)}
+            className={`flex-1 py-2 transition-colors ${
+              tab === t.id ? t.activeColor : `text-text-muted ${t.color}`
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
+      {/* Short/Cover info banners */}
+      {tab === 'SHORT' && (
+        <div className="text-xs text-orange-400 bg-orange-500/10 rounded-lg px-3 py-2 mb-4">
+          Short selling: you profit if the price falls. You receive cash now and must buy back later.
+        </div>
+      )}
+      {tab === 'COVER' && shortQty === 0 && (
+        <div className="text-xs text-text-muted bg-surface-2 rounded-lg px-3 py-2 mb-4">
+          You don&apos;t have an open short position in {symbol}.
+        </div>
+      )}
+      {tab === 'COVER' && shortQty > 0 && (
+        <div className="text-xs text-blue-400 bg-blue-500/10 rounded-lg px-3 py-2 mb-4">
+          Short position: {formatQuantity(shortQty, assetType)} {symbol} @ avg {formatCurrency(holding?.avgCostBasis ?? 0)}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Current price */}
         <div className="flex justify-between text-sm">
           <span className="text-text-muted">Market Price</span>
           <span className="text-text-primary font-mono font-medium">{formatCurrency(currentPrice)}</span>
         </div>
 
-        {/* Quantity input */}
         <div>
           <label className="block text-xs text-text-muted mb-1.5">Quantity</label>
           <input
@@ -118,7 +158,6 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
           />
         </div>
 
-        {/* Quick fractions */}
         <div className="flex gap-2">
           {[0.25, 0.5, 0.75, 1].map(f => (
             <button
@@ -132,42 +171,42 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
           ))}
         </div>
 
-        {/* Order total */}
         <div className="flex justify-between text-sm py-3 border-t border-border">
-          <span className="text-text-muted">Order Total</span>
+          <span className="text-text-muted">{tab === 'SHORT' ? 'You Receive' : tab === 'COVER' ? 'You Pay' : 'Order Total'}</span>
           <span className="font-medium text-text-primary font-mono">{formatCurrency(total)}</span>
         </div>
 
-        {/* Available */}
         <div className="flex justify-between text-xs text-text-muted">
-          {side === 'BUY' ? (
-            <>
-              <span>Buying Power</span>
-              <span>{formatCurrency(cashBalance)}</span>
-            </>
+          {tab === 'BUY' || tab === 'COVER' ? (
+            <><span>Buying Power</span><span>{formatCurrency(cashBalance)}</span></>
+          ) : tab === 'SELL' ? (
+            <><span>Available to Sell</span><span>{formatQuantity(longQty, assetType)} {symbol}</span></>
           ) : (
-            <>
-              <span>Available to Sell</span>
-              <span>{formatQuantity(heldQty, assetType)} {symbol}</span>
-            </>
+            <><span>Short with</span><span>{formatCurrency(cashBalance)}</span></>
           )}
         </div>
 
-        {error && (
-          <div className="text-xs text-red bg-red/10 rounded-lg px-3 py-2">{error}</div>
-        )}
-        {success && (
-          <div className="text-xs text-green bg-green/10 rounded-lg px-3 py-2">{success}</div>
-        )}
+        <div>
+          <label className="block text-xs text-text-muted mb-1.5">Trade Note (optional)</label>
+          <textarea
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="Why are you making this trade?"
+            rows={2}
+            maxLength={500}
+            className="input-base w-full resize-none text-xs"
+          />
+        </div>
+
+        {error && <div className="text-xs text-red bg-red/10 rounded-lg px-3 py-2">{error}</div>}
+        {success && <div className="text-xs text-green bg-green/10 rounded-lg px-3 py-2">{success}</div>}
 
         <button
           type="submit"
           disabled={loading || !qty}
-          className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-            side === 'BUY' ? 'btn-green' : 'btn-red'
-          }`}
+          className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white ${activeTab.activeColor}`}
         >
-          {loading ? 'Processing...' : `${side === 'BUY' ? 'Buy' : 'Sell'} ${symbol}`}
+          {loading ? 'Processing...' : `${activeTab.label} ${symbol}`}
         </button>
       </form>
     </div>

@@ -1,5 +1,5 @@
-export type AssetType = 'STOCK' | 'CRYPTO'
-export type TradeSide = 'BUY' | 'SELL'
+export type AssetType = 'STOCK' | 'CRYPTO' | 'COMMODITY'
+export type TradeSide = 'BUY' | 'SELL' | 'SHORT' | 'COVER'
 
 export interface Quote {
   symbol: string
@@ -69,6 +69,7 @@ export interface TradeRecord {
   quantity: number
   price: number
   totalValue: number
+  note: string | null
   createdAt: string
 }
 

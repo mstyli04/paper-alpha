@@ -4,6 +4,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Dark theme (default) ──────────────────────────────── */
+:root {
+  --background:   #0b0d17;
+  --surface:      #111422;
+  --surface-2:    #181c2e;
+  --border:       #1e2334;
+  --border-2:     #252a3d;
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:     #475569;
+  --scrollbar:    #1e2334;
+  --scrollbar-hover: #252a3d;
+}
+
+/* ─── Light theme ────────────────────────────────────────── */
+.light {
+  --background:   #f8fafc;
+  --surface:      #ffffff;
+  --surface-2:    #f1f5f9;
+  --border:       #e2e8f0;
+  --border-2:     #cbd5e1;
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --scrollbar:    #e2e8f0;
+  --scrollbar-hover: #cbd5e1;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -11,12 +39,11 @@
     margin: 0;
   }
 
-  html,
-  body {
+  html, body {
     max-width: 100vw;
     overflow-x: hidden;
-    background-color: #0b0d17;
-    color: #f1f5f9;
+    background-color: var(--background);
+    color: var(--text-primary);
     font-family: 'Inter', system-ui, sans-serif;
   }
 
@@ -24,23 +51,10 @@
     background-color: rgba(99, 102, 241, 0.3);
   }
 
-  ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #1e2334;
-    border-radius: 2px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #252a3d;
-  }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 }
 
 @layer components {
@@ -89,11 +103,11 @@
   }
 
   .table-row {
-    @apply border-b border-border hover:bg-surface-2/50 transition-colors;
+    @apply border-b border-border hover:bg-surface-2 transition-colors;
   }
 }
 
-/* Lightweight charts dark theme override */
+/* Lightweight charts override */
 .tv-lightweight-charts {
   border-radius: 8px;
   overflow: hidden;

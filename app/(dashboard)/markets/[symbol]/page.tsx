@@ -6,11 +6,18 @@ import useSWR from 'swr'
 import Image from 'next/image'
 import { ArrowUpRight, ArrowDownRight, Star, StarOff } from 'lucide-react'
 import { useQuote } from '@/hooks/use-quote'
+import { useWatchlist } from '@/hooks/use-watchlist'
+import { usePortfolio } from '@/hooks/use-portfolio'
 import { OrderForm } from '@/components/trading/order-form'
 import { PriceChart } from '@/components/charts/price-chart'
 import { NewsFeed } from '@/components/markets/news-feed'
 import { VolatilityMetrics } from '@/components/markets/volatility-metrics'
 import { RedditActivity } from '@/components/markets/reddit-activity'
+import { AlertForm } from '@/components/markets/alert-form'
+import { AICommentary } from '@/components/markets/ai-commentary'
+import { BtcRelativeStrength } from '@/components/markets/btc-relative-strength'
+import { InsiderFeed } from '@/components/markets/insider-feed'
+import { StopOrderForm } from '@/components/trading/stop-order-form'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatPercent, formatMarketCap, pnlColor } from '@/lib/utils'
 import type { AssetType, CandleData } from '@/types'
@@ -25,27 +32,15 @@ export default function AssetDetailPage() {
   const symbol = (params.symbol as string).toUpperCase()
   const assetType = (searchParams.get('type') || 'STOCK') as AssetType
   const [range, setRange] = useState<Range>('1M')
-  const [inWatchlist, setInWatchlist] = useState(false)
 
   const { quote, isLoading: quoteLoading } = useQuote(symbol, assetType)
+  const { portfolio } = usePortfolio()
   const { data: candles, isLoading: candlesLoading } = useSWR<CandleData[]>(
     `/api/market/history?symbol=${symbol}&assetType=${assetType}&range=${range}`,
     fetcher
   )
-
-  async function toggleWatchlist() {
-    if (inWatchlist) {
-      await fetch(`/api/watchlist?symbol=${symbol}`, { method: 'DELETE' })
-      setInWatchlist(false)
-    } else {
-      await fetch('/api/watchlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, assetType }),
-      })
-      setInWatchlist(true)
-    }
-  }
+  const { watchedSymbols, toggle: toggleWatchlist } = useWatchlist()
+  const inWatchlist = watchedSymbols.has(symbol)
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -73,7 +68,7 @@ export default function AssetDetailPage() {
         </div>
 
         <button
-          onClick={toggleWatchlist}
+          onClick={() => toggleWatchlist(symbol, assetType)}
           className="flex items-center gap-1.5 text-sm text-text-muted hover:text-brand transition-colors px-3 py-2 rounded-lg border border-border hover:border-brand"
         >
           {inWatchlist ? <Star className="w-4 h-4 fill-brand text-brand" /> : <StarOff className="w-4 h-4" />}
@@ -141,6 +136,21 @@ export default function AssetDetailPage() {
             <Skeleton className="h-80 w-full rounded-xl" />
           )}
 
+          {/* Price Alert */}
+          {quote && (
+            <AlertForm symbol={symbol} assetType={assetType} currentPrice={quote.price} />
+          )}
+
+          {/* Stop-Loss / Take-Profit */}
+          {quote && (
+            <StopOrderForm
+              symbol={symbol}
+              assetType={assetType}
+              currentPrice={quote.price}
+              holdingQty={portfolio?.holdings.find(h => h.symbol === symbol)?.quantity ?? 0}
+            />
+          )}
+
           {/* Stats */}
           {quote && (
             <div className="card p-5 space-y-3">
@@ -162,6 +172,9 @@ export default function AssetDetailPage() {
         </div>
       </div>
 
+      {/* AI Commentary */}
+      <AICommentary symbol={symbol} assetType={assetType} />
+
       {/* News + Reddit + Volatility */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -170,6 +183,10 @@ export default function AssetDetailPage() {
         </div>
         <div className="space-y-4">
           <VolatilityMetrics symbol={symbol} assetType={assetType} />
+          {assetType === 'CRYPTO' && symbol !== 'BTC' && (
+            <BtcRelativeStrength symbol={symbol} />
+          )}
+          {assetType === 'STOCK' && <InsiderFeed symbol={symbol} />}
         </div>
       </div>
     </div>

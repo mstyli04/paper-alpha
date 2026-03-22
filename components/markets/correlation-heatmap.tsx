@@ -23,9 +23,9 @@ function correlationColor(value: number): string {
 }
 
 const SYMBOL_PRESETS = [
-  { label: 'Big Tech', value: 'AAPL,MSFT,GOOGL,AMZN,META,TSLA,NVDA,AMD' },
-  { label: 'Finance', value: 'JPM,BAC,GS,MS,WFC,C,BLK,V' },
-  { label: 'Energy', value: 'XOM,CVX,COP,SLB,EOG,PXD,MPC,VLO' },
+  { label: 'Big Tech', value: 'AAPL,MSFT,GOOGL,META,NVDA' },
+  { label: 'Finance', value: 'JPM,BAC,GS,MS,WFC' },
+  { label: 'Energy', value: 'XOM,CVX,COP,SLB,EOG' },
 ]
 
 export function CorrelationHeatmap() {

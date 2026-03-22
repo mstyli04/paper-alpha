@@ -12,6 +12,6 @@ export async function GET() {
     const data = await getTrending()
     return NextResponse.json(data, { headers: { 'Cache-Control': 's-maxage=30' } })
   } catch {
-    return NextResponse.json({ stocks: [], crypto: [] })
+    return NextResponse.json({ stocks: [], crypto: [], commodities: [] })
   }
 }

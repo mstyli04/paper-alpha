@@ -32,7 +32,7 @@ const sentimentLabel = {
 
 interface NewsFeedProps {
   symbol: string
-  assetType: 'STOCK' | 'CRYPTO'
+  assetType: 'STOCK' | 'CRYPTO' | 'COMMODITY'
 }
 
 export function NewsFeed({ symbol, assetType }: NewsFeedProps) {

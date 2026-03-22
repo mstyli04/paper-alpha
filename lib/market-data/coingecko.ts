@@ -24,6 +24,22 @@ const SYMBOL_TO_ID: Record<string, string> = {
   OP: 'optimism',
   SUI: 'sui',
   INJ: 'injective-protocol',
+  TAO: 'bittensor',
+  SEI: 'sei-network',
+  TIA: 'celestia',
+  PYTH: 'pyth-network',
+  JUP: 'jupiter-exchange-solana',
+  WIF: 'dogwifcoin',
+  BONK: 'bonk',
+  PEPE: 'pepe',
+  FET: 'fetch-ai',
+  RENDER: 'render-token',
+  RNDR: 'render-token',
+  IMX: 'immutable-x',
+  STRK: 'starknet',
+  MANTA: 'manta-network',
+  ZK: 'zksync',
+  POL: 'matic-network',
 }
 
 async function request<T>(path: string, params: Record<string, string> = {}): Promise<T> {

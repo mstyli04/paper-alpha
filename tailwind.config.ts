@@ -9,20 +9,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#0b0d17',
-        surface: '#111422',
-        'surface-2': '#181c2e',
-        border: '#1e2334',
-        'border-2': '#252a3d',
+        background: 'var(--background)',
+        surface: 'var(--surface)',
+        'surface-2': 'var(--surface-2)',
+        border: 'var(--border)',
+        'border-2': 'var(--border-2)',
         brand: '#6366f1',
         'brand-dim': '#4f46e5',
         green: '#10b981',
         'green-dim': '#059669',
         red: '#ef4444',
         'red-dim': '#dc2626',
-        'text-primary': '#f1f5f9',
-        'text-secondary': '#94a3b8',
-        'text-muted': '#475569',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'text-muted': 'var(--text-muted)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

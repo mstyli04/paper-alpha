@@ -2,7 +2,8 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { getStockCandles } from '@/lib/market-data/finnhub'
+import YahooFinance from 'yahoo-finance2'
+const yahooFinance = new YahooFinance()
 
 function pearson(a: number[], b: number[]): number {
   const n = Math.min(a.length, b.length)
@@ -29,9 +30,7 @@ function dailyReturns(closes: number[]): number[] {
   return returns
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-const DEFAULT_SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'AMD']
+const DEFAULT_SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'META', 'NVDA']
 
 export async function GET(req: Request) {
   const { userId } = auth()
@@ -43,24 +42,36 @@ export async function GET(req: Request) {
     ? symbolsParam.split(',').map(s => s.trim().toUpperCase()).slice(0, 10)
     : DEFAULT_SYMBOLS
 
-  const to = Math.floor(Date.now() / 1000)
-  const from = to - 90 * 86400
+  const toDate = new Date()
+  const fromDate = new Date(Date.now() - 90 * 86400 * 1000)
 
-  // Fetch sequentially to avoid Finnhub rate limits
+  // Fetch all symbols in parallel — Yahoo Finance has no strict rate limit
+  const results = await Promise.allSettled(
+    symbols.map(symbol =>
+      yahooFinance.chart(symbol, {
+        period1: fromDate,
+        period2: toDate,
+        interval: '1d',
+      })
+    )
+  )
+
   const returnsMap: Record<string, number[]> = {}
   const validSymbols: string[] = []
 
-  for (const symbol of symbols) {
-    try {
-      const candles = await getStockCandles(symbol, 'D', from, to)
-      if (candles.length > 10) {
-        returnsMap[symbol] = dailyReturns(candles.map(c => c.close))
-        validSymbols.push(symbol)
+  for (let i = 0; i < symbols.length; i++) {
+    const result = results[i]
+    if (result.status === 'fulfilled') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const quotes = (result.value as any)?.quotes ?? []
+      const closes = quotes
+        .map((q: { close: number | null }) => q.close)
+        .filter((c: number | null): c is number => c !== null)
+      if (closes.length > 10) {
+        returnsMap[symbols[i]] = dailyReturns(closes)
+        validSymbols.push(symbols[i])
       }
-    } catch {
-      // skip failed symbols
     }
-    await sleep(150) // 150ms between requests = ~6/sec, well under 60/min limit
   }
 
   if (validSymbols.length < 2) {

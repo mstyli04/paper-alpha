@@ -8,9 +8,10 @@ import { executeTrade } from '@/lib/trading-engine'
 
 const TradeSchema = z.object({
   symbol: z.string().min(1).max(20).toUpperCase(),
-  assetType: z.enum(['STOCK', 'CRYPTO']),
-  side: z.enum(['BUY', 'SELL']),
+  assetType: z.enum(['STOCK', 'CRYPTO', 'COMMODITY']),
+  side: z.enum(['BUY', 'SELL', 'SHORT', 'COVER']),
   quantity: z.number().positive(),
+  note: z.string().max(500).optional(),
 })
 
 export async function POST(req: Request) {
@@ -32,7 +33,11 @@ export async function POST(req: Request) {
 
   const result = await executeTrade({
     accountId: user.account.id,
-    ...parsed.data,
+    symbol: parsed.data.symbol,
+    assetType: parsed.data.assetType,
+    side: parsed.data.side,
+    quantity: parsed.data.quantity,
+    note: parsed.data.note,
   })
 
   if (!result.success) {

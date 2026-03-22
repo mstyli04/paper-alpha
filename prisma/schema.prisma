@@ -18,6 +18,7 @@ model User {
 
   account   PaperAccount?
   watchlist WatchlistItem[]
+  alerts    PriceAlert[]
 }
 
 model PaperAccount {
@@ -29,9 +30,10 @@ model PaperAccount {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  holdings  Holding[]
-  trades    Trade[]
-  snapshots PortfolioSnapshot[]
+  holdings   Holding[]
+  trades     Trade[]
+  snapshots  PortfolioSnapshot[]
+  stopOrders StopOrder[]
 }
 
 model Holding {
@@ -61,6 +63,7 @@ model Trade {
   quantity   Decimal      @db.Decimal(20, 8)
   price      Decimal      @db.Decimal(20, 8)
   totalValue Decimal      @db.Decimal(20, 8)
+  note       String?
   createdAt  DateTime     @default(now())
 
   @@index([accountId])
@@ -79,6 +82,23 @@ model PortfolioSnapshot {
   @@index([accountId, createdAt])
 }
 
+model PriceAlert {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol      String
+  assetType   AssetType
+  targetPrice Decimal        @db.Decimal(20, 8)
+  condition   AlertCondition
+  triggered   Boolean        @default(false)
+  triggeredAt DateTime?
+  seenAt      DateTime?
+  createdAt   DateTime       @default(now())
+
+  @@index([userId])
+  @@index([triggered])
+}
+
 model WatchlistItem {
   id        String    @id @default(cuid())
   userId    String
@@ -94,9 +114,42 @@ model WatchlistItem {
 enum AssetType {
   STOCK
   CRYPTO
+  COMMODITY
 }
 
 enum TradeSide {
   BUY
   SELL
+  SHORT
+  COVER
+}
+
+enum AlertCondition {
+  ABOVE
+  BELOW
+}
+
+model StopOrder {
+  id           String          @id @default(cuid())
+  accountId    String
+  account      PaperAccount    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  symbol       String
+  assetType    AssetType
+  side         TradeSide
+  triggerPrice Decimal         @db.Decimal(20, 8)
+  condition    AlertCondition
+  quantity     Decimal         @db.Decimal(20, 8)
+  status       StopOrderStatus @default(ACTIVE)
+  triggeredAt  DateTime?
+  createdAt    DateTime        @default(now())
+
+  @@index([accountId])
+  @@index([status])
+}
+
+enum StopOrderStatus {
+  ACTIVE
+  TRIGGERED
+  CANCELLED
+  FAILED
 }

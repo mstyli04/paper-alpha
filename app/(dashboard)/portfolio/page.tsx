@@ -4,6 +4,8 @@ import useSWR from 'swr'
 import { usePortfolio } from '@/hooks/use-portfolio'
 import { StatsCard } from '@/components/portfolio/stats-card'
 import { HoldingsTable } from '@/components/portfolio/holdings-table'
+import { SectorChart } from '@/components/portfolio/sector-chart'
+import { RiskMetricsCard } from '@/components/portfolio/risk-metrics'
 import { PortfolioChart } from '@/components/charts/portfolio-chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatPercent, pnlColor } from '@/lib/utils'
@@ -69,6 +71,8 @@ export default function PortfolioPage() {
         )}
       </div>
 
+      <RiskMetricsCard />
+
       {/* Holdings + Allocation */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 card overflow-hidden">
@@ -78,7 +82,9 @@ export default function PortfolioPage() {
           <HoldingsTable holdings={portfolio?.holdings ?? []} loading={isLoading} />
         </div>
 
-        <div className="card p-5">
+        <div className="space-y-4">
+          <SectorChart holdings={portfolio?.holdings ?? []} />
+          <div className="card p-5">
           <h2 className="text-sm font-semibold text-text-primary mb-4">Allocation</h2>
           {isLoading ? (
             <div className="space-y-3">
@@ -122,6 +128,7 @@ export default function PortfolioPage() {
               })}
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

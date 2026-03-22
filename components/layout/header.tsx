@@ -2,16 +2,23 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Search, Bell } from 'lucide-react'
+import { Search, Menu, Sun, Moon } from 'lucide-react'
 import { UserButton } from '@clerk/nextjs'
+import { useTheme } from 'next-themes'
 import { useSearch } from '@/hooks/use-search'
+import { AlertsDropdown } from '@/components/alerts/alerts-dropdown'
 import type { SearchResult } from '@/types'
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const { results, loading } = useSearch(query)
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
 
   function handleSelect(result: SearchResult) {
     setQuery('')
@@ -20,7 +27,16 @@ export function Header() {
   }
 
   return (
-    <header className="h-16 bg-surface border-b border-border flex items-center px-6 gap-4 sticky top-0 z-20">
+    <header className="h-16 bg-surface border-b border-border flex items-center px-4 gap-3 sticky top-0 z-20">
+      {/* Hamburger — mobile only */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors flex-shrink-0"
+        aria-label="Open menu"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
       {/* Search */}
       <div className="relative flex-1 max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
@@ -62,10 +78,17 @@ export function Header() {
         )}
       </div>
 
-      <div className="flex items-center gap-3 ml-auto">
-        <button className="w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors">
-          <Bell className="w-4 h-4" />
+      <div className="flex items-center gap-2 ml-auto">
+        {/* Theme toggle */}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
+
+        <AlertsDropdown />
         <UserButton afterSignOutUrl="/" />
       </div>
     </header>
