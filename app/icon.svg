@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <!-- Background -->
+  <rect width="16" height="16" fill="#0c0f1a"/>
+
+  <!-- 8-bit dinosaur in green -->
+  <!-- Row 0: head top -->
+  <rect x="6" y="0" width="2" height="1" fill="#22c55e"/>
+  <!-- Row 1: head -->
+  <rect x="5" y="1" width="4" height="1" fill="#22c55e"/>
+  <!-- Row 2: head with eye -->
+  <rect x="5" y="2" width="1" height="1" fill="#22c55e"/>
+  <rect x="6" y="2" width="1" height="1" fill="#ffffff"/>
+  <rect x="7" y="2" width="3" height="1" fill="#22c55e"/>
+  <!-- Row 3: jaw/neck -->
+  <rect x="5" y="3" width="6" height="1" fill="#22c55e"/>
+  <!-- Row 4: upper body -->
+  <rect x="3" y="4" width="7" height="1" fill="#22c55e"/>
+  <!-- Row 5: body -->
+  <rect x="2" y="5" width="9" height="1" fill="#22c55e"/>
+  <!-- Row 6: body with arm -->
+  <rect x="1" y="6" width="11" height="1" fill="#22c55e"/>
+  <!-- Row 7: lower body -->
+  <rect x="1" y="7" width="9" height="1" fill="#22c55e"/>
+  <!-- Row 8: belly -->
+  <rect x="2" y="8" width="6" height="1" fill="#22c55e"/>
+  <!-- Row 9: hips -->
+  <rect x="3" y="9" width="4" height="1" fill="#22c55e"/>
+  <!-- Row 10: upper legs -->
+  <rect x="3" y="10" width="2" height="1" fill="#22c55e"/>
+  <rect x="6" y="10" width="2" height="1" fill="#22c55e"/>
+  <!-- Row 11: lower legs -->
+  <rect x="3" y="11" width="2" height="1" fill="#22c55e"/>
+  <rect x="6" y="11" width="2" height="1" fill="#22c55e"/>
+  <!-- Row 12: feet -->
+  <rect x="2" y="12" width="3" height="1" fill="#22c55e"/>
+  <rect x="6" y="12" width="3" height="1" fill="#22c55e"/>
+</svg>
