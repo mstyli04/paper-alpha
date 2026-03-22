@@ -2,10 +2,10 @@
 
 import { useUser } from '@clerk/nextjs'
 import useSWR from 'swr'
-import Image from 'next/image'
 import Link from 'next/link'
 import { Trophy, Medal, TrendingUp, TrendingDown } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { AvatarDisplay } from '@/components/ui/avatar-display'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import type { LeaderboardEntry } from '@/types'
 
@@ -40,13 +40,9 @@ export default function LeaderboardPage() {
                 <div className={`text-2xl font-bold mb-2 ${rankColors[actualIndex]}`}>
                   {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
                 </div>
-                {entry.avatarUrl ? (
-                  <Image src={entry.avatarUrl} alt={entry.username} width={48} height={48} className="rounded-full mx-auto mb-2" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-surface-2 border border-border mx-auto mb-2 flex items-center justify-center">
-                    <span className="text-sm font-bold text-text-secondary">{entry.username[0].toUpperCase()}</span>
-                  </div>
-                )}
+                <div className="flex justify-center mb-2">
+                  <AvatarDisplay avatarUrl={entry.avatarUrl} username={entry.username} size={48} />
+                </div>
                 <p className="text-sm font-semibold text-text-primary truncate">{entry.username}</p>
                 <p className={`text-lg font-bold mt-1 ${entry.returnPercent >= 0 ? 'text-green' : 'text-red'}`}>
                   {formatPercent(entry.returnPercent)}
@@ -105,13 +101,7 @@ export default function LeaderboardPage() {
                     </td>
                     <td className="py-3 px-4">
                       <Link href={`/profile/${entry.username}`} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-                        {entry.avatarUrl ? (
-                          <Image src={entry.avatarUrl} alt={entry.username} width={32} height={32} className="rounded-full" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-surface-2 border border-border flex items-center justify-center text-xs font-bold text-text-secondary">
-                            {entry.username[0].toUpperCase()}
-                          </div>
-                        )}
+                        <AvatarDisplay avatarUrl={entry.avatarUrl} username={entry.username} size={32} />
                         <div>
                           <p className="font-medium text-text-primary hover:text-brand transition-colors">{entry.username}</p>
                           {isMe && <span className="text-xs text-brand">You</span>}

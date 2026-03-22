@@ -48,12 +48,28 @@ export async function GET() {
   return NextResponse.json(user)
 }
 
-// PATCH /api/user — update username
+// PATCH /api/user — update username or avatarUrl
 export async function PATCH(req: Request) {
   const { userId } = auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { username } = await req.json()
+  const body = await req.json()
+
+  // Avatar update
+  if ('avatarUrl' in body) {
+    const { avatarUrl } = body
+    if (typeof avatarUrl !== 'string') {
+      return NextResponse.json({ error: 'Invalid avatarUrl' }, { status: 400 })
+    }
+    const user = await db.user.update({
+      where: { clerkId: userId },
+      data: { avatarUrl },
+    })
+    return NextResponse.json(user)
+  }
+
+  // Username update
+  const { username } = body
   if (!username || username.length < 3) {
     return NextResponse.json({ error: 'Username must be at least 3 characters' }, { status: 400 })
   }

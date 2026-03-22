@@ -11,7 +11,6 @@ import {
   Settings,
   BarChart2,
   X,
-  Activity,
   Newspaper,
   SlidersHorizontal,
   User,
@@ -77,8 +76,28 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center justify-between px-4 h-14 border-b border-border shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-brand rounded-md flex items-center justify-center shrink-0">
-              <Activity className="w-3.5 h-3.5 text-white" />
+            <div className="w-7 h-7 rounded-md overflow-hidden shrink-0 border border-brand/30">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shapeRendering="crispEdges" width="28" height="28">
+                <rect width="16" height="16" fill="#0c0f1a"/>
+                <rect x="6" y="0" width="2" height="1" fill="#22c55e"/>
+                <rect x="5" y="1" width="4" height="1" fill="#22c55e"/>
+                <rect x="5" y="2" width="1" height="1" fill="#22c55e"/>
+                <rect x="6" y="2" width="1" height="1" fill="#ffffff"/>
+                <rect x="7" y="2" width="3" height="1" fill="#22c55e"/>
+                <rect x="5" y="3" width="6" height="1" fill="#22c55e"/>
+                <rect x="3" y="4" width="7" height="1" fill="#22c55e"/>
+                <rect x="2" y="5" width="9" height="1" fill="#22c55e"/>
+                <rect x="1" y="6" width="11" height="1" fill="#22c55e"/>
+                <rect x="1" y="7" width="9" height="1" fill="#22c55e"/>
+                <rect x="2" y="8" width="6" height="1" fill="#22c55e"/>
+                <rect x="3" y="9" width="4" height="1" fill="#22c55e"/>
+                <rect x="3" y="10" width="2" height="1" fill="#22c55e"/>
+                <rect x="6" y="10" width="2" height="1" fill="#22c55e"/>
+                <rect x="3" y="11" width="2" height="1" fill="#22c55e"/>
+                <rect x="6" y="11" width="2" height="1" fill="#22c55e"/>
+                <rect x="2" y="12" width="3" height="1" fill="#22c55e"/>
+                <rect x="6" y="12" width="3" height="1" fill="#22c55e"/>
+              </svg>
             </div>
             <div>
               <span className="font-semibold text-text-primary text-sm tracking-tight">Paper Alpha</span>

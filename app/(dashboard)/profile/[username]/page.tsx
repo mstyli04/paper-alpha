@@ -1,16 +1,19 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
-import Image from 'next/image'
 import useSWR from 'swr'
-import { ArrowLeft, ArrowUpRight, ArrowDownRight, FileText } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, ArrowDownRight, FileText, Pencil, Check } from 'lucide-react'
 import { HoldingsTable } from '@/components/portfolio/holdings-table'
 import { StatsCard } from '@/components/portfolio/stats-card'
 import { PortfolioChart } from '@/components/charts/portfolio-chart'
+import { AvatarDisplay } from '@/components/ui/avatar-display'
 import { Skeleton } from '@/components/ui/skeleton'
+import { AVATAR_PRESETS, presetUrl } from '@/lib/avatars'
 import { formatCurrency, formatPercent, pnlColor, timeAgo, formatQuantity } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import type { Portfolio, PortfolioSnapshot, TradeRecord } from '@/types'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
@@ -30,12 +33,26 @@ const sideStyles: Record<string, string> = {
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>()
   const { user: currentUser } = useUser()
+  const [showPicker, setShowPicker] = useState(false)
+  const [saving, setSaving] = useState(false)
 
-  const { data, isLoading, error } = useSWR<ProfileData>(`/api/users/${username}/portfolio`, fetcher)
+  const { data, isLoading, error, mutate } = useSWR<ProfileData>(`/api/users/${username}/portfolio`, fetcher)
   const { data: snapshots } = useSWR<PortfolioSnapshot[]>(`/api/users/${username}/snapshots`, fetcher)
   const { data: trades } = useSWR<TradeRecord[]>(`/api/users/${username}/trades`, fetcher)
 
   const isOwnProfile = currentUser?.username === username
+
+  async function selectAvatar(index: number) {
+    setSaving(true)
+    await fetch('/api/user', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatarUrl: presetUrl(index) }),
+    })
+    await mutate()
+    setSaving(false)
+    setShowPicker(false)
+  }
 
   if (error || (!isLoading && !data)) {
     return (
@@ -50,10 +67,7 @@ export default function ProfilePage() {
   const portfolio = data?.portfolio
   const profileUser = data?.user
   const startingBalance = portfolio?.startingBalance ?? 100000
-
-  // Compute basic stats from trades
   const totalTrades = trades?.length ?? 0
-  const closedTrades = trades?.filter(t => t.side === 'SELL' || t.side === 'COVER') ?? []
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -71,21 +85,23 @@ export default function ProfilePage() {
           </>
         ) : (
           <>
-            {profileUser?.avatarUrl ? (
-              <Image
-                src={profileUser.avatarUrl}
-                alt={profileUser.username}
-                width={64}
-                height={64}
-                className="rounded-full border-2 border-border flex-shrink-0"
+            <div className="relative">
+              <AvatarDisplay
+                avatarUrl={profileUser?.avatarUrl}
+                username={profileUser?.username}
+                size={64}
               />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-surface-2 border-2 border-border flex items-center justify-center flex-shrink-0">
-                <span className="text-xl font-bold text-text-secondary">
-                  {profileUser?.username?.[0]?.toUpperCase()}
-                </span>
-              </div>
-            )}
+              {isOwnProfile && (
+                <button
+                  onClick={() => setShowPicker(v => !v)}
+                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand flex items-center justify-center shadow-lg hover:bg-brand-dim transition-colors"
+                  title="Change avatar"
+                >
+                  <Pencil className="w-3 h-3 text-white" />
+                </button>
+              )}
+            </div>
+
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-bold text-text-primary">@{profileUser?.username}</h1>
@@ -114,6 +130,44 @@ export default function ProfilePage() {
           </>
         )}
       </div>
+
+      {/* Avatar picker */}
+      {showPicker && isOwnProfile && (
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-text-primary">Choose your avatar</h2>
+            <button onClick={() => setShowPicker(false)} className="text-xs text-text-muted hover:text-text-primary">
+              Cancel
+            </button>
+          </div>
+          <div className="grid grid-cols-6 sm:grid-cols-12 gap-3">
+            {AVATAR_PRESETS.map((preset, i) => {
+              const isSelected = profileUser?.avatarUrl === presetUrl(i)
+              return (
+                <button
+                  key={i}
+                  onClick={() => selectAvatar(i)}
+                  disabled={saving}
+                  title={preset.label}
+                  className={cn(
+                    'relative w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 border-2',
+                    isSelected ? 'border-brand scale-110' : 'border-transparent hover:border-border'
+                  )}
+                  style={{ backgroundColor: preset.bg }}
+                >
+                  <span className="text-2xl" role="img" aria-label={preset.label}>{preset.emoji}</span>
+                  {isSelected && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand rounded-full flex items-center justify-center">
+                      <Check className="w-2.5 h-2.5 text-white" />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-xs text-text-muted mt-3">Click an avatar to save it instantly.</p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
