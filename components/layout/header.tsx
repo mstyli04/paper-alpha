@@ -14,12 +14,15 @@ interface HeaderProps {
 }
 
 function useMarketStatus() {
-  const [time, setTime] = useState(new Date())
+  const [time, setTime] = useState<Date | null>(null)
 
   useEffect(() => {
+    setTime(new Date())
     const id = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  if (!time) return { isOpen: false, utcTime: '--:--:--' }
 
   // NYSE hours: 9:30am–4:00pm ET, Mon–Fri
   const et = new Date(time.toLocaleString('en-US', { timeZone: 'America/New_York' }))
