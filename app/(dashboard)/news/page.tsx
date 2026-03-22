@@ -131,7 +131,7 @@ export default function NewsPage() {
                     {item.sentiment}
                   </span>
                   <span className="text-[10px] text-text-muted">{item.source}</span>
-                  <span className="text-[10px] text-text-muted">{timeAgo(item.datetime)}</span>
+                  <span className="text-[10px] text-text-muted">{timeAgo(new Date(item.datetime * 1000))}</span>
                   {item.related && (
                     <span className="text-[10px] font-mono text-brand">{item.related}</span>
                   )}
