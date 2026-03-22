@@ -12,6 +12,9 @@ import {
   BarChart2,
   X,
   Activity,
+  Newspaper,
+  SlidersHorizontal,
+  User,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -25,16 +28,24 @@ const navGroups = [
     ],
   },
   {
-    label: 'Insights',
+    label: 'Research',
     items: [
+      { href: '/news', label: 'News', icon: Newspaper },
+      { href: '/screener', label: 'Screener', icon: SlidersHorizontal },
       { href: '/analysis', label: 'Analysis', icon: BarChart2 },
-      { href: '/history', label: 'History', icon: History },
+    ],
+  },
+  {
+    label: 'Community',
+    items: [
       { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+      { href: '/profile', label: 'My Profile', icon: User },
     ],
   },
   {
     label: 'Account',
     items: [
+      { href: '/history', label: 'History', icon: History },
       { href: '/settings', label: 'Settings', icon: Settings },
     ],
   },
