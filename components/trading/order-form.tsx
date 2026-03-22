@@ -21,6 +21,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
   const { portfolio, refresh } = usePortfolio()
 
   const qty = parseFloat(quantity) || 0
@@ -47,9 +48,10 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
     setQuantity('')
     setNote('')
     setSuccess('')
+    setShowConfirm(false)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setSuccess('')
@@ -59,7 +61,12 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
       return
     }
 
+    setShowConfirm(true)
+  }
+
+  async function handleConfirm() {
     setLoading(true)
+    setShowConfirm(false)
     try {
       const res = await fetch('/api/trades', {
         method: 'POST',
@@ -92,6 +99,10 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
     } finally {
       setLoading(false)
     }
+  }
+
+  function handleCancel() {
+    setShowConfirm(false)
   }
 
   const tabs: { id: Tab; label: string; color: string; activeColor: string }[] = [
@@ -201,13 +212,63 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
         {error && <div className="text-xs text-red bg-red/10 rounded-lg px-3 py-2">{error}</div>}
         {success && <div className="text-xs text-green bg-green/10 rounded-lg px-3 py-2">{success}</div>}
 
-        <button
-          type="submit"
-          disabled={loading || !qty}
-          className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white ${activeTab.activeColor}`}
-        >
-          {loading ? 'Processing...' : `${activeTab.label} ${symbol}`}
-        </button>
+        {showConfirm ? (
+          <div className="rounded-lg border border-border bg-surface-2 p-4 space-y-3">
+            <p className="text-xs font-semibold text-text-primary uppercase tracking-wide">Confirm Order</p>
+            <div className="space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-text-muted">Side</span>
+                <span className={`font-semibold ${
+                  tab === 'BUY' ? 'text-green' :
+                  tab === 'SELL' ? 'text-red' :
+                  tab === 'SHORT' ? 'text-orange-400' :
+                  'text-blue-400'
+                }`}>{tab}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Symbol</span>
+                <span className="text-text-primary font-medium">{symbol}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Quantity</span>
+                <span className="text-text-primary font-mono">{formatQuantity(qty, assetType)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Est. Price</span>
+                <span className="text-text-primary font-mono">{formatCurrency(currentPrice)}</span>
+              </div>
+              <div className="flex justify-between border-t border-border pt-1.5 mt-1.5">
+                <span className="text-text-muted font-medium">Total Value</span>
+                <span className="text-text-primary font-mono font-semibold">{formatCurrency(total)}</span>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="flex-1 py-2 text-xs font-semibold rounded-lg border border-border text-text-muted hover:text-text-primary hover:border-border-2 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={loading}
+                className={`flex-1 py-2 text-xs font-semibold rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${activeTab.activeColor}`}
+              >
+                {loading ? 'Processing...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="submit"
+            disabled={loading || !qty}
+            className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white ${activeTab.activeColor}`}
+          >
+            {loading ? 'Processing...' : `${activeTab.label} ${symbol}`}
+          </button>
+        )}
       </form>
     </div>
   )

@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart2, Wallet, Target, Clock } from 'lucide-react'
+import { ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, BarChart2, Wallet, Target, Clock, X } from 'lucide-react'
 import { usePortfolio } from '@/hooks/use-portfolio'
 import { HoldingsTable } from '@/components/portfolio/holdings-table'
 import { PortfolioChart } from '@/components/charts/portfolio-chart'
+import { PnlPeriods } from '@/components/portfolio/pnl-periods'
 import { TradeFeed } from '@/components/feed/trade-feed'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatPercent, pnlColor } from '@/lib/utils'
@@ -62,14 +63,33 @@ function StatCard({ label, value, sub, subColor, icon, accent = 'brand', loading
   )
 }
 
+const ONBOARDING_DISMISSED_KEY = 'paper-alpha:onboarding-dismissed'
+
 export default function DashboardPage() {
   const { portfolio, isLoading } = usePortfolio()
   const { data: snapshots } = useSWR<PortfolioSnapshot[]>('/api/portfolio/snapshots', fetcher)
+  const [onboardingDismissed, setOnboardingDismissed] = useState(true) // start true to avoid flash
 
   // Bootstrap user on first load
   useEffect(() => {
     fetch('/api/user').catch(() => {})
   }, [])
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem(ONBOARDING_DISMISSED_KEY)
+    if (!dismissed) setOnboardingDismissed(false)
+  }, [])
+
+  function dismissOnboarding() {
+    localStorage.setItem(ONBOARDING_DISMISSED_KEY, '1')
+    setOnboardingDismissed(true)
+  }
+
+  const hasNoActivity = !isLoading && portfolio &&
+    portfolio.holdings.length === 0 &&
+    portfolio.realizedPnl === 0
+
+  const showOnboarding = hasNoActivity && !onboardingDismissed
 
   const winRate = portfolio && portfolio.holdings.length > 0
     ? Math.round((portfolio.holdings.filter(h => (h.unrealizedPnl ?? 0) > 0).length / portfolio.holdings.length) * 100)
@@ -95,6 +115,41 @@ export default function DashboardPage() {
           <TrendingUp className="w-3.5 h-3.5" /> Trade
         </Link>
       </div>
+
+      {/* Onboarding banner */}
+      {showOnboarding && (
+        <div className="card p-5 border border-brand/30 bg-brand/5 relative">
+          <button
+            onClick={dismissOnboarding}
+            className="absolute top-3 right-3 text-text-muted hover:text-text-primary transition-colors"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <h2 className="text-sm font-semibold text-text-primary mb-1">Welcome to Paper Alpha!</h2>
+          <p className="text-xs text-text-muted mb-4">Practice trading with virtual money. Get started in 3 easy steps:</p>
+          <ol className="space-y-2 mb-4">
+            {[
+              { step: '1', text: 'Go to Markets to browse stocks and crypto' },
+              { step: '2', text: 'Search for a stock you\'re interested in' },
+              { step: '3', text: 'Place your first paper trade' },
+            ].map(({ step, text }) => (
+              <li key={step} className="flex items-center gap-3 text-xs text-text-secondary">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand/20 text-brand text-[10px] font-bold flex items-center justify-center">
+                  {step}
+                </span>
+                {text}
+              </li>
+            ))}
+          </ol>
+          <Link
+            href="/markets"
+            className="btn-primary inline-flex items-center gap-1.5 py-1.5 px-4 text-xs"
+          >
+            Go to Markets <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
@@ -150,6 +205,9 @@ export default function DashboardPage() {
           loading={isLoading}
         />
       </div>
+
+      {/* P&L by period */}
+      <PnlPeriods />
 
       {/* Portfolio chart */}
       <div className="card p-5">

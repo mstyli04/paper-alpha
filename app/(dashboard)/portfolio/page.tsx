@@ -7,6 +7,7 @@ import { HoldingsTable } from '@/components/portfolio/holdings-table'
 import { SectorChart } from '@/components/portfolio/sector-chart'
 import { RiskMetricsCard } from '@/components/portfolio/risk-metrics'
 import { PortfolioChart } from '@/components/charts/portfolio-chart'
+import { AllocationChart } from '@/components/portfolio/allocation-chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatPercent, pnlColor } from '@/lib/utils'
 import type { PortfolioSnapshot } from '@/types'
@@ -56,6 +57,9 @@ export default function PortfolioPage() {
           loading={isLoading}
         />
       </div>
+
+      {/* Allocation pie chart */}
+      <AllocationChart holdings={portfolio?.holdings ?? []} />
 
       {/* Performance chart */}
       <div className="card p-5">
