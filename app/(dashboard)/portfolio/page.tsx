@@ -6,6 +6,7 @@ import { StatsCard } from '@/components/portfolio/stats-card'
 import { HoldingsTable } from '@/components/portfolio/holdings-table'
 import { SectorChart } from '@/components/portfolio/sector-chart'
 import { RiskMetricsCard } from '@/components/portfolio/risk-metrics'
+import { AchievementsCard } from '@/components/portfolio/achievements-card'
 import { PortfolioChart } from '@/components/charts/portfolio-chart'
 import { AllocationChart } from '@/components/portfolio/allocation-chart'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -69,6 +70,7 @@ export default function PortfolioPage() {
             snapshots={snapshots}
             startingBalance={portfolio?.startingBalance ?? 100000}
             height={240}
+            showBenchmark
           />
         ) : (
           <Skeleton className="h-60 w-full" />
@@ -76,6 +78,8 @@ export default function PortfolioPage() {
       </div>
 
       <RiskMetricsCard />
+
+      <AchievementsCard />
 
       {/* Holdings + Allocation */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

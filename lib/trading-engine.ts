@@ -255,8 +255,10 @@ async function saveSnapshot(
   })
   if (!account) return
 
+  // Longs: qty * price (positive contribution)
+  // Shorts: qty is negative, so qty * price is negative (short is a liability at cost basis)
   const holdingsValue = account.holdings.reduce(
-    (sum, h) => sum + Math.abs(Number(h.quantity)) * Number(h.avgCostBasis),
+    (sum, h) => sum + Number(h.quantity) * Number(h.avgCostBasis),
     0
   )
 

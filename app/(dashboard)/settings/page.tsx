@@ -2,18 +2,45 @@
 
 import { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
+import Link from 'next/link'
+import useSWR from 'swr'
 import { usePortfolio } from '@/hooks/use-portfolio'
+import { AvatarDisplay } from '@/components/ui/avatar-display'
 import { formatCurrency } from '@/lib/utils'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, User, Shield, Palette, BarChart2, ExternalLink, Check } from 'lucide-react'
+import { OWNER_USERNAME } from '@/lib/avatars'
+
+const fetcher = (url: string) => fetch(url).then(r => r.json())
+
+interface DbUser { username: string; avatarUrl?: string; createdAt: string; email: string }
+
+function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="card p-6 space-y-5">
+      <div className="flex items-center gap-2 border-b border-border pb-4">
+        <span className="text-brand">{icon}</span>
+        <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
+      </div>
+      {children}
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const { user } = useUser()
   const { portfolio, refresh } = usePortfolio()
+  const { data: dbUser } = useSWR<DbUser>('/api/user', fetcher)
+
   const [username, setUsername] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [resetting, setResetting] = useState(false)
   const [showReset, setShowReset] = useState(false)
+
+  const isOwner = dbUser?.username === OWNER_USERNAME
+  const memberSince = dbUser?.createdAt
+    ? new Date(dbUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : '—'
 
   async function handleSaveUsername(e: React.FormEvent) {
     e.preventDefault()
@@ -26,12 +53,7 @@ export default function SettingsPage() {
         body: JSON.stringify({ username }),
       })
       const data = await res.json()
-      if (res.ok) {
-        setSaveMsg('Username updated!')
-        setUsername('')
-      } else {
-        setSaveMsg(data.error || 'Failed to update')
-      }
+      setSaveMsg(res.ok ? 'Username updated!' : (data.error || 'Failed to update'))
     } finally {
       setSaving(false)
       setTimeout(() => setSaveMsg(''), 3000)
@@ -52,65 +74,94 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Settings</h1>
-        <p className="text-text-muted text-sm mt-1">Manage your account and preferences</p>
+        <h1 className="text-xl font-bold text-text-primary tracking-tight">Settings</h1>
+        <p className="text-xs text-text-muted mt-0.5">Manage your account and preferences</p>
       </div>
 
       {/* Profile */}
-      <div className="card p-6 space-y-5">
-        <h2 className="text-sm font-semibold text-text-primary border-b border-border pb-3">Profile</h2>
-
-        <div className="space-y-1">
-          <label className="text-xs text-text-muted">Email</label>
-          <p className="text-sm text-text-secondary">{user?.emailAddresses[0]?.emailAddress}</p>
+      <Section title="Profile" icon={<User className="w-4 h-4" />}>
+        <div className="flex items-center gap-4">
+          <AvatarDisplay
+            avatarUrl={dbUser?.avatarUrl}
+            username={dbUser?.username}
+            size={56}
+            isOwner={isOwner}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-text-primary">@{dbUser?.username ?? '—'}</p>
+            <p className="text-xs text-text-muted">{dbUser?.email ?? user?.emailAddresses[0]?.emailAddress}</p>
+            <p className="text-xs text-text-muted">Member since {memberSince}</p>
+          </div>
+          <Link
+            href="/profile"
+            className="flex items-center gap-1.5 text-xs text-brand hover:text-brand-dim transition-colors shrink-0"
+          >
+            Change avatar <ExternalLink className="w-3 h-3" />
+          </Link>
         </div>
+
+        {isOwner && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-400/5 border border-yellow-400/20">
+            <span className="text-sm">👑</span>
+            <div>
+              <p className="text-xs font-semibold text-yellow-400">Admin Account</p>
+              <p className="text-xs text-text-muted">You have owner privileges on this platform.</p>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSaveUsername} className="space-y-3">
           <div>
-            <label className="block text-xs text-text-muted mb-1.5">Update Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder="New username..."
-              minLength={3}
-              className="input-base w-full"
-            />
+            <label className="block text-xs text-text-muted mb-1.5">Change Username</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                placeholder={dbUser?.username ?? 'New username...'}
+                minLength={3}
+                className="input-base flex-1"
+              />
+              <button type="submit" disabled={saving || !username} className="btn-primary text-xs px-4">
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
           </div>
-          <button type="submit" disabled={saving || !username} className="btn-primary text-sm">
-            {saving ? 'Saving...' : 'Save Username'}
-          </button>
           {saveMsg && (
-            <p className={`text-xs ${saveMsg.includes('!') ? 'text-green' : 'text-red'}`}>{saveMsg}</p>
+            <p className={`text-xs flex items-center gap-1 ${saveMsg.includes('!') ? 'text-green' : 'text-red'}`}>
+              {saveMsg.includes('!') && <Check className="w-3 h-3" />}
+              {saveMsg}
+            </p>
           )}
         </form>
-      </div>
+      </Section>
 
-      {/* Account */}
-      <div className="card p-6 space-y-5">
-        <h2 className="text-sm font-semibold text-text-primary border-b border-border pb-3">Paper Account</h2>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-text-muted mb-1">Starting Balance</p>
-            <p className="text-text-primary font-mono">{portfolio ? formatCurrency(portfolio.startingBalance) : '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-text-muted mb-1">Current Value</p>
-            <p className="text-text-primary font-mono">{portfolio ? formatCurrency(portfolio.totalValue) : '—'}</p>
-          </div>
+      {/* Paper Account */}
+      <Section title="Paper Account" icon={<BarChart2 className="w-4 h-4" />}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            { label: 'Starting Balance', value: portfolio ? formatCurrency(portfolio.startingBalance) : '—' },
+            { label: 'Current Value',    value: portfolio ? formatCurrency(portfolio.totalValue) : '—' },
+            { label: 'Cash Balance',     value: portfolio ? formatCurrency(portfolio.cashBalance) : '—' },
+            { label: 'Open Positions',   value: portfolio ? String(portfolio.holdings.length) : '—' },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <p className="text-xs text-text-muted mb-1">{label}</p>
+              <p className="text-sm font-mono font-medium text-text-primary">{value}</p>
+            </div>
+          ))}
         </div>
 
-        <div>
+        <div className="border-t border-border pt-4">
           <button
             onClick={() => setShowReset(true)}
-            className="flex items-center gap-2 text-sm text-red hover:text-red-dim transition-colors"
+            className="flex items-center gap-2 text-sm text-red hover:opacity-80 transition-opacity"
           >
             <AlertTriangle className="w-4 h-4" />
             Reset Portfolio
           </button>
           <p className="text-xs text-text-muted mt-1">
-            Clears all holdings, trades, and restores your starting balance. This cannot be undone.
+            Clears all holdings and trades, restores your starting balance. Cannot be undone.
           </p>
         </div>
 
@@ -125,22 +176,55 @@ export default function SettingsPage() {
               <button onClick={handleReset} disabled={resetting} className="btn-red text-sm">
                 {resetting ? 'Resetting...' : 'Yes, reset my portfolio'}
               </button>
-              <button onClick={() => setShowReset(false)} className="btn-secondary text-sm">
-                Cancel
-              </button>
+              <button onClick={() => setShowReset(false)} className="btn-secondary text-sm">Cancel</button>
             </div>
           </div>
         )}
-      </div>
+      </Section>
+
+      {/* Appearance */}
+      <Section title="Appearance" icon={<Palette className="w-4 h-4" />}>
+        <div className="space-y-3">
+          <p className="text-xs text-text-muted font-medium">Theme</p>
+          <div className="flex gap-2">
+            {(['Dark', 'Light', 'System'] as const).map(label => (
+              <button
+                key={label}
+                disabled={label !== 'Dark'}
+                className={`px-4 py-1.5 text-xs rounded-lg border transition-colors ${
+                  label === 'Dark'
+                    ? 'bg-brand/10 border-brand/30 text-brand'
+                    : 'border-border text-text-muted opacity-40 cursor-not-allowed'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-text-muted">Light and system themes coming soon.</p>
+        </div>
+      </Section>
+
+      {/* Security */}
+      <Section title="Security" icon={<Shield className="w-4 h-4" />}>
+        <p className="text-xs text-text-muted">Authentication is managed by Clerk. Click below to manage your password, connected accounts, and two-factor authentication.</p>
+        <a
+          href="https://accounts.clerk.dev/user"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs text-brand hover:text-brand-dim transition-colors"
+        >
+          Manage account security <ExternalLink className="w-3 h-3" />
+        </a>
+      </Section>
 
       {/* Disclaimer */}
-      <div className="card p-5 bg-brand/5 border-brand/20">
+      <div className="card p-5 bg-brand/5 border border-brand/20">
         <h3 className="text-xs font-semibold text-brand mb-2">Disclaimer</h3>
         <p className="text-xs text-text-secondary leading-relaxed">
           Paper Alpha is a simulated trading platform for educational and entertainment purposes only.
           All trades use virtual currency with zero real monetary value. Market data may be delayed.
-          Nothing on this platform constitutes financial advice. Always do your own research before
-          investing real money.
+          Nothing on this platform constitutes financial advice. Always do your own research before investing real money.
         </p>
       </div>
     </div>
