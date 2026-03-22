@@ -72,7 +72,7 @@ export default function DashboardPage() {
   }, [])
 
   const winRate = portfolio && portfolio.holdings.length > 0
-    ? Math.round((portfolio.holdings.filter(h => h.unrealizedPnl > 0).length / portfolio.holdings.length) * 100)
+    ? Math.round((portfolio.holdings.filter(h => (h.unrealizedPnl ?? 0) > 0).length / portfolio.holdings.length) * 100)
     : null
 
   const allocation = portfolio
@@ -135,7 +135,7 @@ export default function DashboardPage() {
         <StatCard
           label="Win Rate"
           value={winRate !== null ? `${winRate}%` : '—'}
-          sub={portfolio ? `${portfolio.holdings.filter(h => h.unrealizedPnl > 0).length} of ${portfolio.holdings.length} positions` : 'No positions'}
+          sub={portfolio ? `${portfolio.holdings.filter(h => (h.unrealizedPnl ?? 0) > 0).length} of ${portfolio.holdings.length} positions` : 'No positions'}
           subColor={winRate !== null ? (winRate >= 50 ? 'text-green' : 'text-red') : undefined}
           icon={<Target className="w-3.5 h-3.5" />}
           accent={winRate !== null ? (winRate >= 50 ? 'green' : 'red') : 'neutral'}
