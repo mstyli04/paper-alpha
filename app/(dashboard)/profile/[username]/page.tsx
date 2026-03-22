@@ -43,8 +43,10 @@ export default function ProfilePage() {
 
   // Clerk username may be null — fall back to DB username
   const currentUsername = currentUser?.username ?? currentDbUser?.username
-  const isOwnProfile = !!currentUsername && currentUsername === username
-  const isOwner = username === process.env.NEXT_PUBLIC_OWNER_USERNAME
+  const isOwner = username === 'mstyli'
+  // isOwnProfile: viewing your own profile. For the owner account, also match by email as fallback.
+  const isOwnProfile = (!!currentUsername && currentUsername === username)
+    || (isOwner && !!currentUser && currentUser.emailAddresses?.some(e => e.emailAddress === 'michael.stylianou7@gmail.com'))
 
   async function selectAvatar(index: number) {
     setSaving(true)

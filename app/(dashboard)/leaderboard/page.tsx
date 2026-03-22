@@ -41,7 +41,7 @@ export default function LeaderboardPage() {
                   {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
                 </div>
                 <div className="flex justify-center mb-2">
-                  <AvatarDisplay avatarUrl={entry.avatarUrl} username={entry.username} size={48} isOwner={entry.username === process.env.NEXT_PUBLIC_OWNER_USERNAME} />
+                  <AvatarDisplay avatarUrl={entry.avatarUrl} username={entry.username} size={48} isOwner={entry.username === 'mstyli'} />
                 </div>
                 <p className="text-sm font-semibold text-text-primary truncate">{entry.username}</p>
                 <p className={`text-lg font-bold mt-1 ${entry.returnPercent >= 0 ? 'text-green' : 'text-red'}`}>
@@ -101,7 +101,7 @@ export default function LeaderboardPage() {
                     </td>
                     <td className="py-3 px-4">
                       <Link href={`/profile/${entry.username}`} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-                        <AvatarDisplay avatarUrl={entry.avatarUrl} username={entry.username} size={32} isOwner={entry.username === process.env.NEXT_PUBLIC_OWNER_USERNAME} />
+                        <AvatarDisplay avatarUrl={entry.avatarUrl} username={entry.username} size={32} isOwner={entry.username === 'mstyli'} />
                         <div>
                           <p className="font-medium text-text-primary hover:text-brand transition-colors">{entry.username}</p>
                           {isMe && <span className="text-xs text-brand">You</span>}
