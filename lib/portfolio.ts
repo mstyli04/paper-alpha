@@ -78,29 +78,38 @@ export async function getPortfolio(accountId: string): Promise<Portfolio> {
 }
 
 export async function getLeaderboard() {
+  // Use the most recent snapshot per account instead of fetching live prices for every holding.
+  // This reduces N×M external API calls to a single database query.
   const accounts = await db.paperAccount.findMany({
-    include: { user: true, holdings: true },
+    include: {
+      user: true,
+      snapshots: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+    },
   })
 
-  const entries = await Promise.all(
-    accounts.map(async (account) => {
-      const portfolio = await getPortfolio(account.id).catch(() => null)
-      if (!portfolio) return null
+  return accounts
+    .map(account => {
+      const startingBalance = Number(account.startingBalance)
+      // Prefer last snapshot; fall back to cash balance if no trades have been made yet
+      const totalValue = account.snapshots[0]
+        ? Number(account.snapshots[0].totalValue)
+        : Number(account.cashBalance)
+      const totalPnl = totalValue - startingBalance
+      const returnPercent = startingBalance > 0 ? (totalPnl / startingBalance) * 100 : 0
 
       return {
         userId: account.userId,
         username: account.user.username,
         avatarUrl: account.user.avatarUrl ?? undefined,
-        totalValue: portfolio.totalValue,
-        startingBalance: portfolio.startingBalance,
-        returnPercent: portfolio.totalPnlPercent,
-        totalPnl: portfolio.totalPnl,
+        totalValue,
+        startingBalance,
+        returnPercent,
+        totalPnl,
       }
     })
-  )
-
-  return entries
-    .filter((e): e is NonNullable<typeof entries[0]> => e !== null)
     .sort((a, b) => b.returnPercent - a.returnPercent)
     .map((entry, i) => ({ ...entry, rank: i + 1 }))
 }

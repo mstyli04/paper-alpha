@@ -2,9 +2,10 @@
 
 import useSWR from 'swr'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Users } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { AvatarDisplay } from '@/components/ui/avatar-display'
+import { OWNER_USERNAME } from '@/lib/avatars'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import type { AssetType } from '@/types'
 
@@ -65,16 +66,12 @@ export function TradeFeed() {
         <div className="divide-y divide-border">
           {data.map(trade => (
             <div key={trade.id} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors">
-              {/* Avatar */}
-              <div className="w-8 h-8 rounded-full bg-surface-2 border border-border overflow-hidden flex-shrink-0 flex items-center justify-center">
-                {trade.avatarUrl ? (
-                  <Image src={trade.avatarUrl} alt={trade.username} width={32} height={32} className="object-cover" />
-                ) : (
-                  <span className="text-xs font-bold text-text-secondary">
-                    {trade.username.slice(0, 2).toUpperCase()}
-                  </span>
-                )}
-              </div>
+              <AvatarDisplay
+                avatarUrl={trade.avatarUrl}
+                username={trade.username}
+                size={32}
+                isOwner={trade.username === OWNER_USERNAME}
+              />
 
               {/* Info */}
               <div className="flex-1 min-w-0">
