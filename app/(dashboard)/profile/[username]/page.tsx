@@ -39,8 +39,11 @@ export default function ProfilePage() {
   const { data, isLoading, error, mutate } = useSWR<ProfileData>(`/api/users/${username}/portfolio`, fetcher)
   const { data: snapshots } = useSWR<PortfolioSnapshot[]>(`/api/users/${username}/snapshots`, fetcher)
   const { data: trades } = useSWR<TradeRecord[]>(`/api/users/${username}/trades`, fetcher)
+  const { data: currentDbUser } = useSWR<{ username: string }>('/api/user', fetcher)
 
-  const isOwnProfile = currentUser?.username === username
+  // Clerk username may be null — fall back to DB username
+  const currentUsername = currentUser?.username ?? currentDbUser?.username
+  const isOwnProfile = !!currentUsername && currentUsername === username
   const isOwner = username === process.env.NEXT_PUBLIC_OWNER_USERNAME
 
   async function selectAvatar(index: number) {
