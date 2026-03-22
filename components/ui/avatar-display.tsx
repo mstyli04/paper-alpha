@@ -13,38 +13,47 @@ interface AvatarDisplayProps {
 }
 
 // Pixel-art captain's hat SVG — owner-exclusive
+// White cap, black brim, gold band, gold anchor badge (based on classic sailor captain style)
 function CaptainHatAvatar({ size, className }: { size: number; className?: string }) {
   return (
     <div
       className={cn('rounded-full flex items-center justify-center flex-shrink-0 border-2 border-yellow-400/60 overflow-hidden', className)}
-      style={{ width: size, height: size, backgroundColor: '#0a1628' }}
+      style={{ width: size, height: size, backgroundColor: '#1a2540' }}
     >
       <svg
         viewBox="0 0 32 32"
-        width={size * 0.78}
-        height={size * 0.78}
+        width={size}
+        height={size}
         shapeRendering="crispEdges"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Hat brim */}
-        <rect x="4"  y="22" width="24" height="3" fill="#d4a017" />
-        <rect x="3"  y="23" width="26" height="2" fill="#f5c842" />
-        {/* Hat body */}
-        <rect x="7"  y="10" width="18" height="13" fill="#0d2144" />
-        {/* Hat top band (gold stripe) */}
-        <rect x="7"  y="17" width="18" height="2"  fill="#d4a017" />
-        {/* White top */}
-        <rect x="7"  y="10" width="18" height="7"  fill="#1a3a6b" />
-        {/* Anchor badge */}
-        <rect x="14" y="12" width="4"  height="1"  fill="#f5c842" />
-        <rect x="15" y="12" width="2"  height="4"  fill="#f5c842" />
-        <rect x="14" y="15" width="4"  height="1"  fill="#f5c842" />
-        <rect x="13" y="13" width="1"  height="1"  fill="#f5c842" />
-        <rect x="18" y="13" width="1"  height="1"  fill="#f5c842" />
-        <rect x="13" y="15" width="2"  height="1"  fill="#f5c842" />
-        <rect x="17" y="15" width="2"  height="1"  fill="#f5c842" />
-        {/* Brim highlight */}
-        <rect x="3"  y="23" width="26" height="1"  fill="#ffe066" />
+        {/* White hat crown — dome shape */}
+        <rect x="13" y="5"  width="6"  height="1" fill="#f0f0f0" />
+        <rect x="11" y="6"  width="10" height="1" fill="#f0f0f0" />
+        <rect x="9"  y="7"  width="14" height="8" fill="#f0f0f0" />
+        {/* Subtle shadow at base of crown */}
+        <rect x="9"  y="15" width="14" height="1" fill="#d8d8dc" />
+        {/* Gold band */}
+        <rect x="9"  y="16" width="14" height="1" fill="#f5c842" />
+        <rect x="9"  y="17" width="14" height="1" fill="#c9a227" />
+        {/* Black brim */}
+        <rect x="7"  y="18" width="18" height="1" fill="#2a2a2a" />
+        <rect x="5"  y="19" width="22" height="2" fill="#111111" />
+        <rect x="7"  y="21" width="18" height="1" fill="#222222" />
+        {/* Gold anchor badge — centered on white crown */}
+        {/* Ring at top of anchor */}
+        <rect x="15" y="7"  width="2"  height="1" fill="#c9a227" />
+        {/* Vertical stem */}
+        <rect x="16" y="7"  width="1"  height="7" fill="#c9a227" />
+        {/* Horizontal crossbar */}
+        <rect x="13" y="9"  width="6"  height="1" fill="#c9a227" />
+        {/* Crossbar end dots */}
+        <rect x="12" y="9"  width="1"  height="1" fill="#c9a227" />
+        <rect x="19" y="9"  width="1"  height="1" fill="#c9a227" />
+        {/* Bottom flukes */}
+        <rect x="13" y="13" width="2"  height="1" fill="#c9a227" />
+        <rect x="17" y="13" width="2"  height="1" fill="#c9a227" />
+        <rect x="14" y="14" width="4"  height="1" fill="#c9a227" />
       </svg>
     </div>
   )

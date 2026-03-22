@@ -163,22 +163,26 @@ export default function ProfilePage() {
                   'relative w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 border-2 overflow-hidden',
                   profileUser?.avatarUrl === OWNER_AVATAR ? 'border-yellow-400 scale-110' : 'border-yellow-400/40 hover:border-yellow-400'
                 )}
-                style={{ backgroundColor: '#0a1628' }}
+                style={{ backgroundColor: '#1a2540' }}
               >
-                <svg viewBox="0 0 32 32" width="36" height="36" shapeRendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="4"  y="22" width="24" height="3" fill="#d4a017" />
-                  <rect x="3"  y="23" width="26" height="2" fill="#f5c842" />
-                  <rect x="7"  y="10" width="18" height="13" fill="#0d2144" />
-                  <rect x="7"  y="17" width="18" height="2"  fill="#d4a017" />
-                  <rect x="7"  y="10" width="18" height="7"  fill="#1a3a6b" />
-                  <rect x="14" y="12" width="4"  height="1"  fill="#f5c842" />
-                  <rect x="15" y="12" width="2"  height="4"  fill="#f5c842" />
-                  <rect x="14" y="15" width="4"  height="1"  fill="#f5c842" />
-                  <rect x="13" y="13" width="1"  height="1"  fill="#f5c842" />
-                  <rect x="18" y="13" width="1"  height="1"  fill="#f5c842" />
-                  <rect x="13" y="15" width="2"  height="1"  fill="#f5c842" />
-                  <rect x="17" y="15" width="2"  height="1"  fill="#f5c842" />
-                  <rect x="3"  y="23" width="26" height="1"  fill="#ffe066" />
+                <svg viewBox="0 0 32 32" width="48" height="48" shapeRendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="13" y="5"  width="6"  height="1" fill="#f0f0f0" />
+                  <rect x="11" y="6"  width="10" height="1" fill="#f0f0f0" />
+                  <rect x="9"  y="7"  width="14" height="8" fill="#f0f0f0" />
+                  <rect x="9"  y="15" width="14" height="1" fill="#d8d8dc" />
+                  <rect x="9"  y="16" width="14" height="1" fill="#f5c842" />
+                  <rect x="9"  y="17" width="14" height="1" fill="#c9a227" />
+                  <rect x="7"  y="18" width="18" height="1" fill="#2a2a2a" />
+                  <rect x="5"  y="19" width="22" height="2" fill="#111111" />
+                  <rect x="7"  y="21" width="18" height="1" fill="#222222" />
+                  <rect x="15" y="7"  width="2"  height="1" fill="#c9a227" />
+                  <rect x="16" y="7"  width="1"  height="7" fill="#c9a227" />
+                  <rect x="13" y="9"  width="6"  height="1" fill="#c9a227" />
+                  <rect x="12" y="9"  width="1"  height="1" fill="#c9a227" />
+                  <rect x="19" y="9"  width="1"  height="1" fill="#c9a227" />
+                  <rect x="13" y="13" width="2"  height="1" fill="#c9a227" />
+                  <rect x="17" y="13" width="2"  height="1" fill="#c9a227" />
+                  <rect x="14" y="14" width="4"  height="1" fill="#c9a227" />
                 </svg>
                 {profileUser?.avatarUrl === OWNER_AVATAR && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
