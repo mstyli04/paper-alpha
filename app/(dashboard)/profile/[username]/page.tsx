@@ -41,6 +41,7 @@ export default function ProfilePage() {
   const { data: trades } = useSWR<TradeRecord[]>(`/api/users/${username}/trades`, fetcher)
 
   const isOwnProfile = currentUser?.username === username
+  const isOwner = username === process.env.NEXT_PUBLIC_OWNER_USERNAME
 
   async function selectAvatar(index: number) {
     setSaving(true)
@@ -90,6 +91,7 @@ export default function ProfilePage() {
                 avatarUrl={profileUser?.avatarUrl}
                 username={profileUser?.username}
                 size={64}
+                isOwner={isOwner}
               />
               {isOwnProfile && (
                 <button
@@ -105,7 +107,12 @@ export default function ProfilePage() {
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-bold text-text-primary">@{profileUser?.username}</h1>
-                {isOwnProfile && (
+                {isOwner && (
+                  <span className="text-xs bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 px-2 py-0.5 rounded-full font-semibold">
+                    👑 admin
+                  </span>
+                )}
+                {isOwnProfile && !isOwner && (
                   <span className="text-xs bg-brand/10 text-brand px-2 py-0.5 rounded-full">You</span>
                 )}
               </div>
