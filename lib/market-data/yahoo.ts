@@ -26,32 +26,39 @@ export function isCommoditySymbol(symbol: string): boolean {
 }
 
 export async function getCommodityQuote(symbol: string): Promise<Quote> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data = await (yf.quote as any)(symbol, {}, { validateResult: false }) as {
-    regularMarketPrice: number
-    regularMarketChange: number
-    regularMarketChangePercent: number
-    regularMarketOpen: number
-    regularMarketDayHigh: number
-    regularMarketDayLow: number
-    regularMarketPreviousClose: number
-    shortName?: string
-    longName?: string
-  }
+  const to = Math.floor(Date.now() / 1000)
+  const from = to - 7 * 86400 // last 7 days to ensure we get data even over weekends
 
-  const name = COMMODITY_SYMBOLS[symbol] ?? data.shortName ?? data.longName ?? symbol
+  const result = await yf.chart(symbol, {
+    period1: new Date(from * 1000),
+    period2: new Date(to * 1000),
+    interval: '1d',
+  }, { validateResult: false })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const meta = (result as any)?.meta ?? {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const quotes = ((result as any)?.quotes ?? []).filter((q: any) => q.close !== null)
+  const last = quotes[quotes.length - 1]
+  const prev = quotes[quotes.length - 2]
+
+  const price: number = meta.regularMarketPrice ?? last?.close ?? 0
+  const previousClose: number = meta.chartPreviousClose ?? prev?.close ?? 0
+  const change = price - previousClose
+  const changePercent = previousClose ? (change / previousClose) * 100 : 0
+  const name = COMMODITY_SYMBOLS[symbol] ?? symbol
 
   return {
     symbol,
     name,
-    price: data.regularMarketPrice ?? 0,
-    change: data.regularMarketChange ?? 0,
-    changePercent: data.regularMarketChangePercent ?? 0,
-    open: data.regularMarketOpen ?? 0,
-    high: data.regularMarketDayHigh ?? 0,
-    low: data.regularMarketDayLow ?? 0,
-    previousClose: data.regularMarketPreviousClose ?? 0,
-    volume: 0,
+    price,
+    change,
+    changePercent,
+    open: last?.open ?? price,
+    high: last?.high ?? price,
+    low: last?.low ?? price,
+    previousClose,
+    volume: last?.volume ?? 0,
     assetType: 'COMMODITY' as const,
     timestamp: Date.now(),
   }
