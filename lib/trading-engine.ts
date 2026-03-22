@@ -8,6 +8,7 @@ interface TradeInput {
   assetType: AssetType
   side: TradeSide
   quantity: number
+  note?: string
 }
 
 interface TradeResult {
@@ -24,16 +25,16 @@ interface TradeResult {
 }
 
 export async function executeTrade(input: TradeInput): Promise<TradeResult> {
-  const { accountId, symbol, assetType, side, quantity } = input
+  const { accountId, symbol, assetType, side, quantity, note } = input
 
   if (quantity <= 0) return { success: false, error: 'Quantity must be greater than 0' }
 
-  // Get live price
   let quote
   try {
     quote = await getQuote(symbol, assetType)
-  } catch {
-    return { success: false, error: 'Failed to fetch current price. Please try again.' }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return { success: false, error: `Failed to fetch price: ${msg}` }
   }
 
   const price = quote.price
@@ -45,7 +46,14 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
 
     const cashBalance = Number(account.cashBalance)
 
+    const existing = await tx.holding.findUnique({
+      where: { accountId_symbol: { accountId, symbol } },
+    })
+
+    const currentQty = existing ? Number(existing.quantity) : 0
+
     if (side === 'BUY') {
+      // BUY: add to long position (or reduce a short position if currentQty < 0)
       if (cashBalance < totalValue) {
         return {
           success: false,
@@ -53,67 +61,157 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
         }
       }
 
-      // Update or create holding with weighted average cost basis
-      const existing = await tx.holding.findUnique({
-        where: { accountId_symbol: { accountId, symbol } },
-      })
+      if (currentQty < 0) {
+        // Covering a short — buying back borrowed shares
+        const coveredQty = Math.min(quantity, Math.abs(currentQty))
+        const remainingBuy = quantity - coveredQty
+        const avgShortPrice = Number(existing!.avgCostBasis)
+        const realizedPnl = (avgShortPrice - price) * coveredQty
 
-      if (existing) {
-        const existingQty = Number(existing.quantity)
-        const existingCost = Number(existing.avgCostBasis)
-        const newQty = existingQty + quantity
-        const newAvgCost = (existingQty * existingCost + quantity * price) / newQty
+        const newQty = currentQty + quantity
 
-        await tx.holding.update({
-          where: { id: existing.id },
-          data: { quantity: newQty, avgCostBasis: newAvgCost },
-        })
+        if (Math.abs(newQty) < 1e-8) {
+          await tx.holding.delete({ where: { id: existing!.id } })
+        } else if (newQty < 0) {
+          // Still short after covering partial
+          await tx.holding.update({
+            where: { id: existing!.id },
+            data: {
+              quantity: newQty,
+              realizedPnl: Number(existing!.realizedPnl) + realizedPnl,
+            },
+          })
+        } else {
+          // Flipped to long
+          await tx.holding.update({
+            where: { id: existing!.id },
+            data: {
+              quantity: newQty,
+              avgCostBasis: remainingBuy > 0 ? price : existing!.avgCostBasis,
+              realizedPnl: Number(existing!.realizedPnl) + realizedPnl,
+            },
+          })
+        }
       } else {
-        await tx.holding.create({
-          data: { accountId, symbol, assetType, quantity, avgCostBasis: price },
-        })
+        // Normal long buy
+        if (existing) {
+          const newQty = currentQty + quantity
+          const newAvgCost = (currentQty * Number(existing.avgCostBasis) + quantity * price) / newQty
+          await tx.holding.update({
+            where: { id: existing.id },
+            data: { quantity: newQty, avgCostBasis: newAvgCost },
+          })
+        } else {
+          await tx.holding.create({
+            data: { accountId, symbol, assetType, quantity, avgCostBasis: price },
+          })
+        }
       }
 
       await tx.paperAccount.update({
         where: { id: accountId },
         data: { cashBalance: cashBalance - totalValue },
       })
-    } else {
-      // SELL
-      const holding = await tx.holding.findUnique({
-        where: { accountId_symbol: { accountId, symbol } },
-      })
 
-      if (!holding) return { success: false, error: `You don't hold any ${symbol}` }
-
-      const heldQty = Number(holding.quantity)
-      if (heldQty < quantity) {
+    } else if (side === 'SELL') {
+      // SELL: reduce long position
+      if (!existing || currentQty <= 0) {
+        return { success: false, error: `You don't hold any ${symbol} to sell` }
+      }
+      if (currentQty < quantity) {
         return {
           success: false,
-          error: `Insufficient holdings. Have ${formatQuantity(heldQty, assetType)}, trying to sell ${formatQuantity(quantity, assetType)}`,
+          error: `Insufficient holdings. Have ${formatQuantity(currentQty, assetType)}, trying to sell ${formatQuantity(quantity, assetType)}`,
         }
       }
 
-      const avgCost = Number(holding.avgCostBasis)
+      const avgCost = Number(existing.avgCostBasis)
       const realizedPnl = (price - avgCost) * quantity
-      const newQty = heldQty - quantity
+      const newQty = currentQty - quantity
 
       if (newQty < 1e-8) {
-        // Close position
-        await tx.holding.delete({ where: { id: holding.id } })
+        await tx.holding.delete({ where: { id: existing.id } })
       } else {
         await tx.holding.update({
-          where: { id: holding.id },
-          data: {
-            quantity: newQty,
-            realizedPnl: Number(holding.realizedPnl) + realizedPnl,
-          },
+          where: { id: existing.id },
+          data: { quantity: newQty, realizedPnl: Number(existing.realizedPnl) + realizedPnl },
         })
       }
 
       await tx.paperAccount.update({
         where: { id: accountId },
         data: { cashBalance: cashBalance + totalValue },
+      })
+
+    } else if (side === 'SHORT') {
+      // SHORT: sell borrowed shares, receive cash, create negative holding
+      if (existing && currentQty > 0) {
+        return {
+          success: false,
+          error: `You already hold ${symbol} long. Sell your position first before shorting.`,
+        }
+      }
+
+      if (existing && currentQty < 0) {
+        // Add to existing short
+        const newQty = currentQty - quantity
+        const newAvgCost =
+          (Math.abs(currentQty) * Number(existing.avgCostBasis) + quantity * price) /
+          Math.abs(newQty)
+        await tx.holding.update({
+          where: { id: existing.id },
+          data: { quantity: newQty, avgCostBasis: newAvgCost },
+        })
+      } else {
+        // New short position (negative quantity)
+        await tx.holding.create({
+          data: { accountId, symbol, assetType, quantity: -quantity, avgCostBasis: price },
+        })
+      }
+
+      // You receive cash when you short (borrowing and selling the shares)
+      await tx.paperAccount.update({
+        where: { id: accountId },
+        data: { cashBalance: cashBalance + totalValue },
+      })
+
+    } else {
+      // COVER: close a short position
+      if (!existing || currentQty >= 0) {
+        return { success: false, error: `You don't have a short position in ${symbol}` }
+      }
+
+      const maxCover = Math.abs(currentQty)
+      if (quantity > maxCover) {
+        return {
+          success: false,
+          error: `Can only cover up to ${formatQuantity(maxCover, assetType)} shares`,
+        }
+      }
+
+      if (cashBalance < totalValue) {
+        return {
+          success: false,
+          error: `Insufficient funds to cover. Need ${formatCurrency(totalValue)}, have ${formatCurrency(cashBalance)}`,
+        }
+      }
+
+      const avgShortPrice = Number(existing.avgCostBasis)
+      const realizedPnl = (avgShortPrice - price) * quantity
+      const newQty = currentQty + quantity
+
+      if (Math.abs(newQty) < 1e-8) {
+        await tx.holding.delete({ where: { id: existing.id } })
+      } else {
+        await tx.holding.update({
+          where: { id: existing.id },
+          data: { quantity: newQty, realizedPnl: Number(existing.realizedPnl) + realizedPnl },
+        })
+      }
+
+      await tx.paperAccount.update({
+        where: { id: accountId },
+        data: { cashBalance: cashBalance - totalValue },
       })
     }
 
@@ -127,10 +225,10 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
         quantity,
         price,
         totalValue,
+        ...(note ? { note } : {}),
       },
     })
 
-    // Save portfolio snapshot after every trade
     await saveSnapshot(tx, accountId)
 
     return {
@@ -157,9 +255,8 @@ async function saveSnapshot(
   })
   if (!account) return
 
-  // Use stored prices (approximate) for snapshot — full recalc happens in portfolio endpoint
   const holdingsValue = account.holdings.reduce(
-    (sum, h) => sum + Number(h.quantity) * Number(h.avgCostBasis),
+    (sum, h) => sum + Math.abs(Number(h.quantity)) * Number(h.avgCostBasis),
     0
   )
 
