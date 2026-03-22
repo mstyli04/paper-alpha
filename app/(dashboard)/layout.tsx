@@ -10,7 +10,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-background">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:ml-60">
+      <div className="lg:ml-56">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="p-4 md:p-6">{children}</main>
       </div>
