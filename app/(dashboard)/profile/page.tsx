@@ -1,19 +1,37 @@
 'use client'
 
 import { useUser } from '@clerk/nextjs'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function ProfileRedirect() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
+  const [tried, setTried] = useState(false)
 
   useEffect(() => {
-    if (isLoaded && user?.username) {
+    if (!isLoaded) return
+
+    // Try Clerk username first
+    if (user?.username) {
       router.replace(`/profile/${user.username}`)
+      return
     }
-  }, [isLoaded, user, router])
+
+    // Fall back to DB username (Clerk username may not be set)
+    if (!tried) {
+      setTried(true)
+      fetch('/api/user')
+        .then(r => r.json())
+        .then(data => {
+          if (data?.username) {
+            router.replace(`/profile/${data.username}`)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [isLoaded, user, router, tried])
 
   return (
     <div className="space-y-4 animate-fade-in">
