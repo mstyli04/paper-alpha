@@ -21,9 +21,15 @@ export const AVATAR_PRESETS: AvatarPreset[] = [
 ]
 
 export const PRESET_PREFIX = 'preset:'
+export const OWNER_AVATAR = 'preset:owner'
+export const OWNER_USERNAME = 'mstyli'
 
 export function isPreset(avatarUrl: string | null | undefined): boolean {
   return !!avatarUrl?.startsWith(PRESET_PREFIX)
+}
+
+export function isOwnerAvatar(avatarUrl: string | null | undefined): boolean {
+  return avatarUrl === OWNER_AVATAR
 }
 
 export function getPresetIndex(avatarUrl: string | null | undefined): number {

@@ -11,7 +11,7 @@ import { StatsCard } from '@/components/portfolio/stats-card'
 import { PortfolioChart } from '@/components/charts/portfolio-chart'
 import { AvatarDisplay } from '@/components/ui/avatar-display'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AVATAR_PRESETS, presetUrl } from '@/lib/avatars'
+import { AVATAR_PRESETS, OWNER_AVATAR, presetUrl } from '@/lib/avatars'
 import { formatCurrency, formatPercent, pnlColor, timeAgo, formatQuantity } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { Portfolio, PortfolioSnapshot, TradeRecord } from '@/types'
@@ -48,12 +48,12 @@ export default function ProfilePage() {
   const isOwnProfile = (!!currentUsername && currentUsername === username)
     || (isOwner && !!currentUser && currentUser.emailAddresses?.some(e => e.emailAddress === 'michael.stylianou7@gmail.com'))
 
-  async function selectAvatar(index: number) {
+  async function selectAvatar(avatarUrl: string) {
     setSaving(true)
     await fetch('/api/user', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ avatarUrl: presetUrl(index) }),
+      body: JSON.stringify({ avatarUrl }),
     })
     await mutate()
     setSaving(false)
@@ -153,12 +153,46 @@ export default function ProfilePage() {
             </button>
           </div>
           <div className="grid grid-cols-6 sm:grid-cols-12 gap-3">
+            {/* Owner-exclusive captain's hat — only shown to the owner */}
+            {isOwner && (
+              <button
+                onClick={() => selectAvatar(OWNER_AVATAR)}
+                disabled={saving}
+                title="Captain (Owner Exclusive)"
+                className={cn(
+                  'relative w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 border-2 overflow-hidden',
+                  profileUser?.avatarUrl === OWNER_AVATAR ? 'border-yellow-400 scale-110' : 'border-yellow-400/40 hover:border-yellow-400'
+                )}
+                style={{ backgroundColor: '#0a1628' }}
+              >
+                <svg viewBox="0 0 32 32" width="36" height="36" shapeRendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="4"  y="22" width="24" height="3" fill="#d4a017" />
+                  <rect x="3"  y="23" width="26" height="2" fill="#f5c842" />
+                  <rect x="7"  y="10" width="18" height="13" fill="#0d2144" />
+                  <rect x="7"  y="17" width="18" height="2"  fill="#d4a017" />
+                  <rect x="7"  y="10" width="18" height="7"  fill="#1a3a6b" />
+                  <rect x="14" y="12" width="4"  height="1"  fill="#f5c842" />
+                  <rect x="15" y="12" width="2"  height="4"  fill="#f5c842" />
+                  <rect x="14" y="15" width="4"  height="1"  fill="#f5c842" />
+                  <rect x="13" y="13" width="1"  height="1"  fill="#f5c842" />
+                  <rect x="18" y="13" width="1"  height="1"  fill="#f5c842" />
+                  <rect x="13" y="15" width="2"  height="1"  fill="#f5c842" />
+                  <rect x="17" y="15" width="2"  height="1"  fill="#f5c842" />
+                  <rect x="3"  y="23" width="26" height="1"  fill="#ffe066" />
+                </svg>
+                {profileUser?.avatarUrl === OWNER_AVATAR && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-black" />
+                  </span>
+                )}
+              </button>
+            )}
             {AVATAR_PRESETS.map((preset, i) => {
               const isSelected = profileUser?.avatarUrl === presetUrl(i)
               return (
                 <button
                   key={i}
-                  onClick={() => selectAvatar(i)}
+                  onClick={() => selectAvatar(presetUrl(i))}
                   disabled={saving}
                   title={preset.label}
                   className={cn(

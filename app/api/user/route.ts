@@ -61,6 +61,13 @@ export async function PATCH(req: Request) {
     if (typeof avatarUrl !== 'string') {
       return NextResponse.json({ error: 'Invalid avatarUrl' }, { status: 400 })
     }
+    // Owner-exclusive avatar — only mstyli can set it
+    if (avatarUrl === 'preset:owner') {
+      const requestingUser = await db.user.findUnique({ where: { clerkId: userId } })
+      if (requestingUser?.username !== 'mstyli') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
     const user = await db.user.update({
       where: { clerkId: userId },
       data: { avatarUrl },
