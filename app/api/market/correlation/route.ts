@@ -52,7 +52,7 @@ export async function GET(req: Request) {
         period1: fromDate,
         period2: toDate,
         interval: '1d',
-      })
+      }, { validateResult: false })
     )
   )
 

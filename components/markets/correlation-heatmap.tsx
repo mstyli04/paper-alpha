@@ -23,14 +23,20 @@ function correlationColor(value: number): string {
 }
 
 const SYMBOL_PRESETS = [
+  { label: 'Crypto vs Market', value: 'BTC-USD,ETH-USD,SOL-USD,XRP-USD,SPY,QQQ,GLD' },
   { label: 'Big Tech', value: 'AAPL,MSFT,GOOGL,META,NVDA' },
   { label: 'Finance', value: 'JPM,BAC,GS,MS,WFC' },
   { label: 'Energy', value: 'XOM,CVX,COP,SLB,EOG' },
 ]
 
+function displayName(symbol: string): string {
+  return symbol.replace(/-USD$/, '')
+}
+
 export function CorrelationHeatmap() {
   const [symbols, setSymbols] = useState(SYMBOL_PRESETS[0].value)
   const [input, setInput] = useState(SYMBOL_PRESETS[0].value)
+
 
   const { data, isLoading } = useSWR<CorrelationData>(
     `/api/market/correlation?symbols=${symbols}`,
@@ -100,7 +106,7 @@ export function CorrelationHeatmap() {
                 <th className="w-12" />
                 {data.symbols.map(s => (
                   <th key={s} className="text-center text-text-muted font-medium pb-2 px-1 w-12">
-                    {s}
+                    {displayName(s)}
                   </th>
                 ))}
               </tr>
@@ -108,7 +114,7 @@ export function CorrelationHeatmap() {
             <tbody>
               {data.symbols.map(rowSymbol => (
                 <tr key={rowSymbol}>
-                  <td className="text-text-muted font-medium pr-2 py-0.5 text-right">{rowSymbol}</td>
+                  <td className="text-text-muted font-medium pr-2 py-0.5 text-right">{displayName(rowSymbol)}</td>
                   {data.symbols.map(colSymbol => {
                     const val = data.matrix[rowSymbol][colSymbol]
                     return (
