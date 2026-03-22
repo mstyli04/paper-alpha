@@ -118,7 +118,7 @@
   }
 
   .table-row {
-    @apply border-b border-border hover:bg-surface-2/60 transition-colors;
+    @apply border-b border-border hover:bg-surface-2 transition-colors;
   }
 
   /* Terminal-style data row */
