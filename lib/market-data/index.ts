@@ -2,8 +2,15 @@ import type { Quote, CandleData, SearchResult, TrendingAsset } from '@/types'
 import type { CandleResolution } from './types'
 import { getStockQuote, getStockCandles, searchStocks, getTrendingStocks } from './finnhub'
 import { getCryptoQuote, getCryptoCandles, searchCrypto, getTrendingCrypto } from './coingecko'
+import {
+  getCommodityQuote,
+  getCommodityCandles,
+  getCommodityIntradayCandles,
+  getTrendingCommodities,
+  isCommoditySymbol,
+  getStockCandlesYahoo,
+} from './yahoo'
 
-// Well-known crypto symbols for routing decisions
 const CRYPTO_SYMBOLS = new Set([
   'BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'AVAX', 'DOGE', 'DOT',
   'MATIC', 'LINK', 'UNI', 'LTC', 'ATOM', 'FIL', 'APT', 'ARB', 'OP', 'SUI', 'INJ',
@@ -13,7 +20,8 @@ export function isCrypto(symbol: string): boolean {
   return CRYPTO_SYMBOLS.has(symbol.toUpperCase())
 }
 
-export async function getQuote(symbol: string, assetType?: 'STOCK' | 'CRYPTO'): Promise<Quote> {
+export async function getQuote(symbol: string, assetType?: 'STOCK' | 'CRYPTO' | 'COMMODITY'): Promise<Quote> {
+  if (assetType === 'COMMODITY' || isCommoditySymbol(symbol)) return getCommodityQuote(symbol)
   const type = assetType ?? (isCrypto(symbol) ? 'CRYPTO' : 'STOCK')
   if (type === 'CRYPTO') return getCryptoQuote(symbol)
   return getStockQuote(symbol)
@@ -21,13 +29,19 @@ export async function getQuote(symbol: string, assetType?: 'STOCK' | 'CRYPTO'): 
 
 export async function getCandles(
   symbol: string,
-  assetType: 'STOCK' | 'CRYPTO',
+  assetType: 'STOCK' | 'CRYPTO' | 'COMMODITY',
   resolution: CandleResolution,
   from: number,
   to: number
 ): Promise<CandleData[]> {
+  if (assetType === 'COMMODITY') {
+    if (resolution === '1') return getCommodityIntradayCandles(symbol)
+    return getCommodityCandles(symbol, from, to)
+  }
   if (assetType === 'CRYPTO') return getCryptoCandles(symbol, resolution, from, to)
-  return getStockCandles(symbol, resolution, from, to)
+  const candles = await getStockCandles(symbol, resolution, from, to)
+  if (candles.length > 0) return candles
+  return getStockCandlesYahoo(symbol, from, to, resolution)
 }
 
 export async function search(query: string): Promise<SearchResult[]> {
@@ -38,10 +52,15 @@ export async function search(query: string): Promise<SearchResult[]> {
   return results.slice(0, 20)
 }
 
-export async function getTrending(): Promise<{ stocks: TrendingAsset[]; crypto: TrendingAsset[] }> {
-  const [stocks, crypto] = await Promise.allSettled([getTrendingStocks(), getTrendingCrypto()])
+export async function getTrending(): Promise<{ stocks: TrendingAsset[]; crypto: TrendingAsset[]; commodities: TrendingAsset[] }> {
+  const [stocks, crypto, commodities] = await Promise.allSettled([
+    getTrendingStocks(),
+    getTrendingCrypto(),
+    getTrendingCommodities(),
+  ])
   return {
     stocks: stocks.status === 'fulfilled' ? stocks.value : [],
     crypto: crypto.status === 'fulfilled' ? crypto.value : [],
+    commodities: commodities.status === 'fulfilled' ? commodities.value : [],
   }
 }
