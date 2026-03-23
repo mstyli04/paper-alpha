@@ -64,6 +64,8 @@ const SYMBOL_TO_ID: Record<string, string> = {
   XMR: 'monero',
 }
 
+export const CRYPTO_SYMBOL_SET = new Set(Object.keys(SYMBOL_TO_ID))
+
 async function request<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${BASE_URL}${path}`)
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
@@ -73,7 +75,7 @@ async function request<T>(path: string, params: Record<string, string> = {}): Pr
     headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY
   }
 
-  const res = await fetch(url.toString(), { headers, next: { revalidate: 30 } })
+  const res = await fetch(url.toString(), { headers, cache: 'no-store' })
   if (res.status === 429) throw new Error('CoinGecko rate limit exceeded')
   if (!res.ok) throw new Error(`CoinGecko error: ${res.status}`)
   return res.json()

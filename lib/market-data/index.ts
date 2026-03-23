@@ -1,7 +1,7 @@
 import type { Quote, CandleData, SearchResult, TrendingAsset } from '@/types'
 import type { CandleResolution } from './types'
 import { getStockQuote, getStockCandles, searchStocks, getTrendingStocks } from './finnhub'
-import { getCryptoQuote, getCryptoCandles, searchCrypto, getTrendingCrypto } from './coingecko'
+import { getCryptoQuote, getCryptoCandles, searchCrypto, getTrendingCrypto, CRYPTO_SYMBOL_SET } from './coingecko'
 import {
   getCommodityQuote,
   getCommodityCandles,
@@ -11,13 +11,8 @@ import {
   getStockCandlesYahoo,
 } from './yahoo'
 
-const CRYPTO_SYMBOLS = new Set([
-  'BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'AVAX', 'DOGE', 'DOT',
-  'MATIC', 'LINK', 'UNI', 'LTC', 'ATOM', 'FIL', 'APT', 'ARB', 'OP', 'SUI', 'INJ',
-])
-
 export function isCrypto(symbol: string): boolean {
-  return CRYPTO_SYMBOLS.has(symbol.toUpperCase())
+  return CRYPTO_SYMBOL_SET.has(symbol.toUpperCase())
 }
 
 export async function getQuote(symbol: string, assetType?: 'STOCK' | 'CRYPTO' | 'COMMODITY'): Promise<Quote> {
