@@ -152,8 +152,37 @@ async function request<T>(path: string, params: Record<string, string> = {}): Pr
 
 // ── Quote & candle fetchers ───────────────────────────────────────────────────
 
+// Cache search-resolved IDs so we only search once per symbol per process
+const searchResolvedIds = new Map<string, string>()
+
+async function resolveId(symbol: string): Promise<string> {
+  const sym = symbol.toUpperCase()
+
+  // 1. Try the map (static overrides + dynamic top-500)
+  const mapId = await symbolToId(symbol)
+
+  // 2. If the map returned a meaningful entry (not just lowercased fallback),
+  //    use it directly. Otherwise try a CoinGecko search to find the correct ID.
+  if (mapId !== sym.toLowerCase() || searchResolvedIds.has(sym)) {
+    return searchResolvedIds.get(sym) ?? mapId
+  }
+
+  try {
+    const result = await request<{ coins: Array<{ id: string; symbol: string }> }>('/search', { query: sym })
+    const match = result.coins?.find(c => c.symbol.toUpperCase() === sym)
+    if (match) {
+      searchResolvedIds.set(sym, match.id)
+      return match.id
+    }
+  } catch {
+    // Fall through to the lowercased guess
+  }
+
+  return mapId
+}
+
 export async function getCryptoQuote(symbol: string): Promise<Quote> {
-  const id = await symbolToId(symbol)
+  const id = await resolveId(symbol)
   const data = await request<Record<string, {
     usd: number
     usd_24h_change: number
@@ -168,7 +197,7 @@ export async function getCryptoQuote(symbol: string): Promise<Quote> {
   })
 
   const coin = data[id]
-  if (!coin) throw new Error(`No data for ${symbol}`)
+  if (!coin) throw new Error(`No data for ${symbol} (resolved id: ${id})`)
 
   const price = coin.usd
   const changePercent = coin.usd_24h_change || 0

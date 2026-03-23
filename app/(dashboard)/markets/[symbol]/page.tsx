@@ -10,6 +10,7 @@ import { useWatchlist } from '@/hooks/use-watchlist'
 import { usePortfolio } from '@/hooks/use-portfolio'
 import { OrderForm } from '@/components/trading/order-form'
 import { PriceChart } from '@/components/charts/price-chart'
+import type { TradeMarker } from '@/components/charts/price-chart'
 import { NewsFeed } from '@/components/markets/news-feed'
 import { VolatilityMetrics } from '@/components/markets/volatility-metrics'
 import { RedditActivity } from '@/components/markets/reddit-activity'
@@ -39,6 +40,17 @@ export default function AssetDetailPage() {
     `/api/market/history?symbol=${symbol}&assetType=${assetType}&range=${range}`,
     fetcher
   )
+  const { data: tradeHistory } = useSWR<{ trades: Array<{ side: 'BUY' | 'SELL'; quantity: number; price: number; createdAt: string }> }>(
+    `/api/history?symbol=${symbol}&limit=100`,
+    fetcher
+  )
+  const trades: TradeMarker[] = (tradeHistory?.trades ?? []).map(t => ({
+    time: Math.floor(new Date(t.createdAt).getTime() / 1000),
+    side: t.side,
+    price: t.price,
+    quantity: t.quantity,
+  }))
+
   const { watchedSymbols, toggle: toggleWatchlist } = useWatchlist()
   const inWatchlist = watchedSymbols.has(symbol)
 
@@ -121,7 +133,7 @@ export default function AssetDetailPage() {
           {candlesLoading ? (
             <Skeleton className="h-72 w-full" />
           ) : candles && candles.length > 0 ? (
-            <PriceChart data={candles} type="area" height={288} />
+            <PriceChart data={candles} type="area" height={288} trades={trades} />
           ) : (
             <div className="h-72 flex items-center justify-center text-text-muted text-sm">
               No chart data available
