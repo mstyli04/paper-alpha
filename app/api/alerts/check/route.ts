@@ -4,7 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { db as prisma } from '@/lib/db'
 import { getStockQuote } from '@/lib/market-data/finnhub'
-import { getCryptoQuote } from '@/lib/market-data/coingecko'
+import { getCryptoQuote } from '@/lib/market-data/livecoinwatch'
 
 export async function POST() {
   const { userId: clerkId } = auth()
