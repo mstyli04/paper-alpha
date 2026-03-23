@@ -2,8 +2,9 @@ import type { Quote, CandleData, SearchResult, TrendingAsset } from '@/types'
 
 const BASE_URL = 'https://api.coingecko.com/api/v3'
 
-// Maps common ticker symbols to CoinGecko IDs
-const SYMBOL_TO_ID: Record<string, string> = {
+// Curated high-precision overrides — these take priority over the dynamic map
+// because some symbols are ambiguous (e.g. MATIC was renamed to POL but share a symbol).
+const STATIC_OVERRIDES: Record<string, string> = {
   BTC: 'bitcoin',
   ETH: 'ethereum',
   SOL: 'solana',
@@ -14,6 +15,7 @@ const SYMBOL_TO_ID: Record<string, string> = {
   DOGE: 'dogecoin',
   DOT: 'polkadot',
   MATIC: 'matic-network',
+  POL: 'matic-network',
   LINK: 'chainlink',
   UNI: 'uniswap',
   LTC: 'litecoin',
@@ -39,7 +41,6 @@ const SYMBOL_TO_ID: Record<string, string> = {
   STRK: 'starknet',
   MANTA: 'manta-network',
   ZK: 'zksync',
-  POL: 'matic-network',
   TRX: 'tron',
   TON: 'the-open-network',
   SHIB: 'shiba-inu',
@@ -64,7 +65,75 @@ const SYMBOL_TO_ID: Record<string, string> = {
   XMR: 'monero',
 }
 
-export const CRYPTO_SYMBOL_SET = new Set(Object.keys(SYMBOL_TO_ID))
+// ── Dynamic top-500 map ───────────────────────────────────────────────────────
+// In-process cache (survives within a warm serverless instance).
+// The underlying fetch also carries next:{revalidate:3600} so Next.js's data
+// cache keeps it warm across cold starts.
+let dynamicMapCache: Map<string, string> | null = null
+let dynamicMapCachedAt = 0
+const DYNAMIC_MAP_TTL = 60 * 60 * 1000 // 1 hour
+
+async function getSymbolMap(): Promise<Map<string, string>> {
+  if (dynamicMapCache && Date.now() - dynamicMapCachedAt < DYNAMIC_MAP_TTL) {
+    return dynamicMapCache
+  }
+
+  const headers: Record<string, string> = {}
+  if (process.env.COINGECKO_API_KEY) {
+    headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY
+  }
+
+  // Start with our curated overrides as the base
+  const map = new Map<string, string>(Object.entries(STATIC_OVERRIDES))
+
+  // Fetch top 500 by market cap in two pages of 250
+  await Promise.allSettled(
+    [1, 2].map(async (page) => {
+      try {
+        const res = await fetch(
+          `${BASE_URL}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=${page}&sparkline=false`,
+          { headers, next: { revalidate: 3600 } }
+        )
+        if (!res.ok) return
+        const coins: Array<{ id: string; symbol: string }> = await res.json()
+        if (!Array.isArray(coins)) return
+        for (const coin of coins) {
+          const sym = coin.symbol.toUpperCase()
+          // Only add if not already covered by our curated overrides
+          if (!map.has(sym)) {
+            map.set(sym, coin.id)
+          }
+        }
+      } catch {
+        // Silently skip — static overrides still work
+      }
+    })
+  )
+
+  dynamicMapCache = map
+  dynamicMapCachedAt = Date.now()
+  return map
+}
+
+// ── Exports ───────────────────────────────────────────────────────────────────
+
+export async function symbolToId(symbol: string): Promise<string> {
+  const map = await getSymbolMap()
+  return map.get(symbol.toUpperCase()) ?? symbol.toLowerCase()
+}
+
+/** Returns the full set of known crypto ticker symbols (top 500 + overrides). */
+export async function getCryptoSymbols(): Promise<Set<string>> {
+  const map = await getSymbolMap()
+  return new Set(map.keys())
+}
+
+export function idToSymbol(id: string): string {
+  const entry = Object.entries(STATIC_OVERRIDES).find(([, v]) => v === id)
+  return entry ? entry[0] : id.toUpperCase()
+}
+
+// ── Internal request helper ───────────────────────────────────────────────────
 
 async function request<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${BASE_URL}${path}`)
@@ -81,17 +150,10 @@ async function request<T>(path: string, params: Record<string, string> = {}): Pr
   return res.json()
 }
 
-export function symbolToId(symbol: string): string {
-  return SYMBOL_TO_ID[symbol.toUpperCase()] || symbol.toLowerCase()
-}
-
-export function idToSymbol(id: string): string {
-  const entry = Object.entries(SYMBOL_TO_ID).find(([, v]) => v === id)
-  return entry ? entry[0] : id.toUpperCase()
-}
+// ── Quote & candle fetchers ───────────────────────────────────────────────────
 
 export async function getCryptoQuote(symbol: string): Promise<Quote> {
-  const id = symbolToId(symbol)
+  const id = await symbolToId(symbol)
   const data = await request<Record<string, {
     usd: number
     usd_24h_change: number
@@ -135,14 +197,13 @@ export async function getCryptoCandles(
   from: number,
   to: number
 ): Promise<CandleData[]> {
-  const id = symbolToId(symbol)
+  const id = await symbolToId(symbol)
   const days = Math.ceil((to - from) / 86400)
   const data = await request<{ prices: [number, number][] }>(`/coins/${id}/market_chart`, {
     vs_currency: 'usd',
     days: String(Math.max(1, Math.min(days, 365))),
   })
 
-  // Convert price data to OHLC-like candles (CoinGecko free tier doesn't provide true OHLC)
   return data.prices.map(([timestamp, price]) => ({
     time: Math.floor(timestamp / 1000),
     open: price,
