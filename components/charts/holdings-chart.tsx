@@ -135,6 +135,7 @@ export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
           priceLineVisible: false,
           lastValueVisible: true,
           title: symbol,
+          priceScaleId: 'right',
         })
         series.setData(valueData)
 
@@ -182,6 +183,7 @@ export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
         }
 
         if (totalData.length > 1) {
+          // Put total on the left scale so it doesn't compress the individual holding lines
           const totalSeries = chart.addLineSeries({
             color: '#e2e8f0',
             lineWidth: 2,
@@ -189,8 +191,10 @@ export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
             priceLineVisible: false,
             lastValueVisible: true,
             title: 'Total',
+            priceScaleId: 'left',
           })
           totalSeries.setData(totalData)
+          chart.priceScale('left').applyOptions({ visible: true, borderColor: '#1e2334' })
         }
       }
 
