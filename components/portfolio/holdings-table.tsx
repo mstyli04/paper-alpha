@@ -11,6 +11,7 @@ import type { Holding } from '@/types'
 interface HoldingsTableProps {
   holdings: Holding[]
   loading?: boolean
+  onTradeSuccess?: () => void
 }
 
 interface ExpandedRowProps {
@@ -43,7 +44,7 @@ function ExpandedRow({ symbol, currentPrice }: ExpandedRowProps) {
 
   return (
     <tr className="bg-surface-2/50">
-      <td colSpan={6} className="px-4 py-3">
+      <td colSpan={7} className="px-4 py-3">
         <div className="flex flex-col sm:flex-row gap-3 items-start">
           {/* Target price */}
           <div className="flex flex-col gap-1 min-w-[160px]">
@@ -105,11 +106,142 @@ function ExpandedRow({ symbol, currentPrice }: ExpandedRowProps) {
   )
 }
 
-export function HoldingsTable({ holdings, loading }: HoldingsTableProps) {
+interface SellRowProps {
+  holding: Holding
+  onClose: () => void
+  onSuccess: () => void
+}
+
+function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
+  const isShort = holding.quantity < 0
+  const side = isShort ? 'COVER' : 'SELL'
+  const maxQty = Math.abs(holding.quantity)
+  const price = holding.currentPrice ?? holding.avgCostBasis
+
+  const [quantity, setQuantity] = useState(String(maxQty))
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [confirm, setConfirm] = useState(false)
+
+  const qty = parseFloat(quantity) || 0
+  const total = qty * price
+
+  async function handleConfirm() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: holding.symbol,
+          assetType: holding.assetType,
+          side,
+          quantity: qty,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Trade failed')
+        setConfirm(false)
+      } else {
+        onSuccess()
+        onClose()
+      }
+    } catch {
+      setError('Network error. Please try again.')
+      setConfirm(false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <tr className={`${isShort ? 'bg-blue-500/5' : 'bg-red/5'}`}>
+      <td colSpan={7} className="px-4 py-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-end">
+          {/* Quantity */}
+          <div className="flex flex-col gap-1 min-w-[160px]">
+            <label className="text-[10px] text-text-muted font-medium uppercase tracking-wide">
+              Quantity
+            </label>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) => { setQuantity(e.target.value); setError('') }}
+              step={holding.assetType === 'CRYPTO' ? '0.000001' : '0.0001'}
+              min="0"
+              max={maxQty}
+              className="input-base py-1.5 text-xs w-full"
+            />
+            <button
+              type="button"
+              onClick={() => setQuantity(String(maxQty))}
+              className="text-[10px] text-brand hover:underline text-left"
+            >
+              Max ({formatQuantity(maxQty, holding.assetType)})
+            </button>
+          </div>
+
+          {/* Summary */}
+          <div className="flex flex-col gap-1 flex-1 text-xs">
+            <div className="flex justify-between text-text-muted">
+              <span>Price</span>
+              <span className="font-mono text-text-primary">{formatCurrency(price)}</span>
+            </div>
+            <div className="flex justify-between text-text-muted">
+              <span>{isShort ? 'You Pay' : 'You Receive'}</span>
+              <span className="font-mono text-text-primary font-semibold">{formatCurrency(total)}</span>
+            </div>
+            {error && <p className="text-red text-[10px]">{error}</p>}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="py-1.5 px-3 text-xs font-medium rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors"
+            >
+              Cancel
+            </button>
+            {confirm ? (
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={loading || qty <= 0 || qty > maxQty}
+                className={`py-1.5 px-4 text-xs font-semibold rounded-lg text-white transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500' : 'bg-red'}`}
+              >
+                {loading ? 'Processing...' : 'Confirm'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setError(''); setConfirm(true) }}
+                disabled={qty <= 0 || qty > maxQty}
+                className={`py-1.5 px-4 text-xs font-semibold rounded-lg text-white transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500' : 'bg-red'}`}
+              >
+                {isShort ? 'Cover' : 'Sell'} {holding.symbol}
+              </button>
+            )}
+          </div>
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+export function HoldingsTable({ holdings, loading, onTradeSuccess }: HoldingsTableProps) {
   const [expandedSymbol, setExpandedSymbol] = useState<string | null>(null)
+  const [sellSymbol, setSellSymbol] = useState<string | null>(null)
 
   function toggleExpand(symbol: string) {
     setExpandedSymbol((prev) => (prev === symbol ? null : symbol))
+    setSellSymbol(null)
+  }
+
+  function openSell(symbol: string) {
+    setSellSymbol((prev) => (prev === symbol ? null : symbol))
+    setExpandedSymbol(null)
   }
 
   if (loading) {
@@ -142,12 +274,14 @@ export function HoldingsTable({ holdings, loading }: HoldingsTableProps) {
             <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Current Price</th>
             <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Value</th>
             <th className="text-right text-xs text-text-muted font-medium py-3 px-4">P&L</th>
+            <th className="py-3 px-4" />
           </tr>
         </thead>
         <tbody>
           {holdings.map(h => {
             const isShort = h.quantity < 0
             const isExpanded = expandedSymbol === h.symbol
+            const isSelling = sellSymbol === h.symbol
             return (
               <>
                 <tr
@@ -203,12 +337,36 @@ export function HoldingsTable({ holdings, loading }: HoldingsTableProps) {
                       {h.unrealizedPnlPercent !== undefined ? formatPercent(h.unrealizedPnlPercent) : ''}
                     </p>
                   </td>
+                  <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => openSell(h.symbol)}
+                      className={`text-xs font-medium px-2.5 py-1 rounded-md border transition-colors ${
+                        isSelling
+                          ? isShort
+                            ? 'bg-blue-500 text-white border-blue-500'
+                            : 'bg-red text-white border-red'
+                          : isShort
+                            ? 'text-blue-400 border-blue-400/40 hover:bg-blue-500/10'
+                            : 'text-red border-red/40 hover:bg-red/10'
+                      }`}
+                    >
+                      {isShort ? 'Cover' : 'Sell'}
+                    </button>
+                  </td>
                 </tr>
                 {isExpanded && (
                   <ExpandedRow
                     key={`${h.symbol}-expanded`}
                     symbol={h.symbol}
                     currentPrice={h.currentPrice}
+                  />
+                )}
+                {isSelling && (
+                  <SellRow
+                    key={`${h.symbol}-sell`}
+                    holding={h}
+                    onClose={() => setSellSymbol(null)}
+                    onSuccess={() => { setSellSymbol(null); onTradeSuccess?.() }}
                   />
                 )}
               </>

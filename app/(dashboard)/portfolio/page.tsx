@@ -16,7 +16,7 @@ import type { PortfolioSnapshot } from '@/types'
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 export default function PortfolioPage() {
-  const { portfolio, isLoading } = usePortfolio()
+  const { portfolio, isLoading, refresh } = usePortfolio()
   const { data: snapshots } = useSWR<PortfolioSnapshot[]>('/api/portfolio/snapshots', fetcher)
 
   const allocationData = portfolio?.holdings
@@ -59,6 +59,65 @@ export default function PortfolioPage() {
         />
       </div>
 
+      {/* Holdings + Allocation */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 card overflow-hidden">
+          <div className="px-5 py-4 border-b border-border">
+            <h2 className="text-sm font-semibold text-text-primary">All Holdings</h2>
+          </div>
+          <HoldingsTable holdings={portfolio?.holdings ?? []} loading={isLoading} onTradeSuccess={refresh} />
+        </div>
+
+        <div className="space-y-4">
+          <SectorChart holdings={portfolio?.holdings ?? []} />
+          <div className="card p-5">
+            <h2 className="text-sm font-semibold text-text-primary mb-4">Allocation</h2>
+            {isLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+              </div>
+            ) : allocationData.length === 0 ? (
+              <p className="text-sm text-text-muted">No holdings yet</p>
+            ) : (
+              <div className="space-y-3">
+                {/* Cash row */}
+                {portfolio && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-text-secondary font-medium">Cash</span>
+                      <span className="text-text-muted">
+                        {((portfolio.cashBalance / portfolio.totalValue) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-brand"
+                        style={{ width: `${(portfolio.cashBalance / portfolio.totalValue) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {allocationData.map((h, i) => {
+                  const pct = portfolio ? ((h.currentValue ?? 0) / portfolio.totalValue) * 100 : 0
+                  const colors = ['bg-green', 'bg-red', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-cyan-500', 'bg-orange-500', 'bg-teal-500']
+                  return (
+                    <div key={h.symbol} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-text-secondary font-medium">{h.symbol}</span>
+                        <span className="text-text-muted">{pct.toFixed(1)}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+                        <div className={`h-full rounded-full ${colors[i % colors.length]}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Allocation pie chart */}
       <AllocationChart holdings={portfolio?.holdings ?? []} />
 
@@ -80,65 +139,6 @@ export default function PortfolioPage() {
       <RiskMetricsCard />
 
       <AchievementsCard />
-
-      {/* Holdings + Allocation */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 card overflow-hidden">
-          <div className="px-5 py-4 border-b border-border">
-            <h2 className="text-sm font-semibold text-text-primary">All Holdings</h2>
-          </div>
-          <HoldingsTable holdings={portfolio?.holdings ?? []} loading={isLoading} />
-        </div>
-
-        <div className="space-y-4">
-          <SectorChart holdings={portfolio?.holdings ?? []} />
-          <div className="card p-5">
-          <h2 className="text-sm font-semibold text-text-primary mb-4">Allocation</h2>
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
-            </div>
-          ) : allocationData.length === 0 ? (
-            <p className="text-sm text-text-muted">No holdings yet</p>
-          ) : (
-            <div className="space-y-3">
-              {/* Cash row */}
-              {portfolio && (
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-text-secondary font-medium">Cash</span>
-                    <span className="text-text-muted">
-                      {((portfolio.cashBalance / portfolio.totalValue) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-brand"
-                      style={{ width: `${(portfolio.cashBalance / portfolio.totalValue) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-              {allocationData.map((h, i) => {
-                const pct = portfolio ? ((h.currentValue ?? 0) / portfolio.totalValue) * 100 : 0
-                const colors = ['bg-green', 'bg-red', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-cyan-500', 'bg-orange-500', 'bg-teal-500']
-                return (
-                  <div key={h.symbol} className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-text-secondary font-medium">{h.symbol}</span>
-                      <span className="text-text-muted">{pct.toFixed(1)}%</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
-                      <div className={`h-full rounded-full ${colors[i % colors.length]}`} style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
