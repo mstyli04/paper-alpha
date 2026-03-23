@@ -78,32 +78,40 @@ export async function getPortfolio(accountId: string): Promise<Portfolio> {
 }
 
 export async function getLeaderboard() {
-  // Use the most recent snapshot per account instead of fetching live prices for every holding.
-  // This reduces N×M external API calls to a single database query.
   const accounts = await db.paperAccount.findMany({
     include: {
       user: true,
       holdings: true,
-      snapshots: {
-        orderBy: { createdAt: 'desc' },
-        take: 1,
-      },
     },
   })
+
+  // Deduplicate symbols across all users so each symbol is fetched only once
+  const uniqueSymbols = new Map<string, { symbol: string; assetType: AssetType }>()
+  for (const account of accounts) {
+    for (const h of account.holdings) {
+      uniqueSymbols.set(h.symbol, { symbol: h.symbol, assetType: h.assetType as AssetType })
+    }
+  }
+
+  const priceMap = new Map<string, number>()
+  await Promise.allSettled(
+    Array.from(uniqueSymbols.values()).map(async ({ symbol, assetType }) => {
+      const quote = await getQuote(symbol, assetType)
+      priceMap.set(symbol, quote.price)
+    })
+  )
 
   return accounts
     .map(account => {
       const startingBalance = Number(account.startingBalance)
       const cashBalance = Number(account.cashBalance)
-      // Prefer last snapshot; fall back to cash + holdings at cost basis if no snapshot yet
-      const totalValue = account.snapshots[0]
-        ? Number(account.snapshots[0].totalValue)
-        : cashBalance + account.holdings.reduce((sum, h) => {
-            const qty = Number(h.quantity)
-            const costBasis = Number(h.avgCostBasis)
-            // Longs add value, shorts are liabilities
-            return sum + qty * costBasis
-          }, 0)
+      const holdingsValue = account.holdings.reduce((sum, h) => {
+        const qty = Number(h.quantity)
+        // Fall back to cost basis if live price fetch failed
+        const price = priceMap.get(h.symbol) ?? Number(h.avgCostBasis)
+        return sum + qty * price
+      }, 0)
+      const totalValue = cashBalance + holdingsValue
       const totalPnl = totalValue - startingBalance
       const returnPercent = startingBalance > 0 ? (totalPnl / startingBalance) * 100 : 0
 
