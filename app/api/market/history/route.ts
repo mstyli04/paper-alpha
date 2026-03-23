@@ -20,8 +20,19 @@ export async function GET(req: Request) {
 
   const to = Math.floor(Date.now() / 1000)
 
-  // For 1D, use 1-minute resolution starting from market open today
-  const resolvedResolution: CandleResolution = range === '1D' ? '1' : resolution
+  // Choose the finest resolution that keeps data density high without
+  // blowing past API rate limits. For crypto, CoinGecko ignores the
+  // resolution and auto-selects granularity from the days window:
+  //   ≤1 day → minutely, 2–90 days → hourly, >90 days → daily.
+  const rangeResolutionMap: Record<string, CandleResolution> = {
+    '1D': '1',   // 1-min  — stocks ~390 pts, crypto minutely
+    '1W': '60',  // 1-hour — stocks ~56 pts,  crypto ~168 pts (hourly)
+    '1M': '60',  // 1-hour — stocks ~168 pts, crypto ~720 pts (hourly)
+    '3M': 'D',   // daily  — stocks ~63 pts,  crypto ~90 pts (daily)
+    '1Y': 'D',   // daily  — stocks ~252 pts, crypto ~365 pts
+    '5Y': 'W',   // weekly — stocks ~260 pts, crypto uses 'max' (see coingecko.ts)
+  }
+  const resolvedResolution: CandleResolution = rangeResolutionMap[range] ?? resolution
 
   const rangeMap: Record<string, number> = {
     '1D': 86400,

@@ -1,13 +1,7 @@
 import type { Quote, CandleData, SearchResult, TrendingAsset } from '@/types'
 import type { CandleResolution } from './types'
 import { getStockQuote, getStockCandles, searchStocks, getTrendingStocks } from './finnhub'
-import { searchCrypto } from './coingecko'
-import {
-  getCryptoQuote,
-  getCryptoCandles,
-  getTrendingCrypto,
-  getCryptoSymbols,
-} from './livecoinwatch'
+import { getCryptoQuote, getCryptoCandles, searchCrypto, getTrendingCrypto, getCryptoSymbols } from './coingecko'
 import {
   getCommodityQuote,
   getCommodityCandles,

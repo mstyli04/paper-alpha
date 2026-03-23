@@ -3,7 +3,7 @@ import type { CandleResolution } from './types'
 
 const BASE_URL = 'https://finnhub.io/api/v1'
 
-async function request<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+async function request<T>(path: string, params: Record<string, string> = {}, cache: RequestCache = 'no-store'): Promise<T> {
   const apiKey = process.env.FINNHUB_API_KEY
   if (!apiKey) throw new Error('FINNHUB_API_KEY is not set')
 
@@ -13,15 +13,15 @@ async function request<T>(path: string, params: Record<string, string> = {}): Pr
     url.searchParams.set(k, v)
   }
 
-  const res = await fetch(url.toString(), { next: { revalidate: 15 } })
+  const res = await fetch(url.toString(), { cache })
   if (!res.ok) throw new Error(`Finnhub error: ${res.status}`)
   return res.json()
 }
 
 export async function getStockQuote(symbol: string): Promise<Quote> {
   const [quote, profile] = await Promise.all([
-    request<{ c: number; d: number; dp: number; h: number; l: number; o: number; pc: number; v: number }>('/quote', { symbol }),
-    request<{ name: string; logo: string; marketCapitalization: number }>('/stock/profile2', { symbol }).catch(() => ({ name: symbol, logo: '', marketCapitalization: 0 })),
+    request<{ c: number; d: number; dp: number; h: number; l: number; o: number; pc: number; v: number }>('/quote', { symbol }, 'no-store'),
+    request<{ name: string; logo: string; marketCapitalization: number }>('/stock/profile2', { symbol }, 'no-store').catch(() => ({ name: symbol, logo: '', marketCapitalization: 0 })),
   ])
 
   return {

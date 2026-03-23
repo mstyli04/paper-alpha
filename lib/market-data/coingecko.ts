@@ -199,9 +199,13 @@ export async function getCryptoCandles(
 ): Promise<CandleData[]> {
   const id = await symbolToId(symbol)
   const days = Math.ceil((to - from) / 86400)
+  // CoinGecko free tier auto-selects granularity by days window:
+  //   ≤1 day → minutely, 2–90 days → hourly, >90 days → daily.
+  // For ranges beyond a year use 'max' so 5Y charts show full history.
+  const daysParam = days > 365 ? 'max' : String(Math.max(1, days))
   const data = await request<{ prices: [number, number][] }>(`/coins/${id}/market_chart`, {
     vs_currency: 'usd',
-    days: String(Math.max(1, Math.min(days, 365))),
+    days: daysParam,
   })
 
   return data.prices.map(([timestamp, price]) => ({
