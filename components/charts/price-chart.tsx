@@ -127,7 +127,7 @@ export function PriceChart({ data, type = 'area', height = 300, trades }: PriceC
         for (const m of markers) {
           seen.set(m.time as number, m)
         }
-        for (const m of seen.values()) deduped.push(m)
+        for (const m of Array.from(seen.values())) deduped.push(m)
         deduped.sort((a, b) => (a.time as number) - (b.time as number))
 
         series.setMarkers(deduped)
