@@ -83,6 +83,7 @@ export async function getLeaderboard() {
   const accounts = await db.paperAccount.findMany({
     include: {
       user: true,
+      holdings: true,
       snapshots: {
         orderBy: { createdAt: 'desc' },
         take: 1,
@@ -93,10 +94,16 @@ export async function getLeaderboard() {
   return accounts
     .map(account => {
       const startingBalance = Number(account.startingBalance)
-      // Prefer last snapshot; fall back to cash balance if no trades have been made yet
+      const cashBalance = Number(account.cashBalance)
+      // Prefer last snapshot; fall back to cash + holdings at cost basis if no snapshot yet
       const totalValue = account.snapshots[0]
         ? Number(account.snapshots[0].totalValue)
-        : Number(account.cashBalance)
+        : cashBalance + account.holdings.reduce((sum, h) => {
+            const qty = Number(h.quantity)
+            const costBasis = Number(h.avgCostBasis)
+            // Longs add value, shorts are liabilities
+            return sum + qty * costBasis
+          }, 0)
       const totalPnl = totalValue - startingBalance
       const returnPercent = startingBalance > 0 ? (totalPnl / startingBalance) * 100 : 0
 
