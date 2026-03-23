@@ -14,7 +14,7 @@ const fetcher = (url: string) => fetch(url).then(r => r.json())
 export default function LeaderboardPage() {
   const { user } = useUser()
   const { data: entries, isLoading } = useSWR<LeaderboardEntry[]>('/api/leaderboard', fetcher, {
-    refreshInterval: 60000,
+    refreshInterval: 30000,
   })
 
   return (

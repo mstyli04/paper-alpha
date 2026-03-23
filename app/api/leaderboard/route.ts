@@ -10,7 +10,7 @@ export async function GET() {
 
   try {
     const leaderboard = await getLeaderboard()
-    return NextResponse.json(leaderboard, { headers: { 'Cache-Control': 's-maxage=60' } })
+    return NextResponse.json(leaderboard)
   } catch {
     return NextResponse.json([], { status: 200 })
   }
