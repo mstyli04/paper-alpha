@@ -161,7 +161,7 @@ export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
       }
 
       // --- Total holdings line ---
-      const sortedTimes = [...allTimes].sort((a, b) => a - b)
+      const sortedTimes = Array.from(allTimes).sort((a, b) => a - b)
       if (sortedTimes.length > 1) {
         const totalData: { time: number; value: number }[] = []
 
