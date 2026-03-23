@@ -117,14 +117,23 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
   const side = isShort ? 'COVER' : 'SELL'
   const maxQty = Math.abs(holding.quantity)
   const price = holding.currentPrice ?? holding.avgCostBasis
+  const maxUsd = maxQty * price
 
-  const [quantity, setQuantity] = useState(String(maxQty))
+  const [inputMode, setInputMode] = useState<'qty' | 'usd'>('qty')
+  const [inputValue, setInputValue] = useState(String(maxQty))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [confirm, setConfirm] = useState(false)
 
-  const qty = parseFloat(quantity) || 0
+  const rawValue = parseFloat(inputValue) || 0
+  const qty = inputMode === 'qty' ? rawValue : (price > 0 ? rawValue / price : 0)
   const total = qty * price
+
+  function switchInputMode(mode: 'qty' | 'usd') {
+    setInputMode(mode)
+    setInputValue(mode === 'qty' ? String(maxQty) : String(+maxUsd.toFixed(2)))
+    setError('')
+  }
 
   async function handleConfirm() {
     setLoading(true)
@@ -159,26 +168,48 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
     <tr className={`${isShort ? 'bg-blue-500/5' : 'bg-red/5'}`}>
       <td colSpan={7} className="px-4 py-3">
         <div className="flex flex-col sm:flex-row gap-3 items-end">
-          {/* Quantity */}
-          <div className="flex flex-col gap-1 min-w-[160px]">
-            <label className="text-[10px] text-text-muted font-medium uppercase tracking-wide">
-              Quantity
-            </label>
+          {/* Input */}
+          <div className="flex flex-col gap-1 min-w-[180px]">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] text-text-muted font-medium uppercase tracking-wide">
+                {inputMode === 'qty' ? 'Quantity' : 'Amount (USD)'}
+              </label>
+              <div className="flex rounded overflow-hidden border border-border text-[10px] font-semibold">
+                <button
+                  type="button"
+                  onClick={() => switchInputMode('qty')}
+                  className={`px-2 py-0.5 transition-colors ${inputMode === 'qty' ? 'bg-brand text-white' : 'text-text-muted hover:text-text-primary'}`}
+                >
+                  Qty
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchInputMode('usd')}
+                  className={`px-2 py-0.5 transition-colors ${inputMode === 'usd' ? 'bg-brand text-white' : 'text-text-muted hover:text-text-primary'}`}
+                >
+                  $
+                </button>
+              </div>
+            </div>
             <input
               type="number"
-              value={quantity}
-              onChange={(e) => { setQuantity(e.target.value); setError('') }}
-              step={holding.assetType === 'CRYPTO' ? '0.000001' : '0.0001'}
+              value={inputValue}
+              onChange={(e) => { setInputValue(e.target.value); setError('') }}
+              step={inputMode === 'qty' ? (holding.assetType === 'CRYPTO' ? '0.000001' : '0.0001') : '0.01'}
               min="0"
-              max={maxQty}
               className="input-base py-1.5 text-xs w-full"
             />
+            {inputMode === 'usd' && qty > 0 && (
+              <p className="text-[10px] text-text-muted font-mono">
+                ≈ {formatQuantity(qty, holding.assetType)} {holding.symbol}
+              </p>
+            )}
             <button
               type="button"
-              onClick={() => setQuantity(String(maxQty))}
+              onClick={() => setInputValue(inputMode === 'qty' ? String(maxQty) : String(+maxUsd.toFixed(2)))}
               className="text-[10px] text-brand hover:underline text-left"
             >
-              Max ({formatQuantity(maxQty, holding.assetType)})
+              Max ({inputMode === 'qty' ? formatQuantity(maxQty, holding.assetType) : formatCurrency(maxUsd)})
             </button>
           </div>
 

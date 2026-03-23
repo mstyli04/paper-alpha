@@ -13,10 +13,12 @@ interface OrderFormProps {
 }
 
 type Tab = 'BUY' | 'SELL' | 'SHORT' | 'COVER'
+type InputMode = 'qty' | 'usd'
 
 export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderFormProps) {
   const [tab, setTab] = useState<Tab>('BUY')
-  const [quantity, setQuantity] = useState('')
+  const [inputMode, setInputMode] = useState<InputMode>('qty')
+  const [inputValue, setInputValue] = useState('')
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -24,8 +26,6 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
   const [showConfirm, setShowConfirm] = useState(false)
   const { portfolio, refresh } = usePortfolio()
 
-  const qty = parseFloat(quantity) || 0
-  const total = qty * currentPrice
   const cashBalance = portfolio?.cashBalance ?? 0
   const holding = portfolio?.holdings.find(h => h.symbol === symbol)
   const heldQty = holding?.quantity ?? 0
@@ -33,34 +33,49 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
   const shortQty = Math.abs(Math.min(heldQty, 0))
   const longQty = Math.max(heldQty, 0)
 
+  // Derive qty and total from inputValue + inputMode
+  const rawValue = parseFloat(inputValue) || 0
+  const qty = inputMode === 'qty' ? rawValue : (currentPrice > 0 ? rawValue / currentPrice : 0)
+  const total = qty * currentPrice
+
   function setQuickAmount(fraction: number) {
-    let max = 0
-    if (tab === 'BUY') max = cashBalance / currentPrice
-    else if (tab === 'SELL') max = longQty
-    else if (tab === 'SHORT') max = cashBalance / currentPrice
-    else if (tab === 'COVER') max = shortQty
-    setQuantity(String(+(max * fraction).toFixed(assetType === 'CRYPTO' ? 6 : 4)))
+    let maxQty = 0
+    if (tab === 'BUY') maxQty = cashBalance / currentPrice
+    else if (tab === 'SELL') maxQty = longQty
+    else if (tab === 'SHORT') maxQty = cashBalance / currentPrice
+    else if (tab === 'COVER') maxQty = shortQty
+
+    if (inputMode === 'qty') {
+      setInputValue(String(+(maxQty * fraction).toFixed(assetType === 'CRYPTO' ? 6 : 4)))
+    } else {
+      const maxUsd = maxQty * currentPrice
+      setInputValue(String(+(maxUsd * fraction).toFixed(2)))
+    }
   }
 
   function switchTab(t: Tab) {
     setTab(t)
     setError('')
-    setQuantity('')
+    setInputValue('')
     setNote('')
     setSuccess('')
     setShowConfirm(false)
+  }
+
+  function switchInputMode(mode: InputMode) {
+    setInputMode(mode)
+    setInputValue('')
+    setError('')
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setSuccess('')
-
     if (!qty || qty <= 0) {
-      setError('Enter a valid quantity')
+      setError('Enter a valid amount')
       return
     }
-
     setShowConfirm(true)
   }
 
@@ -88,7 +103,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
         setSuccess(
           `${labels[tab]} ${formatQuantity(qty, assetType)} ${symbol} @ ${formatCurrency(data.price)}`
         )
-        setQuantity('')
+        setInputValue('')
         setNote('')
         refresh()
         onSuccess?.()
@@ -157,16 +172,43 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
         </div>
 
         <div>
-          <label className="block text-xs text-text-muted mb-1.5">Quantity</label>
+          {/* Label row with Qty/$ toggle */}
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs text-text-muted">
+              {inputMode === 'qty' ? 'Quantity' : 'Amount (USD)'}
+            </label>
+            <div className="flex rounded overflow-hidden border border-border text-[10px] font-semibold">
+              <button
+                type="button"
+                onClick={() => switchInputMode('qty')}
+                className={`px-2 py-0.5 transition-colors ${inputMode === 'qty' ? 'bg-brand text-white' : 'text-text-muted hover:text-text-primary'}`}
+              >
+                Qty
+              </button>
+              <button
+                type="button"
+                onClick={() => switchInputMode('usd')}
+                className={`px-2 py-0.5 transition-colors ${inputMode === 'usd' ? 'bg-brand text-white' : 'text-text-muted hover:text-text-primary'}`}
+              >
+                $
+              </button>
+            </div>
+          </div>
           <input
             type="number"
-            value={quantity}
-            onChange={e => setQuantity(e.target.value)}
-            placeholder={assetType === 'CRYPTO' ? '0.000000' : '0'}
-            step={assetType === 'CRYPTO' ? '0.000001' : '0.0001'}
+            value={inputValue}
+            onChange={e => { setInputValue(e.target.value); setError('') }}
+            placeholder={inputMode === 'qty' ? (assetType === 'CRYPTO' ? '0.000000' : '0') : '0.00'}
+            step={inputMode === 'qty' ? (assetType === 'CRYPTO' ? '0.000001' : '0.0001') : '0.01'}
             min="0"
             className="input-base w-full"
           />
+          {/* Show computed qty when in USD mode */}
+          {inputMode === 'usd' && qty > 0 && (
+            <p className="text-[10px] text-text-muted mt-1 font-mono">
+              ≈ {formatQuantity(qty, assetType)} {symbol}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-2">
