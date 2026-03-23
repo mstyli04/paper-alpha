@@ -1,23 +1,18 @@
 'use client'
 
-import useSWR from 'swr'
 import { usePortfolio } from '@/hooks/use-portfolio'
 import { StatsCard } from '@/components/portfolio/stats-card'
 import { HoldingsTable } from '@/components/portfolio/holdings-table'
 import { SectorChart } from '@/components/portfolio/sector-chart'
 import { RiskMetricsCard } from '@/components/portfolio/risk-metrics'
 import { AchievementsCard } from '@/components/portfolio/achievements-card'
-import { PortfolioChart } from '@/components/charts/portfolio-chart'
+import { HoldingsChart } from '@/components/charts/holdings-chart'
 import { AllocationChart } from '@/components/portfolio/allocation-chart'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatPercent, pnlColor } from '@/lib/utils'
-import type { PortfolioSnapshot } from '@/types'
-
-const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 export default function PortfolioPage() {
   const { portfolio, isLoading, refresh } = usePortfolio()
-  const { data: snapshots } = useSWR<PortfolioSnapshot[]>('/api/portfolio/snapshots', fetcher)
 
   const allocationData = portfolio?.holdings
     .sort((a, b) => (b.currentValue ?? 0) - (a.currentValue ?? 0))
@@ -121,19 +116,11 @@ export default function PortfolioPage() {
       {/* Allocation pie chart */}
       <AllocationChart holdings={portfolio?.holdings ?? []} />
 
-      {/* Performance chart */}
+      {/* Holdings performance chart */}
       <div className="card p-5">
-        <h2 className="text-sm font-semibold text-text-primary mb-4">Performance History</h2>
-        {snapshots ? (
-          <PortfolioChart
-            snapshots={snapshots}
-            startingBalance={portfolio?.startingBalance ?? 100000}
-            height={240}
-            showBenchmark
-          />
-        ) : (
-          <Skeleton className="h-60 w-full" />
-        )}
+        <h2 className="text-sm font-semibold text-text-primary mb-1">Holdings Performance</h2>
+        <p className="text-xs text-text-muted mb-4">Value of each position over time — arrows mark buys and sells</p>
+        <HoldingsChart height={320} />
       </div>
 
       <RiskMetricsCard />
