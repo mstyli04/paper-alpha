@@ -2,7 +2,15 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { db as prisma } from '@/lib/db'
+
+const AlertSchema = z.object({
+  symbol: z.string().min(1).toUpperCase(),
+  assetType: z.enum(['STOCK', 'CRYPTO', 'COMMODITY']),
+  targetPrice: z.number().positive(),
+  condition: z.enum(['ABOVE', 'BELOW']),
+})
 
 export async function GET() {
   const { userId: clerkId } = auth()
@@ -26,15 +34,18 @@ export async function POST(req: Request) {
   const user = await prisma.user.findUnique({ where: { clerkId } })
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  const { symbol, assetType, targetPrice, condition } = await req.json()
-  if (!symbol || !assetType || !targetPrice || !condition) {
-    return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+  const body = await req.json().catch(() => null)
+  const parsed = AlertSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 })
   }
+
+  const { symbol, assetType, targetPrice, condition } = parsed.data
 
   const alert = await prisma.priceAlert.create({
     data: {
       userId: user.id,
-      symbol: symbol.toUpperCase(),
+      symbol,
       assetType,
       targetPrice,
       condition,

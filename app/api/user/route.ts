@@ -61,10 +61,19 @@ export async function PATCH(req: Request) {
     if (typeof avatarUrl !== 'string') {
       return NextResponse.json({ error: 'Invalid avatarUrl' }, { status: 400 })
     }
-    // Owner-exclusive avatar — only mstyli can set it
+    // Validate URL: only allow https://, /avatars/ paths, or the special preset:owner value
+    if (
+      avatarUrl !== 'preset:owner' &&
+      !avatarUrl.startsWith('/avatars/') &&
+      !avatarUrl.startsWith('https://')
+    ) {
+      return NextResponse.json({ error: 'Invalid avatarUrl: must start with https://, /avatars/, or be preset:owner' }, { status: 400 })
+    }
+    // Owner-exclusive avatar — only the owner account can set it
     if (avatarUrl === 'preset:owner') {
+      const ownerUsername = process.env.OWNER_USERNAME ?? 'mstyli'
       const requestingUser = await db.user.findUnique({ where: { clerkId: userId } })
-      if (requestingUser?.username !== 'mstyli') {
+      if (requestingUser?.username !== ownerUsername) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
     }
