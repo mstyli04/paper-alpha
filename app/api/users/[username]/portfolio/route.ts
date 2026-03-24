@@ -5,12 +5,13 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getPortfolio } from '@/lib/portfolio'
 
-export async function GET(_req: Request, { params }: { params: { username: string } }) {
-  const { userId } = auth()
+export async function GET(_req: Request, { params }: { params: Promise<{ username: string }> }) {
+  const { username } = await params
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const user = await db.user.findUnique({
-    where: { username: params.username },
+    where: { username },
     include: { account: true },
   })
 

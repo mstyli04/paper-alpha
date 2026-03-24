@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET
   if (!webhookSecret) return new Response('Webhook secret not configured', { status: 500 })
 
-  const headerPayload = headers()
+  const headerPayload = await headers()
   const svixId = headerPayload.get('svix-id')
   const svixTimestamp = headerPayload.get('svix-timestamp')
   const svixSignature = headerPayload.get('svix-signature')
