@@ -1,3 +1,4 @@
+import { Decimal } from 'decimal.js'
 import { db } from './db'
 import { getQuote } from './market-data'
 import type { AssetType, TradeSide } from '@/types'
@@ -66,7 +67,7 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
         const coveredQty = Math.min(quantity, Math.abs(currentQty))
         const remainingBuy = quantity - coveredQty
         const avgShortPrice = Number(existing!.avgCostBasis)
-        const realizedPnl = (avgShortPrice - price) * coveredQty
+        const realizedPnl = new Decimal(avgShortPrice).minus(price).times(coveredQty).toNumber()
 
         const newQty = currentQty + quantity
 
@@ -78,7 +79,7 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
             where: { id: existing!.id },
             data: {
               quantity: newQty,
-              realizedPnl: Number(existing!.realizedPnl) + realizedPnl,
+              realizedPnl: new Decimal(Number(existing!.realizedPnl)).plus(realizedPnl).toNumber(),
             },
           })
         } else {
@@ -88,18 +89,22 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
             data: {
               quantity: newQty,
               avgCostBasis: remainingBuy > 0 ? price : existing!.avgCostBasis,
-              realizedPnl: Number(existing!.realizedPnl) + realizedPnl,
+              realizedPnl: new Decimal(Number(existing!.realizedPnl)).plus(realizedPnl).toNumber(),
             },
           })
         }
       } else {
         // Normal long buy
         if (existing) {
-          const newQty = currentQty + quantity
-          const newAvgCost = (currentQty * Number(existing.avgCostBasis) + quantity * price) / newQty
+          const newQty = new Decimal(currentQty).plus(quantity)
+          const newAvgCost = new Decimal(currentQty)
+            .times(Number(existing.avgCostBasis))
+            .plus(new Decimal(quantity).times(price))
+            .dividedBy(newQty)
+            .toNumber()
           await tx.holding.update({
             where: { id: existing.id },
-            data: { quantity: newQty, avgCostBasis: newAvgCost },
+            data: { quantity: newQty.toNumber(), avgCostBasis: newAvgCost },
           })
         } else {
           await tx.holding.create({
@@ -126,7 +131,7 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
       }
 
       const avgCost = Number(existing.avgCostBasis)
-      const realizedPnl = (price - avgCost) * quantity
+      const realizedPnl = new Decimal(price).minus(avgCost).times(quantity).toNumber()
       const newQty = currentQty - quantity
 
       if (newQty < 1e-8) {
@@ -134,7 +139,7 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
       } else {
         await tx.holding.update({
           where: { id: existing.id },
-          data: { quantity: newQty, realizedPnl: Number(existing.realizedPnl) + realizedPnl },
+          data: { quantity: newQty, realizedPnl: new Decimal(Number(existing.realizedPnl)).plus(realizedPnl).toNumber() },
         })
       }
 
@@ -154,13 +159,15 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
 
       if (existing && currentQty < 0) {
         // Add to existing short
-        const newQty = currentQty - quantity
-        const newAvgCost =
-          (Math.abs(currentQty) * Number(existing.avgCostBasis) + quantity * price) /
-          Math.abs(newQty)
+        const newQty = new Decimal(currentQty).minus(quantity)
+        const newAvgCost = new Decimal(Math.abs(currentQty))
+          .times(Number(existing.avgCostBasis))
+          .plus(new Decimal(quantity).times(price))
+          .dividedBy(newQty.abs())
+          .toNumber()
         await tx.holding.update({
           where: { id: existing.id },
-          data: { quantity: newQty, avgCostBasis: newAvgCost },
+          data: { quantity: newQty.toNumber(), avgCostBasis: newAvgCost },
         })
       } else {
         // New short position (negative quantity)
@@ -197,7 +204,7 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
       }
 
       const avgShortPrice = Number(existing.avgCostBasis)
-      const realizedPnl = (avgShortPrice - price) * quantity
+      const realizedPnl = new Decimal(avgShortPrice).minus(price).times(quantity).toNumber()
       const newQty = currentQty + quantity
 
       if (Math.abs(newQty) < 1e-8) {
@@ -205,7 +212,7 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
       } else {
         await tx.holding.update({
           where: { id: existing.id },
-          data: { quantity: newQty, realizedPnl: Number(existing.realizedPnl) + realizedPnl },
+          data: { quantity: newQty, realizedPnl: new Decimal(Number(existing.realizedPnl)).plus(realizedPnl).toNumber() },
         })
       }
 

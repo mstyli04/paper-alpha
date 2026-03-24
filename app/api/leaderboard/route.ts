@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'

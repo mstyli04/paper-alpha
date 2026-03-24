@@ -77,22 +77,9 @@ export async function getPortfolio(accountId: string): Promise<Portfolio> {
   }
 }
 
-// ── Leaderboard price cache ───────────────────────────────────────────────────
-// Persists last-known prices across leaderboard calls within a warm instance.
-// This prevents the "net 0" bug: when a live fetch fails the fallback is a
-// real price rather than cost-basis (which mathematically cancels to 0 P&L).
-const lastKnownPrices = new Map<string, number>()
-
-// Cache the full computed leaderboard for 90 s so repeat page loads are instant.
 type LeaderboardResult = { userId: string; username: string; avatarUrl?: string; totalValue: number; startingBalance: number; returnPercent: number; totalPnl: number; rank: number }[]
-let leaderboardCache: { data: LeaderboardResult; at: number } | null = null
-const LEADERBOARD_TTL = 90_000
 
 export async function getLeaderboard(): Promise<LeaderboardResult> {
-  if (leaderboardCache && Date.now() - leaderboardCache.at < LEADERBOARD_TTL) {
-    return leaderboardCache.data
-  }
-
   const accounts = await db.paperAccount.findMany({
     include: {
       user: true,
@@ -108,15 +95,12 @@ export async function getLeaderboard(): Promise<LeaderboardResult> {
     }
   }
 
-  // Fetch fresh prices; on success update the persistent price cache
+  // Fetch fresh prices; fall back to avgCostBasis if a fetch fails
+  const priceMap = new Map<string, number>()
   await Promise.allSettled(
     Array.from(uniqueSymbols.values()).map(async ({ symbol, assetType }) => {
-      try {
-        const quote = await getQuote(symbol, assetType)
-        if (quote?.price) lastKnownPrices.set(symbol, quote.price)
-      } catch {
-        // lastKnownPrices retains the previous value — used as fallback below
-      }
+      const quote = await getQuote(symbol, assetType)
+      if (quote?.price) priceMap.set(symbol, quote.price)
     })
   )
 
@@ -126,9 +110,7 @@ export async function getLeaderboard(): Promise<LeaderboardResult> {
       const cashBalance = Number(account.cashBalance)
       const holdingsValue = account.holdings.reduce((sum, h) => {
         const qty = Number(h.quantity)
-        // Prefer last-known price over cost basis: cost basis always cancels
-        // to 0 P&L (cash spent + qty×costBasis = startingBalance exactly).
-        const price = lastKnownPrices.get(h.symbol) ?? Number(h.avgCostBasis)
+        const price = priceMap.get(h.symbol) ?? Number(h.avgCostBasis)
         return sum + qty * price
       }, 0)
       const totalValue = cashBalance + holdingsValue
@@ -148,6 +130,5 @@ export async function getLeaderboard(): Promise<LeaderboardResult> {
     .sort((a, b) => b.returnPercent - a.returnPercent)
     .map((entry, i) => ({ ...entry, rank: i + 1 }))
 
-  leaderboardCache = { data, at: Date.now() }
   return data
 }
