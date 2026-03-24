@@ -57,7 +57,7 @@ function toBinanceSymbol(symbol: string): string {
 async function request<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${BASE_URL}${path}`)
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
-  const res = await fetch(url.toString(), { next: { revalidate: 30 } })
+  const res = await fetch(url.toString(), { cache: 'no-store' })
   if (!res.ok) throw new Error(`Binance error: ${res.status}`)
   return res.json()
 }
