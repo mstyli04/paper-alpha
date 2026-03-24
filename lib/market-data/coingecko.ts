@@ -1,220 +1,110 @@
 import type { Quote, CandleData, SearchResult, TrendingAsset } from '@/types'
 
-const BASE_URL = 'https://api.coingecko.com/api/v3'
+const BASE_URL = 'https://api.binance.com/api/v3'
 
-// Curated high-precision overrides — these take priority over the dynamic map
-// because some symbols are ambiguous (e.g. MATIC was renamed to POL but share a symbol).
-const STATIC_OVERRIDES: Record<string, string> = {
-  BTC: 'bitcoin',
-  ETH: 'ethereum',
-  SOL: 'solana',
-  BNB: 'binancecoin',
-  XRP: 'ripple',
-  ADA: 'cardano',
-  AVAX: 'avalanche-2',
-  DOGE: 'dogecoin',
-  DOT: 'polkadot',
-  MATIC: 'matic-network',
-  POL: 'matic-network',
-  LINK: 'chainlink',
-  UNI: 'uniswap',
-  LTC: 'litecoin',
-  ATOM: 'cosmos',
-  FIL: 'filecoin',
-  APT: 'aptos',
-  ARB: 'arbitrum',
-  OP: 'optimism',
-  SUI: 'sui',
-  INJ: 'injective-protocol',
-  TAO: 'bittensor',
-  SEI: 'sei-network',
-  TIA: 'celestia',
-  PYTH: 'pyth-network',
-  JUP: 'jupiter-exchange-solana',
-  WIF: 'dogwifcoin',
-  BONK: 'bonk',
-  PEPE: 'pepe',
-  FET: 'fetch-ai',
-  RENDER: 'render-token',
-  RNDR: 'render-token',
-  IMX: 'immutable-x',
-  STRK: 'starknet',
-  MANTA: 'manta-network',
-  ZK: 'zksync',
-  TRX: 'tron',
-  TON: 'the-open-network',
-  SHIB: 'shiba-inu',
-  BCH: 'bitcoin-cash',
-  NEAR: 'near',
-  VET: 'vechain',
-  ICP: 'internet-computer',
-  HBAR: 'hedera-hashgraph',
-  MKR: 'maker',
-  AAVE: 'aave',
-  SNX: 'havven',
-  CRV: 'curve-dao-token',
-  LDO: 'lido-dao',
-  SAND: 'the-sandbox',
-  MANA: 'decentraland',
-  AXS: 'axie-infinity',
-  RUNE: 'thorchain',
-  ALGO: 'algorand',
-  XLM: 'stellar',
-  ETC: 'ethereum-classic',
-  FLOW: 'flow',
-  XMR: 'monero',
+const SYMBOL_NAMES: Record<string, string> = {
+  BTC: 'Bitcoin', ETH: 'Ethereum', SOL: 'Solana', BNB: 'BNB', XRP: 'XRP',
+  ADA: 'Cardano', AVAX: 'Avalanche', DOGE: 'Dogecoin', DOT: 'Polkadot',
+  MATIC: 'Polygon', POL: 'Polygon', LINK: 'Chainlink', UNI: 'Uniswap',
+  LTC: 'Litecoin', ATOM: 'Cosmos', FIL: 'Filecoin', APT: 'Aptos',
+  ARB: 'Arbitrum', OP: 'Optimism', SUI: 'Sui', INJ: 'Injective',
+  TAO: 'Bittensor', SEI: 'Sei', TIA: 'Celestia', JUP: 'Jupiter',
+  WIF: 'dogwifhat', BONK: 'Bonk', PEPE: 'Pepe', FET: 'Fetch.ai',
+  RENDER: 'Render', RNDR: 'Render', IMX: 'Immutable', TRX: 'Tron',
+  TON: 'Toncoin', SHIB: 'Shiba Inu', BCH: 'Bitcoin Cash', NEAR: 'NEAR',
+  VET: 'VeChain', ICP: 'Internet Computer', HBAR: 'Hedera', MKR: 'Maker',
+  AAVE: 'Aave', CRV: 'Curve', LDO: 'Lido', SAND: 'The Sandbox',
+  MANA: 'Decentraland', AXS: 'Axie Infinity', RUNE: 'THORChain',
+  ALGO: 'Algorand', XLM: 'Stellar', ETC: 'Ethereum Classic', XMR: 'Monero',
 }
 
-// ── Dynamic top-500 map ───────────────────────────────────────────────────────
-// In-process cache (survives within a warm serverless instance).
-// The underlying fetch also carries next:{revalidate:3600} so Next.js's data
-// cache keeps it warm across cold starts.
-let dynamicMapCache: Map<string, string> | null = null
-let dynamicMapCachedAt = 0
-const DYNAMIC_MAP_TTL = 60 * 60 * 1000 // 1 hour
+// ── Symbol cache (from Binance exchange info) ─────────────────────────────────
 
-async function getSymbolMap(): Promise<Map<string, string>> {
-  if (dynamicMapCache && Date.now() - dynamicMapCachedAt < DYNAMIC_MAP_TTL) {
-    return dynamicMapCache
+let symbolsCache: Set<string> | null = null
+let symbolsCachedAt = 0
+const SYMBOLS_TTL = 60 * 60 * 1000 // 1 hour
+
+async function fetchAllSymbols(): Promise<Set<string>> {
+  if (symbolsCache && Date.now() - symbolsCachedAt < SYMBOLS_TTL) {
+    return symbolsCache
   }
 
-  const headers: Record<string, string> = {}
-  if (process.env.COINGECKO_API_KEY) {
-    headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY
-  }
-
-  // Start with our curated overrides as the base
-  const map = new Map<string, string>(Object.entries(STATIC_OVERRIDES))
-
-  // Fetch top 500 by market cap in two pages of 250
-  await Promise.allSettled(
-    [1, 2].map(async (page) => {
-      try {
-        const res = await fetch(
-          `${BASE_URL}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=${page}&sparkline=false`,
-          { headers, next: { revalidate: 3600 } }
-        )
-        if (!res.ok) return
-        const coins: Array<{ id: string; symbol: string }> = await res.json()
-        if (!Array.isArray(coins)) return
-        for (const coin of coins) {
-          const sym = coin.symbol.toUpperCase()
-          // Only add if not already covered by our curated overrides
-          if (!map.has(sym)) {
-            map.set(sym, coin.id)
-          }
-        }
-      } catch {
-        // Silently skip — static overrides still work
+  try {
+    const res = await fetch(`${BASE_URL}/exchangeInfo`, { next: { revalidate: 3600 } })
+    if (!res.ok) throw new Error('failed')
+    const data: { symbols: Array<{ baseAsset: string; quoteAsset: string; status: string }> } = await res.json()
+    const set = new Set<string>()
+    for (const s of data.symbols) {
+      if (s.quoteAsset === 'USDT' && s.status === 'TRADING') {
+        set.add(s.baseAsset.toUpperCase())
       }
-    })
-  )
+    }
+    symbolsCache = set
+    symbolsCachedAt = Date.now()
+    return set
+  } catch {
+    // Fall back to known list
+    return new Set(Object.keys(SYMBOL_NAMES))
+  }
+}
 
-  dynamicMapCache = map
-  dynamicMapCachedAt = Date.now()
-  return map
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function toBinanceSymbol(symbol: string): string {
+  return `${symbol.toUpperCase()}USDT`
+}
+
+async function request<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+  const url = new URL(`${BASE_URL}${path}`)
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
+  const res = await fetch(url.toString(), { next: { revalidate: 30 } })
+  if (!res.ok) throw new Error(`Binance error: ${res.status}`)
+  return res.json()
 }
 
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export async function symbolToId(symbol: string): Promise<string> {
-  const map = await getSymbolMap()
-  return map.get(symbol.toUpperCase()) ?? symbol.toLowerCase()
-}
-
-/** Returns the full set of known crypto ticker symbols (top 500 + overrides). */
-export async function getCryptoSymbols(): Promise<Set<string>> {
-  const map = await getSymbolMap()
-  return new Set(map.keys())
+  return symbol.toLowerCase()
 }
 
 export function idToSymbol(id: string): string {
-  const entry = Object.entries(STATIC_OVERRIDES).find(([, v]) => v === id)
-  return entry ? entry[0] : id.toUpperCase()
+  return id.toUpperCase()
 }
 
-// ── Internal request helper ───────────────────────────────────────────────────
-
-async function request<T>(path: string, params: Record<string, string> = {}): Promise<T> {
-  const url = new URL(`${BASE_URL}${path}`)
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
-
-  const headers: Record<string, string> = {}
-  if (process.env.COINGECKO_API_KEY) {
-    headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY
-  }
-
-  const res = await fetch(url.toString(), { headers, cache: 'no-store' })
-  if (res.status === 429) throw new Error('CoinGecko rate limit exceeded')
-  if (!res.ok) throw new Error(`CoinGecko error: ${res.status}`)
-  return res.json()
-}
-
-// ── Quote & candle fetchers ───────────────────────────────────────────────────
-
-// Cache search-resolved IDs so we only search once per symbol per process
-const searchResolvedIds = new Map<string, string>()
-
-async function resolveId(symbol: string): Promise<string> {
-  const sym = symbol.toUpperCase()
-
-  // 1. Try the map (static overrides + dynamic top-500)
-  const mapId = await symbolToId(symbol)
-
-  // 2. If the map returned a meaningful entry (not just lowercased fallback),
-  //    use it directly. Otherwise try a CoinGecko search to find the correct ID.
-  if (mapId !== sym.toLowerCase() || searchResolvedIds.has(sym)) {
-    return searchResolvedIds.get(sym) ?? mapId
-  }
-
-  try {
-    const result = await request<{ coins: Array<{ id: string; symbol: string }> }>('/search', { query: sym })
-    const match = result.coins?.find(c => c.symbol.toUpperCase() === sym)
-    if (match) {
-      searchResolvedIds.set(sym, match.id)
-      return match.id
-    }
-  } catch {
-    // Fall through to the lowercased guess
-  }
-
-  return mapId
+export async function getCryptoSymbols(): Promise<Set<string>> {
+  return fetchAllSymbols()
 }
 
 export async function getCryptoQuote(symbol: string): Promise<Quote> {
-  const id = await resolveId(symbol)
-  const data = await request<Record<string, {
-    usd: number
-    usd_24h_change: number
-    usd_24h_vol: number
-    usd_market_cap: number
-  }>>('/simple/price', {
-    ids: id,
-    vs_currencies: 'usd',
-    include_24hr_change: 'true',
-    include_24hr_vol: 'true',
-    include_market_cap: 'true',
-  })
+  const binanceSymbol = toBinanceSymbol(symbol)
+  const data = await request<{
+    lastPrice: string
+    priceChange: string
+    priceChangePercent: string
+    highPrice: string
+    lowPrice: string
+    openPrice: string
+    prevClosePrice: string
+    quoteVolume: string
+  }>('/ticker/24hr', { symbol: binanceSymbol })
 
-  const coin = data[id]
-  if (!coin) throw new Error(`No data for ${symbol} (resolved id: ${id})`)
-
-  const price = coin.usd
-  const changePercent = coin.usd_24h_change || 0
-  const change = (price / (1 + changePercent / 100)) * (changePercent / 100)
+  const price = parseFloat(data.lastPrice)
+  const change = parseFloat(data.priceChange)
+  const changePercent = parseFloat(data.priceChangePercent)
 
   return {
     symbol: symbol.toUpperCase(),
-    name: symbol.toUpperCase(),
+    name: SYMBOL_NAMES[symbol.toUpperCase()] || symbol.toUpperCase(),
     price,
     change,
     changePercent,
-    high: price * 1.01,
-    low: price * 0.99,
-    open: price - change,
-    previousClose: price - change,
-    volume: coin.usd_24h_vol || 0,
-    marketCap: coin.usd_market_cap || 0,
+    high: parseFloat(data.highPrice),
+    low: parseFloat(data.lowPrice),
+    open: parseFloat(data.openPrice),
+    previousClose: parseFloat(data.prevClosePrice),
+    volume: parseFloat(data.quoteVolume),
+    marketCap: 0,
     assetType: 'CRYPTO',
     timestamp: Date.now(),
   }
@@ -226,61 +116,61 @@ export async function getCryptoCandles(
   from: number,
   to: number
 ): Promise<CandleData[]> {
-  const id = await symbolToId(symbol)
+  const binanceSymbol = toBinanceSymbol(symbol)
   const days = Math.ceil((to - from) / 86400)
-  // CoinGecko free tier auto-selects granularity by days window:
-  //   ≤1 day → minutely, 2–90 days → hourly, >90 days → daily.
-  // For ranges beyond a year use 'max' so 5Y charts show full history.
-  const daysParam = days > 365 ? 'max' : String(Math.max(1, days))
-  const data = await request<{ prices: [number, number][] }>(`/coins/${id}/market_chart`, {
-    vs_currency: 'usd',
-    days: daysParam,
-  })
+  const interval = days <= 1 ? '1h' : days <= 7 ? '4h' : '1d'
 
-  return data.prices.map(([timestamp, price]) => ({
-    time: Math.floor(timestamp / 1000),
-    open: price,
-    high: price,
-    low: price,
-    close: price,
+  const data = await request<Array<[number, string, string, string, string]>>(
+    '/klines',
+    {
+      symbol: binanceSymbol,
+      interval,
+      startTime: String(from * 1000),
+      endTime: String(to * 1000),
+      limit: '500',
+    }
+  )
+
+  return data.map(([openTime, open, high, low, close]) => ({
+    time: Math.floor(openTime / 1000),
+    open: parseFloat(open),
+    high: parseFloat(high),
+    low: parseFloat(low),
+    close: parseFloat(close),
   }))
 }
 
 export async function searchCrypto(query: string): Promise<SearchResult[]> {
-  const data = await request<{ coins: Array<{ id: string; symbol: string; name: string; thumb: string }> }>('/search', {
-    query,
-  })
-
-  return (data.coins || []).slice(0, 10).map(c => ({
-    symbol: c.symbol.toUpperCase(),
-    name: c.name,
-    assetType: 'CRYPTO' as const,
-    logoUrl: c.thumb,
-  }))
+  const q = query.toUpperCase()
+  const allSymbols = await fetchAllSymbols()
+  return Array.from(allSymbols)
+    .filter(sym => sym.includes(q) || (SYMBOL_NAMES[sym] || '').toUpperCase().includes(q))
+    .slice(0, 10)
+    .map(sym => ({
+      symbol: sym,
+      name: SYMBOL_NAMES[sym] || sym,
+      assetType: 'CRYPTO' as const,
+    }))
 }
 
 export async function getTrendingCrypto(): Promise<TrendingAsset[]> {
-  const data = await request<Array<{
-    id: string
-    symbol: string
-    name: string
-    image: string
-    current_price: number
-    price_change_percentage_24h: number
-  }>>('/coins/markets', {
-    vs_currency: 'usd',
-    order: 'market_cap_desc',
-    per_page: '10',
-    page: '1',
-    sparkline: 'false',
-  })
+  const topSymbols = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'AVAX', 'DOGE', 'LINK', 'DOT']
+  const binanceSymbols = JSON.stringify(topSymbols.map(toBinanceSymbol))
 
-  return (Array.isArray(data) ? data : []).map(c => ({
-    symbol: c.symbol.toUpperCase(),
-    name: c.name,
-    price: c.current_price,
-    changePercent: c.price_change_percentage_24h || 0,
-    assetType: 'CRYPTO' as const,
-    logoUrl: c.image,
-  }))
+  const data = await request<Array<{
+    symbol: string
+    lastPrice: string
+    priceChangePercent: string
+  }>>('/ticker/24hr', { symbols: binanceSymbols })
+
+  return data.map(item => {
+    const sym = item.symbol.replace('USDT', '')
+    return {
+      symbol: sym,
+      name: SYMBOL_NAMES[sym] || sym,
+      price: parseFloat(item.lastPrice),
+      changePercent: parseFloat(item.priceChangePercent),
+      assetType: 'CRYPTO' as const,
+    }
+  })
 }
