@@ -82,6 +82,8 @@ export interface LeaderboardEntry {
   startingBalance: number
   returnPercent: number
   totalPnl: number
+  dailyPnl?: number
+  dailyReturnPercent?: number
 }
 
 export interface PortfolioSnapshot {

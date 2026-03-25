@@ -77,13 +77,20 @@ export async function getPortfolio(accountId: string): Promise<Portfolio> {
   }
 }
 
-type LeaderboardResult = { userId: string; username: string; avatarUrl?: string; totalValue: number; startingBalance: number; returnPercent: number; totalPnl: number; rank: number }[]
+type LeaderboardResult = { userId: string; username: string; avatarUrl?: string; totalValue: number; startingBalance: number; returnPercent: number; totalPnl: number; dailyPnl?: number; dailyReturnPercent?: number; rank: number }[]
 
 export async function getLeaderboard(): Promise<LeaderboardResult> {
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+
   const accounts = await db.paperAccount.findMany({
     include: {
       user: true,
       holdings: true,
+      snapshots: {
+        where: { createdAt: { lte: oneDayAgo } },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
     },
   })
 
@@ -117,6 +124,11 @@ export async function getLeaderboard(): Promise<LeaderboardResult> {
       const totalPnl = totalValue - startingBalance
       const returnPercent = startingBalance > 0 ? (totalPnl / startingBalance) * 100 : 0
 
+      const snapshot24h = account.snapshots[0]
+      const value24hAgo = snapshot24h ? Number(snapshot24h.totalValue) : undefined
+      const dailyPnl = value24hAgo !== undefined ? totalValue - value24hAgo : undefined
+      const dailyReturnPercent = value24hAgo && value24hAgo > 0 ? (dailyPnl! / value24hAgo) * 100 : undefined
+
       return {
         userId: account.userId,
         username: account.user.username,
@@ -125,6 +137,8 @@ export async function getLeaderboard(): Promise<LeaderboardResult> {
         startingBalance,
         returnPercent,
         totalPnl,
+        dailyPnl,
+        dailyReturnPercent,
       }
     })
     .sort((a, b) => b.returnPercent - a.returnPercent)

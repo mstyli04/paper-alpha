@@ -79,6 +79,7 @@ export default function LeaderboardPage() {
                 <th className="text-left text-xs text-text-muted font-medium py-3 px-4">Trader</th>
                 <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Portfolio Value</th>
                 <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Total Return</th>
+                <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Today</th>
                 <th className="text-right text-xs text-text-muted font-medium py-3 px-5">P&L</th>
               </tr>
             </thead>
@@ -116,6 +117,16 @@ export default function LeaderboardPage() {
                         {entry.returnPercent >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                         {formatPercent(entry.returnPercent)}
                       </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      {entry.dailyReturnPercent !== undefined ? (
+                        <span className={`flex items-center justify-end gap-1 font-medium text-sm ${entry.dailyReturnPercent >= 0 ? 'text-green' : 'text-red'}`}>
+                          {entry.dailyReturnPercent >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                          {formatPercent(entry.dailyReturnPercent)}
+                        </span>
+                      ) : (
+                        <span className="text-text-muted text-xs">—</span>
+                      )}
                     </td>
                     <td className={`py-3 px-5 text-right font-mono font-medium ${entry.totalPnl >= 0 ? 'text-green' : 'text-red'}`}>
                       {entry.totalPnl >= 0 ? '+' : ''}{formatCurrency(entry.totalPnl)}
