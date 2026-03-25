@@ -93,6 +93,7 @@ export interface PortfolioSnapshot {
 export interface TrendingAsset {
   symbol: string
   name: string
+  description?: string
   price: number
   changePercent: number
   assetType: AssetType

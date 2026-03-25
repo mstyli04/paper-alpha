@@ -65,6 +65,53 @@ const STATIC_OVERRIDES: Record<string, string> = {
   XMR: 'monero',
 }
 
+// Short descriptions shown on the crypto markets tab
+const CRYPTO_DESCRIPTIONS: Record<string, string> = {
+  BTC: 'The original decentralised digital currency',
+  ETH: 'Programmable blockchain powering most DeFi & NFTs',
+  SOL: 'Fast, low-fee blockchain for DeFi and apps',
+  BNB: 'Binance exchange token with broad utility',
+  XRP: 'Fast cross-border payments network',
+  ADA: 'Research-driven proof-of-stake blockchain',
+  AVAX: 'High-speed platform for DeFi and custom blockchains',
+  DOGE: 'The original meme coin, now widely accepted',
+  DOT: 'Connects multiple blockchains in one network',
+  MATIC: 'Ethereum scaling solution with low fees',
+  POL: 'Ethereum scaling solution with low fees',
+  LINK: 'Connects smart contracts to real-world data',
+  UNI: 'Governance token for Uniswap decentralised exchange',
+  LTC: 'Faster, lighter version of Bitcoin',
+  ATOM: 'Hub connecting independent blockchains',
+  FIL: 'Decentralised cloud storage network',
+  APT: 'Fast Layer 1 blockchain from ex-Meta engineers',
+  ARB: 'Ethereum Layer 2 with lower fees',
+  OP: 'Ethereum Layer 2 optimistic rollup network',
+  SUI: 'High-performance Layer 1 with fast finality',
+  INJ: 'DeFi-focused blockchain for trading apps',
+  TAO: 'Decentralised AI and machine learning network',
+  FET: 'AI agents for automating tasks on-chain',
+  RENDER: 'Decentralised GPU rendering for AI and 3D',
+  RNDR: 'Decentralised GPU rendering for AI and 3D',
+  NEAR: 'AI-friendly blockchain with low fees',
+  SHIB: 'Community-driven Ethereum meme token',
+  PEPE: 'Meme coin based on the Pepe the Frog meme',
+  BONK: 'Solana-based meme coin',
+  WIF: 'Dog-themed Solana meme coin',
+  TRX: 'High-throughput blockchain for content creators',
+  TON: 'Blockchain built by the Telegram team',
+  BCH: 'Bitcoin fork focused on everyday payments',
+  XLM: 'Low-cost network for cross-border payments',
+  XMR: 'Privacy-focused untraceable cryptocurrency',
+  AAVE: 'Decentralised lending and borrowing protocol',
+  MKR: 'Governance token for the DAI stablecoin',
+  CRV: 'Token for Curve stablecoin exchange protocol',
+  LDO: 'Governance token for Lido liquid staking',
+  RUNE: 'Cross-chain liquidity and swapping network',
+  ALGO: 'Fast, carbon-neutral proof-of-stake blockchain',
+  ICP: 'Blockchain running smart contracts at web speed',
+  HBAR: 'Enterprise-grade fast and low-cost network',
+}
+
 // ── Dynamic top-500 map ───────────────────────────────────────────────────────
 let dynamicMapCache: Map<string, string> | null = null
 let dynamicMapCachedAt = 0
@@ -263,6 +310,7 @@ export async function getTrendingCrypto(): Promise<TrendingAsset[]> {
   return (Array.isArray(data) ? data : []).map(c => ({
     symbol: c.symbol.toUpperCase(),
     name: c.name,
+    description: CRYPTO_DESCRIPTIONS[c.symbol.toUpperCase()],
     price: c.current_price,
     changePercent: c.price_change_percentage_24h || 0,
     assetType: 'CRYPTO' as const,
