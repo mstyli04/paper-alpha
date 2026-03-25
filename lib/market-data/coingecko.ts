@@ -261,7 +261,7 @@ export async function getCryptoCandles(
   from: number,
   to: number
 ): Promise<CandleData[]> {
-  const id = await symbolToId(symbol)
+  const id = await resolveId(symbol)
   const days = Math.ceil((to - from) / 86400)
   const daysParam = days > 365 ? 'max' : String(Math.max(1, days))
   const data = await request<{ prices: [number, number][] }>(`/coins/${id}/market_chart`, {
