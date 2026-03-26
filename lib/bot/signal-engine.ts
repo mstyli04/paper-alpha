@@ -42,7 +42,7 @@ function momentumSignal(
     return { ...base, action: 'SELL', conviction: clamp((currRsi - 50) / 30, 0, 1) }
   }
 
-  if (!isHeld && crossedAbove && currRsi >= 50 && currRsi <= 70) {
+  if (!isHeld && crossedAbove && currRsi >= 45 && currRsi <= 75) {
     const avg20Vol   = volumes.length >= 21
       ? volumes.slice(-21, -1).reduce((a, b) => a + b, 0) / 20
       : 0
@@ -75,10 +75,10 @@ function meanReversionSignal(
     return { ...base, action: 'SELL', conviction: 0.7 }
   }
 
-  if (!isHeld && price <= band.lower && currRsi < 35) {
+  if (!isHeld && price <= band.lower * 1.03 && currRsi < 45) {
     const bandRange  = band.middle - band.lower
-    const bandScore  = bandRange > 0 ? clamp((band.lower - price) / bandRange, 0, 1) : 0
-    const rsiScore   = clamp((35 - currRsi) / 35, 0, 1)
+    const bandScore  = bandRange > 0 ? clamp((band.lower * 1.03 - price) / (band.lower * 0.03), 0, 1) : 0
+    const rsiScore   = clamp((45 - currRsi) / 45, 0, 1)
     const conviction = 0.5 * bandScore + 0.5 * rsiScore
     return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1) }
   }

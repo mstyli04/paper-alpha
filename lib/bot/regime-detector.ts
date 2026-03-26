@@ -4,7 +4,7 @@ import { ema, atr, emaSlope } from './indicators'
 
 export type Regime = 'TRENDING' | 'RANGING'
 
-const EMA_SLOPE_THRESHOLD = 0.005  // 0.5% per period
+const EMA_SLOPE_THRESHOLD = 0.001  // 0.1% per period
 
 export function detectRegime(candles: CandleData[]): Regime {
   if (candles.length < 35) return 'RANGING'
