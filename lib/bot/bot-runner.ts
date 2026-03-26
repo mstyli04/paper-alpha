@@ -15,6 +15,8 @@ const MAX_SECTOR_PERCENT = 0.40
 const MAX_DRAWDOWN       = 0.15
 const CIRCUIT_BREAKER_CYCLES = 3
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
 let circuitBreakerTriggeredAt: number | null = null
 
 export interface BotRunResult {
@@ -99,6 +101,7 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
     const isHeld    = !!holding && Number(holding.quantity) > 0
     const openCount = account.holdings.filter(h => Number(h.quantity) > 0).length
 
+    await sleep(300)
     const candles = await fetchBotCandles(asset.symbol, asset.assetType)
     if (candles.length < 30) { skipped++; continue }
 
