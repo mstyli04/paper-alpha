@@ -70,6 +70,7 @@ model Trade {
 
   @@index([accountId])
   @@index([accountId, symbol])
+  @@index([accountId, createdAt])
 }
 
 model PortfolioSnapshot {
@@ -99,6 +100,8 @@ model PriceAlert {
 
   @@index([userId])
   @@index([triggered])
+  @@index([symbol])
+  @@index([userId, triggered])
 }
 
 model WatchlistItem {
@@ -111,6 +114,7 @@ model WatchlistItem {
 
   @@unique([userId, symbol])
   @@index([userId])
+  @@index([symbol])
 }
 
 enum AssetType {

@@ -65,10 +65,54 @@ const STATIC_OVERRIDES: Record<string, string> = {
   XMR: 'monero',
 }
 
+// Short descriptions shown on the crypto markets tab
+const CRYPTO_DESCRIPTIONS: Record<string, string> = {
+  BTC: 'The original decentralised digital currency',
+  ETH: 'Programmable blockchain powering most DeFi & NFTs',
+  SOL: 'Fast, low-fee blockchain for DeFi and apps',
+  BNB: 'Binance exchange token with broad utility',
+  XRP: 'Fast cross-border payments network',
+  ADA: 'Research-driven proof-of-stake blockchain',
+  AVAX: 'High-speed platform for DeFi and custom blockchains',
+  DOGE: 'The original meme coin, now widely accepted',
+  DOT: 'Connects multiple blockchains in one network',
+  MATIC: 'Ethereum scaling solution with low fees',
+  POL: 'Ethereum scaling solution with low fees',
+  LINK: 'Connects smart contracts to real-world data',
+  UNI: 'Governance token for Uniswap decentralised exchange',
+  LTC: 'Faster, lighter version of Bitcoin',
+  ATOM: 'Hub connecting independent blockchains',
+  FIL: 'Decentralised cloud storage network',
+  APT: 'Fast Layer 1 blockchain from ex-Meta engineers',
+  ARB: 'Ethereum Layer 2 with lower fees',
+  OP: 'Ethereum Layer 2 optimistic rollup network',
+  SUI: 'High-performance Layer 1 with fast finality',
+  INJ: 'DeFi-focused blockchain for trading apps',
+  TAO: 'Decentralised AI and machine learning network',
+  FET: 'AI agents for automating tasks on-chain',
+  RENDER: 'Decentralised GPU rendering for AI and 3D',
+  RNDR: 'Decentralised GPU rendering for AI and 3D',
+  NEAR: 'AI-friendly blockchain with low fees',
+  SHIB: 'Community-driven Ethereum meme token',
+  PEPE: 'Meme coin based on the Pepe the Frog meme',
+  BONK: 'Solana-based meme coin',
+  WIF: 'Dog-themed Solana meme coin',
+  TRX: 'High-throughput blockchain for content creators',
+  TON: 'Blockchain built by the Telegram team',
+  BCH: 'Bitcoin fork focused on everyday payments',
+  XLM: 'Low-cost network for cross-border payments',
+  XMR: 'Privacy-focused untraceable cryptocurrency',
+  AAVE: 'Decentralised lending and borrowing protocol',
+  MKR: 'Governance token for the DAI stablecoin',
+  CRV: 'Token for Curve stablecoin exchange protocol',
+  LDO: 'Governance token for Lido liquid staking',
+  RUNE: 'Cross-chain liquidity and swapping network',
+  ALGO: 'Fast, carbon-neutral proof-of-stake blockchain',
+  ICP: 'Blockchain running smart contracts at web speed',
+  HBAR: 'Enterprise-grade fast and low-cost network',
+}
+
 // ── Dynamic top-500 map ───────────────────────────────────────────────────────
-// In-process cache (survives within a warm serverless instance).
-// The underlying fetch also carries next:{revalidate:3600} so Next.js's data
-// cache keeps it warm across cold starts.
 let dynamicMapCache: Map<string, string> | null = null
 let dynamicMapCachedAt = 0
 const DYNAMIC_MAP_TTL = 60 * 60 * 1000 // 1 hour
@@ -83,10 +127,8 @@ async function getSymbolMap(): Promise<Map<string, string>> {
     headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY
   }
 
-  // Start with our curated overrides as the base
   const map = new Map<string, string>(Object.entries(STATIC_OVERRIDES))
 
-  // Fetch top 500 by market cap in two pages of 250
   await Promise.allSettled(
     [1, 2].map(async (page) => {
       try {
@@ -99,10 +141,7 @@ async function getSymbolMap(): Promise<Map<string, string>> {
         if (!Array.isArray(coins)) return
         for (const coin of coins) {
           const sym = coin.symbol.toUpperCase()
-          // Only add if not already covered by our curated overrides
-          if (!map.has(sym)) {
-            map.set(sym, coin.id)
-          }
+          if (!map.has(sym)) map.set(sym, coin.id)
         }
       } catch {
         // Silently skip — static overrides still work
@@ -122,7 +161,6 @@ export async function symbolToId(symbol: string): Promise<string> {
   return map.get(symbol.toUpperCase()) ?? symbol.toLowerCase()
 }
 
-/** Returns the full set of known crypto ticker symbols (top 500 + overrides). */
 export async function getCryptoSymbols(): Promise<Set<string>> {
   const map = await getSymbolMap()
   return new Set(map.keys())
@@ -144,7 +182,9 @@ async function request<T>(path: string, params: Record<string, string> = {}): Pr
     headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY
   }
 
-  const res = await fetch(url.toString(), { headers, cache: 'no-store' })
+  // 30-second cache: prevents rate limit errors when multiple parts of the app
+  // (markets, portfolio, trading engine) request the same price simultaneously.
+  const res = await fetch(url.toString(), { headers, next: { revalidate: 30 } })
   if (res.status === 429) throw new Error('CoinGecko rate limit exceeded')
   if (!res.ok) throw new Error(`CoinGecko error: ${res.status}`)
   return res.json()
@@ -152,17 +192,12 @@ async function request<T>(path: string, params: Record<string, string> = {}): Pr
 
 // ── Quote & candle fetchers ───────────────────────────────────────────────────
 
-// Cache search-resolved IDs so we only search once per symbol per process
 const searchResolvedIds = new Map<string, string>()
 
 async function resolveId(symbol: string): Promise<string> {
   const sym = symbol.toUpperCase()
-
-  // 1. Try the map (static overrides + dynamic top-500)
   const mapId = await symbolToId(symbol)
 
-  // 2. If the map returned a meaningful entry (not just lowercased fallback),
-  //    use it directly. Otherwise try a CoinGecko search to find the correct ID.
   if (mapId !== sym.toLowerCase() || searchResolvedIds.has(sym)) {
     return searchResolvedIds.get(sym) ?? mapId
   }
@@ -226,11 +261,8 @@ export async function getCryptoCandles(
   from: number,
   to: number
 ): Promise<CandleData[]> {
-  const id = await symbolToId(symbol)
+  const id = await resolveId(symbol)
   const days = Math.ceil((to - from) / 86400)
-  // CoinGecko free tier auto-selects granularity by days window:
-  //   ≤1 day → minutely, 2–90 days → hourly, >90 days → daily.
-  // For ranges beyond a year use 'max' so 5Y charts show full history.
   const daysParam = days > 365 ? 'max' : String(Math.max(1, days))
   const data = await request<{ prices: [number, number][] }>(`/coins/${id}/market_chart`, {
     vs_currency: 'usd',
@@ -278,6 +310,7 @@ export async function getTrendingCrypto(): Promise<TrendingAsset[]> {
   return (Array.isArray(data) ? data : []).map(c => ({
     symbol: c.symbol.toUpperCase(),
     name: c.name,
+    description: CRYPTO_DESCRIPTIONS[c.symbol.toUpperCase()],
     price: c.current_price,
     changePercent: c.price_change_percentage_24h || 0,
     assetType: 'CRYPTO' as const,

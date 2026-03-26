@@ -32,8 +32,13 @@ export function AssetRow({ asset, rank, watched, onToggleWatch }: AssetRowProps)
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-text-primary">{asset.symbol}</p>
-        <p className="text-xs text-text-muted truncate">{asset.name}</p>
+        <p className="text-sm font-medium text-text-primary">
+          {asset.symbol}
+          {asset.description && <span className="text-text-muted font-normal"> · {asset.name}</span>}
+        </p>
+        <p className="text-xs text-text-muted truncate">
+          {asset.description ?? asset.name}
+        </p>
       </div>
 
       <div className="text-right">

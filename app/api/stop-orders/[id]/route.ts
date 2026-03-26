@@ -4,8 +4,9 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const { userId } = auth()
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const user = await db.user.findUnique({
@@ -15,12 +16,12 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (!user?.account) return NextResponse.json({ error: 'Account not found' }, { status: 404 })
 
   const order = await db.stopOrder.findFirst({
-    where: { id: params.id, accountId: user.account.id },
+    where: { id, accountId: user.account.id },
   })
   if (!order) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await db.stopOrder.update({
-    where: { id: params.id },
+    where: { id },
     data: { status: 'CANCELLED' },
   })
 

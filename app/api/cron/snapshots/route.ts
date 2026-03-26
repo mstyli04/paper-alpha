@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60 // seconds — Vercel hobby plan max
 
+import crypto from 'crypto'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getQuote } from '@/lib/market-data'
@@ -8,8 +9,21 @@ import type { AssetType } from '@/types'
 
 // Called daily by Vercel Cron. Protected by CRON_SECRET.
 export async function GET(req: Request) {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const expected = `Bearer ${cronSecret}`
+  let authorized = false
+  try {
+    authorized = authHeader !== null &&
+      authHeader.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
+  } catch {
+    authorized = false
+  }
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

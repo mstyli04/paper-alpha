@@ -82,6 +82,8 @@ export interface LeaderboardEntry {
   startingBalance: number
   returnPercent: number
   totalPnl: number
+  dailyPnl?: number
+  dailyReturnPercent?: number
   isBot?: boolean
 }
 
@@ -94,6 +96,7 @@ export interface PortfolioSnapshot {
 export interface TrendingAsset {
   symbol: string
   name: string
+  description?: string
   price: number
   changePercent: number
   assetType: AssetType

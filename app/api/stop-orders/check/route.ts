@@ -1,11 +1,30 @@
 export const dynamic = 'force-dynamic'
 
+import crypto from 'crypto'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getQuote } from '@/lib/market-data'
 import { executeTrade } from '@/lib/trading-engine'
 
-export async function POST() {
+export async function POST(req: Request) {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const authHeader = req.headers.get('authorization')
+  const expected = `Bearer ${cronSecret}`
+  let authorized = false
+  try {
+    authorized = authHeader !== null &&
+      authHeader.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
+  } catch {
+    authorized = false
+  }
+  if (!authorized) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const activeOrders = await db.stopOrder.findMany({
     where: { status: 'ACTIVE' },
   })

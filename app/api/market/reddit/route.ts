@@ -20,6 +20,11 @@ export async function GET(req: Request) {
   const symbol = searchParams.get('symbol')
   if (!symbol) return NextResponse.json({ error: 'symbol required' }, { status: 400 })
 
+  // Sanitise symbol: only allow alphanumeric characters, hyphens, and dots
+  if (!/^[a-zA-Z0-9\-.]+$/.test(symbol)) {
+    return NextResponse.json({ error: 'Invalid symbol' }, { status: 400 })
+  }
+
   try {
     const subreddits = ['wallstreetbets', 'stocks', 'investing']
     const allPosts: RedditPost['data'][] = []

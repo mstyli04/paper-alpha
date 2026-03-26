@@ -3,9 +3,10 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-export async function GET(_req: Request, { params }: { params: { username: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ username: string }> }) {
+  const { username } = await params
   const user = await db.user.findUnique({
-    where: { username: params.username },
+    where: { username },
     include: { account: true },
   })
 
