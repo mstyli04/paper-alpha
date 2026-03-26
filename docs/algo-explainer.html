@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Algo Alpha Bot — How It Works</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; padding: 40px 20px; min-height: 100vh; }
+
+  h1 { text-align: center; font-size: 1.8rem; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { text-align: center; color: #64748b; font-size: 0.9rem; margin-bottom: 48px; }
+  .brand { color: #6366f1; }
+
+  /* Pipeline */
+  .pipeline { display: flex; flex-direction: column; align-items: center; gap: 0; max-width: 680px; margin: 0 auto 56px; }
+
+  .stage {
+    width: 100%;
+    background: #13131f;
+    border: 1px solid #1e1e3a;
+    border-radius: 12px;
+    padding: 18px 24px;
+    position: relative;
+  }
+  .stage-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .stage-icon { font-size: 1.3rem; }
+  .stage-title { font-size: 0.95rem; font-weight: 700; color: #c7d2fe; }
+  .stage-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: #1e1e3a;
+    color: #6366f1;
+    border: 1px solid #3730a3;
+  }
+  .stage-body { font-size: 0.82rem; color: #94a3b8; line-height: 1.6; }
+  .stage-body strong { color: #e2e8f0; }
+
+  .arrow { width: 2px; height: 28px; background: linear-gradient(to bottom, #3730a3, #6366f1); margin: 0 auto; position: relative; }
+  .arrow::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #6366f1; }
+
+  /* Branch section */
+  .branch-section { max-width: 680px; margin: 0 auto 56px; }
+  .branch-title { text-align: center; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 16px; }
+  .branch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .branch-card { background: #13131f; border: 1px solid #1e1e3a; border-radius: 12px; padding: 18px; }
+  .branch-card.trending { border-top: 3px solid #22c55e; }
+  .branch-card.ranging { border-top: 3px solid #f59e0b; }
+  .branch-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .trending .branch-label { color: #22c55e; }
+  .ranging .branch-label { color: #f59e0b; }
+  .branch-name { font-size: 0.9rem; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; }
+  .branch-rules { font-size: 0.78rem; color: #94a3b8; line-height: 1.7; }
+  .branch-rules .buy { color: #22c55e; font-weight: 600; }
+  .branch-rules .sell { color: #ef4444; font-weight: 600; }
+
+  /* Risk grid */
+  .risk-section { max-width: 680px; margin: 0 auto 56px; }
+  .risk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .risk-card { background: #13131f; border: 1px solid #1e1e3a; border-radius: 10px; padding: 16px; text-align: center; }
+  .risk-value { font-size: 1.4rem; font-weight: 800; color: #6366f1; margin-bottom: 4px; }
+  .risk-label { font-size: 0.72rem; color: #64748b; line-height: 1.4; }
+
+  /* Universe */
+  .universe-section { max-width: 680px; margin: 0 auto 56px; }
+  .universe-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .universe-card { background: #13131f; border: 1px solid #1e1e3a; border-radius: 10px; padding: 14px 16px; }
+  .universe-card-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 8px; }
+  .universe-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+  .pill { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+  .pill.stock { background: #1e3a5f; color: #60a5fa; border: 1px solid #1d4ed8; }
+  .pill.crypto { background: #1a2e1a; color: #4ade80; border: 1px solid #166534; }
+  .pill.etf { background: #2d1f3d; color: #c084fc; border: 1px solid #7e22ce; }
+
+  /* Schedule */
+  .schedule { max-width: 680px; margin: 0 auto; background: #13131f; border: 1px solid #1e1e3a; border-radius: 12px; padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
+  .schedule-icon { font-size: 2rem; }
+  .schedule-text h3 { font-size: 0.9rem; font-weight: 700; color: #c7d2fe; margin-bottom: 4px; }
+  .schedule-text p { font-size: 0.82rem; color: #94a3b8; line-height: 1.5; }
+
+  .section-label { text-align: center; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<h1><span class="brand">Algo Alpha Bot</span> — How It Works</h1>
+<p class="subtitle">A daily automated trading pipeline using momentum &amp; mean reversion strategies</p>
+
+<!-- Pipeline -->
+<div class="section-label">Daily Pipeline</div>
+<div class="pipeline">
+
+  <div class="stage">
+    <div class="stage-header">
+      <span class="stage-icon">🌐</span>
+      <span class="stage-title">1. Fetch Market Data</span>
+      <span class="stage-badge">universe.ts</span>
+    </div>
+    <div class="stage-body">Pulls <strong>60 daily candles</strong> (OHLCV) for all 22 symbols — stocks via Finnhub, crypto via CoinGecko.</div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="stage">
+    <div class="stage-header">
+      <span class="stage-icon">📐</span>
+      <span class="stage-title">2. Calculate Indicators</span>
+      <span class="stage-badge">indicators.ts</span>
+    </div>
+    <div class="stage-body">Computes <strong>EMA (20)</strong>, <strong>RSI (14)</strong>, <strong>ATR (14)</strong>, and <strong>Bollinger Bands (20, 2σ)</strong> for each symbol using the candle history.</div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="stage">
+    <div class="stage-header">
+      <span class="stage-icon">🔍</span>
+      <span class="stage-title">3. Detect Market Regime</span>
+      <span class="stage-badge">regime-detector.ts</span>
+    </div>
+    <div class="stage-body">Classifies each asset as <strong style="color:#22c55e">TRENDING</strong> or <strong style="color:#f59e0b">RANGING</strong> by checking EMA slope (≥ 0.5% per period) and whether ATR is expanding.</div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="stage">
+    <div class="stage-header">
+      <span class="stage-icon">⚡</span>
+      <span class="stage-title">4. Generate Signal</span>
+      <span class="stage-badge">signal-engine.ts</span>
+    </div>
+    <div class="stage-body">Picks the right strategy for each regime (see below), then produces a <strong>BUY / SELL / HOLD</strong> signal with a <strong>conviction score</strong> (0–1).</div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="stage">
+    <div class="stage-header">
+      <span class="stage-icon">📏</span>
+      <span class="stage-title">5. Size the Position</span>
+      <span class="stage-badge">position-sizer.ts</span>
+    </div>
+    <div class="stage-body">Uses <strong>Half-Kelly Criterion</strong> scaled by conviction score. Hard cap of <strong>5% of portfolio</strong> per trade. Whole shares for stocks, 6 decimals for crypto.</div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <div class="stage">
+    <div class="stage-header">
+      <span class="stage-icon">✅</span>
+      <span class="stage-title">6. Execute Trade</span>
+      <span class="stage-badge">trade-executor.ts</span>
+    </div>
+    <div class="stage-body">Calls the trading engine <strong>directly</strong> (no HTTP). Skips execution if signal is HOLD or position size is zero. Logs outcome.</div>
+  </div>
+
+</div>
+
+<!-- Strategy branch -->
+<div class="branch-section">
+  <div class="branch-title">Strategy Selection (Step 4)</div>
+  <div class="branch-grid">
+    <div class="branch-card trending">
+      <div class="branch-label">Trending Market</div>
+      <div class="branch-name">Momentum Strategy</div>
+      <div class="branch-rules">
+        <span class="buy">BUY</span> when price crosses above 20 EMA and RSI is 50–70<br>
+        <span class="sell">SELL</span> when price crosses below 20 EMA or RSI &gt; 80<br><br>
+        Conviction = EMA slope + RSI strength + volume surge
+      </div>
+    </div>
+    <div class="branch-card ranging">
+      <div class="branch-label">Ranging Market</div>
+      <div class="branch-name">Mean Reversion Strategy</div>
+      <div class="branch-rules">
+        <span class="buy">BUY</span> when price touches lower Bollinger Band and RSI &lt; 35<br>
+        <span class="sell">SELL</span> when price reaches middle band or RSI &gt; 65<br><br>
+        Conviction = distance to band + RSI oversold depth
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Risk controls -->
+<div class="risk-section">
+  <div class="section-label">Risk Controls</div>
+  <div class="risk-grid">
+    <div class="risk-card">
+      <div class="risk-value">5%</div>
+      <div class="risk-label">Max position size per trade</div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-value">30%</div>
+      <div class="risk-label">Max crypto allocation</div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-value">10</div>
+      <div class="risk-label">Max open positions</div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-value">2× ATR</div>
+      <div class="risk-label">Stop-loss per position</div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-value">15%</div>
+      <div class="risk-label">Drawdown circuit breaker</div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-value">3</div>
+      <div class="risk-label">Cron cycles paused after breaker</div>
+    </div>
+  </div>
+</div>
+
+<!-- Universe -->
+<div class="universe-section">
+  <div class="section-label">Trading Universe (41 Symbols)</div>
+  <div class="universe-grid">
+    <div class="universe-card">
+      <div class="universe-card-title">Tech (10)</div>
+      <div class="universe-pills">
+        <span class="pill stock">AAPL</span><span class="pill stock">MSFT</span><span class="pill stock">NVDA</span>
+        <span class="pill stock">GOOGL</span><span class="pill stock">META</span><span class="pill stock">AMD</span>
+        <span class="pill stock">ORCL</span><span class="pill stock">CRM</span><span class="pill stock">ADBE</span>
+        <span class="pill stock">INTC</span>
+      </div>
+    </div>
+    <div class="universe-card">
+      <div class="universe-card-title">Consumer (5)</div>
+      <div class="universe-pills">
+        <span class="pill stock">AMZN</span><span class="pill stock">TSLA</span><span class="pill stock">NFLX</span>
+        <span class="pill stock">DIS</span><span class="pill stock">NKE</span>
+      </div>
+    </div>
+    <div class="universe-card">
+      <div class="universe-card-title">Finance (5)</div>
+      <div class="universe-pills">
+        <span class="pill stock">JPM</span><span class="pill stock">V</span><span class="pill stock">GS</span>
+        <span class="pill stock">BAC</span><span class="pill stock">MA</span>
+      </div>
+    </div>
+    <div class="universe-card">
+      <div class="universe-card-title">Health + Energy (5)</div>
+      <div class="universe-pills">
+        <span class="pill stock">UNH</span><span class="pill stock">JNJ</span><span class="pill stock">PFE</span>
+        <span class="pill stock">XOM</span><span class="pill stock">CVX</span>
+      </div>
+    </div>
+    <div class="universe-card">
+      <div class="universe-card-title">Crypto (12)</div>
+      <div class="universe-pills">
+        <span class="pill crypto">BTC</span><span class="pill crypto">ETH</span><span class="pill crypto">SOL</span>
+        <span class="pill crypto">BNB</span><span class="pill crypto">XRP</span><span class="pill crypto">DOGE</span>
+        <span class="pill crypto">ADA</span><span class="pill crypto">AVAX</span><span class="pill crypto">LINK</span>
+        <span class="pill crypto">DOT</span><span class="pill crypto">LTC</span><span class="pill crypto">UNI</span>
+      </div>
+    </div>
+    <div class="universe-card">
+      <div class="universe-card-title">Commodity ETFs (5)</div>
+      <div class="universe-pills">
+        <span class="pill etf">GLD</span><span class="pill etf">SLV</span>
+        <span class="pill etf">USO</span><span class="pill etf">PDBC</span><span class="pill etf">CPER</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule -->
+<div class="schedule">
+  <div class="schedule-icon">🕘</div>
+  <div class="schedule-text">
+    <h3>Runs every day at 9:10pm (UK time)</h3>
+    <p>Triggered automatically by Vercel cron at 20:10 UTC. The full pipeline — fetch → indicators → regime → signal → size → execute — completes in a single serverless function call.</p>
+  </div>
+</div>
+
+</body>
+</html>
