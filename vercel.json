@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/bot",
-      "schedule": "30 9 * * *"
+      "schedule": "10 20 * * *"
     }
   ]
 }
