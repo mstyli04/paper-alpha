@@ -84,6 +84,7 @@ export interface LeaderboardEntry {
   totalPnl: number
   dailyPnl?: number
   dailyReturnPercent?: number
+  isBot?: boolean
 }
 
 export interface PortfolioSnapshot {

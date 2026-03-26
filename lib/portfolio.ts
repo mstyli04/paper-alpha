@@ -77,7 +77,7 @@ export async function getPortfolio(accountId: string): Promise<Portfolio> {
   }
 }
 
-type LeaderboardResult = { userId: string; username: string; avatarUrl?: string; totalValue: number; startingBalance: number; returnPercent: number; totalPnl: number; dailyPnl?: number; dailyReturnPercent?: number; rank: number }[]
+type LeaderboardResult = { userId: string; username: string; avatarUrl?: string; totalValue: number; startingBalance: number; returnPercent: number; totalPnl: number; dailyPnl?: number; dailyReturnPercent?: number; rank: number; isBot?: boolean }[]
 
 export async function getLeaderboard(): Promise<LeaderboardResult> {
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -139,6 +139,7 @@ export async function getLeaderboard(): Promise<LeaderboardResult> {
         totalPnl,
         dailyPnl,
         dailyReturnPercent,
+        isBot: account.isBot,
       }
     })
     .sort((a, b) => b.returnPercent - a.returnPercent)

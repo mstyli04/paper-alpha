@@ -13,6 +13,7 @@ model User {
   username  String   @unique
   email     String   @unique
   avatarUrl String?
+  isBot     Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -27,6 +28,7 @@ model PaperAccount {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   cashBalance     Decimal  @db.Decimal(20, 8)
   startingBalance Decimal  @db.Decimal(20, 8)
+  isBot           Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
