@@ -35,7 +35,10 @@ export async function getCandles(
     return getCommodityCandles(symbol, from, to)
   }
   if (assetType === 'CRYPTO') return getCryptoCandles(symbol, resolution, from, to)
-  const candles = await getStockCandles(symbol, resolution, from, to)
+  let candles: CandleData[] = []
+  try {
+    candles = await getStockCandles(symbol, resolution, from, to)
+  } catch { /* Finnhub unavailable on free tier — fall through to Yahoo */ }
   if (candles.length > 0) return candles
   return getStockCandlesYahoo(symbol, from, to, resolution)
 }
