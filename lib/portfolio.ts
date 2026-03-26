@@ -84,7 +84,7 @@ export async function getPortfolio(accountId: string): Promise<Portfolio> {
 const lastKnownPrices = new Map<string, number>()
 
 // Cache the full computed leaderboard for 90 s so repeat page loads are instant.
-type LeaderboardResult = { userId: string; username: string; avatarUrl?: string; totalValue: number; startingBalance: number; returnPercent: number; totalPnl: number; rank: number }[]
+type LeaderboardResult = { userId: string; username: string; avatarUrl?: string; totalValue: number; startingBalance: number; returnPercent: number; totalPnl: number; rank: number; isBot?: boolean }[]
 let leaderboardCache: { data: LeaderboardResult; at: number } | null = null
 const LEADERBOARD_TTL = 90_000
 
@@ -143,6 +143,7 @@ export async function getLeaderboard(): Promise<LeaderboardResult> {
         startingBalance,
         returnPercent,
         totalPnl,
+        isBot: account.isBot,
       }
     })
     .sort((a, b) => b.returnPercent - a.returnPercent)

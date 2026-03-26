@@ -82,6 +82,7 @@ export interface LeaderboardEntry {
   startingBalance: number
   returnPercent: number
   totalPnl: number
+  isBot?: boolean
 }
 
 export interface PortfolioSnapshot {

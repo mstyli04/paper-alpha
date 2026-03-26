@@ -44,6 +44,11 @@ export default function LeaderboardPage() {
                   <AvatarDisplay avatarUrl={entry.avatarUrl} username={entry.username} size={48} isOwner={entry.username === 'mstyli'} />
                 </div>
                 <p className="text-sm font-semibold text-text-primary truncate">{entry.username}</p>
+                {entry.isBot && (
+                  <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">
+                    BOT
+                  </span>
+                )}
                 <p className={`text-lg font-bold mt-1 ${entry.returnPercent >= 0 ? 'text-green' : 'text-red'}`}>
                   {formatPercent(entry.returnPercent)}
                 </p>
@@ -104,7 +109,14 @@ export default function LeaderboardPage() {
                         <AvatarDisplay avatarUrl={entry.avatarUrl} username={entry.username} size={32} isOwner={entry.username === 'mstyli'} />
                         <div>
                           <p className="font-medium text-text-primary hover:text-brand transition-colors">{entry.username}</p>
-                          {isMe && <span className="text-xs text-brand">You</span>}
+                          <div className="flex items-center gap-1.5">
+                            {isMe && <span className="text-xs text-brand">You</span>}
+                            {entry.isBot && (
+                              <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">
+                                BOT
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </Link>
                     </td>
