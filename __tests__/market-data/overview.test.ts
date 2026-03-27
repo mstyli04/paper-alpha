@@ -24,6 +24,10 @@ describe('sectorColor', () => {
     expect(sectorColor(-3)).toBe('bg-red text-white')
     expect(sectorColor(-2.1)).toBe('bg-red text-white')
   })
+  it('handles exact boundaries at ±2%', () => {
+    expect(sectorColor(2)).toBe('bg-green text-white')   // >= 2 → strong green
+    expect(sectorColor(-2)).toBe('bg-red text-white')    // <= -2 → strong red
+  })
 })
 
 describe('pickMovers', () => {
@@ -54,5 +58,22 @@ describe('pickMovers', () => {
   it('handles n larger than array length gracefully', () => {
     const { gainers } = pickMovers(data, 10)
     expect(gainers.length).toBeLessThanOrEqual(data.length)
+  })
+
+  it('returns fewer losers than n when 2n > array length, with no overlap', () => {
+    const small: MoverData[] = [
+      { symbol: 'A', price: 10, changePercent: 5.0 },
+      { symbol: 'B', price: 20, changePercent: 2.0 },
+      { symbol: 'C', price: 30, changePercent: -1.0 },
+      { symbol: 'D', price: 40, changePercent: -3.0 },
+    ]
+    const { gainers, losers } = pickMovers(small, 3)
+    // Gainers take top 3: A, B, C
+    expect(gainers.map(m => m.symbol)).toEqual(['A', 'B', 'C'])
+    // Only 1 item remains for losers: D
+    expect(losers.map(m => m.symbol)).toEqual(['D'])
+    // No symbol appears in both lists
+    const gainerSymbols = new Set(gainers.map(m => m.symbol))
+    expect(losers.every(m => !gainerSymbols.has(m.symbol))).toBe(true)
   })
 })
