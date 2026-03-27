@@ -1,7 +1,8 @@
 import type { Quote, CandleData, SearchResult, TrendingAsset } from '@/types'
 import type { CandleResolution } from './types'
 import { getStockQuote, getStockCandles, searchStocks, getTrendingStocks } from './finnhub'
-import { getCryptoQuote, getCryptoCandles, searchCrypto, getTrendingCrypto, getCryptoSymbols } from './coingecko'
+import { searchCrypto, getTrendingCrypto, getCryptoSymbols } from './coingecko'
+import { getBinanceCryptoQuote, getBinanceCryptoCandles } from './binance'
 import {
   getCommodityQuote,
   getCommodityCandles,
@@ -19,7 +20,7 @@ export async function isCrypto(symbol: string): Promise<boolean> {
 export async function getQuote(symbol: string, assetType?: 'STOCK' | 'CRYPTO' | 'COMMODITY'): Promise<Quote> {
   if (assetType === 'COMMODITY' || isCommoditySymbol(symbol)) return getCommodityQuote(symbol)
   const type = assetType ?? ((await isCrypto(symbol)) ? 'CRYPTO' : 'STOCK')
-  if (type === 'CRYPTO') return getCryptoQuote(symbol)
+  if (type === 'CRYPTO') return getBinanceCryptoQuote(symbol)
   return getStockQuote(symbol)
 }
 
@@ -34,7 +35,7 @@ export async function getCandles(
     if (resolution === '1') return getCommodityIntradayCandles(symbol)
     return getCommodityCandles(symbol, from, to)
   }
-  if (assetType === 'CRYPTO') return getCryptoCandles(symbol, resolution, from, to)
+  if (assetType === 'CRYPTO') return getBinanceCryptoCandles(symbol, from, to)
   let candles: CandleData[] = []
   try {
     candles = await getStockCandles(symbol, resolution, from, to)
