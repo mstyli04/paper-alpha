@@ -1,45 +1,30 @@
-// lib/market-data/binance.ts
-// Binance public API — no API key required, 1200 req/min rate limit.
+// lib/market-data/crypto-yahoo.ts
+// Uses Yahoo Finance for crypto data — no API key, works on all servers.
 import type { Quote, CandleData } from '@/types'
+import YahooFinance from 'yahoo-finance2'
 
-const BASE_URL = 'https://api.binance.com/api/v3'
+const yf = new YahooFinance()
 
-function toUSDT(symbol: string): string {
-  return `${symbol.toUpperCase()}USDT`
-}
-
-async function request<T>(path: string, params: Record<string, string> = {}): Promise<T> {
-  const url = new URL(`${BASE_URL}${path}`)
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
-  const res = await fetch(url.toString(), { next: { revalidate: 30 } })
-  if (!res.ok) throw new Error(`Binance error: ${res.status}`)
-  return res.json()
+function toYahooSymbol(symbol: string): string {
+  return `${symbol.toUpperCase()}-USD`
 }
 
 export async function getBinanceCryptoQuote(symbol: string): Promise<Quote> {
-  const ticker = await request<{
-    symbol: string
-    lastPrice: string
-    priceChange: string
-    priceChangePercent: string
-    highPrice: string
-    lowPrice: string
-    openPrice: string
-    volume: string
-  }>('/ticker/24hr', { symbol: toUSDT(symbol) })
-
-  const open = parseFloat(ticker.openPrice)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await (yf as any).quote(toYahooSymbol(symbol), {}, { validateResult: false })
+  const price = result?.regularMarketPrice ?? 0
+  const open = result?.regularMarketOpen ?? price
   return {
     symbol,
-    name: symbol,
-    price: parseFloat(ticker.lastPrice),
-    change: parseFloat(ticker.priceChange),
-    changePercent: parseFloat(ticker.priceChangePercent),
-    high: parseFloat(ticker.highPrice),
-    low: parseFloat(ticker.lowPrice),
+    name: result?.longName ?? result?.shortName ?? symbol,
+    price,
+    change: result?.regularMarketChange ?? 0,
+    changePercent: result?.regularMarketChangePercent ?? 0,
+    high: result?.regularMarketDayHigh ?? price,
+    low: result?.regularMarketDayLow ?? price,
     open,
-    previousClose: open,
-    volume: parseFloat(ticker.volume),
+    previousClose: result?.regularMarketPreviousClose ?? open,
+    volume: result?.regularMarketVolume ?? 0,
     assetType: 'CRYPTO',
     timestamp: Date.now(),
   }
@@ -50,23 +35,23 @@ export async function getBinanceCryptoCandles(
   from: number,
   to: number
 ): Promise<CandleData[]> {
-  const limit = Math.min(Math.ceil((to - from) / 86400) + 2, 100)
-  const klines = await request<Array<[
-    number, string, string, string, string, string, number, string, number
-  ]>>('/klines', {
-    symbol: toUSDT(symbol),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await (yf as any).chart(toYahooSymbol(symbol), {
+    period1: new Date(from * 1000),
+    period2: new Date(to * 1000),
     interval: '1d',
-    startTime: String(from * 1000),
-    endTime: String(to * 1000),
-    limit: String(limit),
-  })
+  }, { validateResult: false })
 
-  return klines.map(k => ({
-    time: Math.floor(k[0] / 1000),
-    open: parseFloat(k[1]),
-    high: parseFloat(k[2]),
-    low: parseFloat(k[3]),
-    close: parseFloat(k[4]),
-    volume: parseFloat(k[5]),
-  }))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const quotes = (result as any)?.quotes ?? []
+  return quotes
+    .filter((q: { close: number | null }) => q.close !== null)
+    .map((q: { date: Date; open: number; high: number; low: number; close: number; volume: number }) => ({
+      time: Math.floor(new Date(q.date).getTime() / 1000),
+      open: q.open ?? q.close,
+      high: q.high ?? q.close,
+      low: q.low ?? q.close,
+      close: q.close,
+      volume: q.volume ?? 0,
+    }))
 }
