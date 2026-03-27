@@ -3,14 +3,17 @@
 import { CorrelationHeatmap } from '@/components/markets/correlation-heatmap'
 import { Screener } from '@/components/markets/screener'
 import { EarningsCalendar } from '@/components/markets/earnings-calendar'
+import { MarketOverview } from '@/components/markets/market-overview'
 
 export default function AnalysisPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-text-primary">Analysis</h1>
-        <p className="text-text-muted text-sm mt-1">Screener, correlation and market events</p>
+        <p className="text-text-muted text-sm mt-1">Market overview, screener, and market events</p>
       </div>
+
+      <MarketOverview />
 
       <Screener />
 
