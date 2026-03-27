@@ -10,8 +10,8 @@ export async function GET() {
 
   try {
     const data = await getTrending()
-    return NextResponse.json(data, { headers: { 'Cache-Control': 's-maxage=30' } })
+    return NextResponse.json(data, { headers: { 'Cache-Control': 's-maxage=120, stale-while-revalidate=300' } })
   } catch {
-    return NextResponse.json({ stocks: [], crypto: [], commodities: [] })
+    return NextResponse.json({ stocks: [], crypto: [], commodities: [] }, { headers: { 'Cache-Control': 's-maxage=120, stale-while-revalidate=300' } })
   }
 }

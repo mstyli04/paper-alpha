@@ -182,9 +182,8 @@ async function request<T>(path: string, params: Record<string, string> = {}): Pr
     headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY
   }
 
-  // 30-second cache: prevents rate limit errors when multiple parts of the app
-  // (markets, portfolio, trading engine) request the same price simultaneously.
-  const res = await fetch(url.toString(), { headers, next: { revalidate: 30 } })
+  // 2-minute cache: reduces rate limit exposure on unauthenticated free tier.
+  const res = await fetch(url.toString(), { headers, next: { revalidate: 120 } })
   if (res.status === 429) throw new Error('CoinGecko rate limit exceeded')
   if (!res.ok) throw new Error(`CoinGecko error: ${res.status}`)
   return res.json()
