@@ -57,7 +57,7 @@ async function fetchQuote(ticker: string): Promise<any> {
 }
 
 export function sectorColor(changePercent: number): string {
-  if (changePercent >= 2)    return 'bg-green text-white'
+  if (changePercent > 2)     return 'bg-green text-white'
   if (changePercent >= 0.5)  return 'bg-green/20 text-green'
   if (changePercent >= -0.5) return 'bg-surface-2 text-text-muted'
   if (changePercent > -2)    return 'bg-red/20 text-red'

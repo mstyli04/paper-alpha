@@ -25,7 +25,7 @@ describe('sectorColor', () => {
     expect(sectorColor(-2.1)).toBe('bg-red text-white')
   })
   it('handles exact boundaries at ±2%', () => {
-    expect(sectorColor(2)).toBe('bg-green text-white')   // >= 2 → strong green
+    expect(sectorColor(2)).toBe('bg-green/20 text-green')   // > 2 exclusive → light green
     expect(sectorColor(-2)).toBe('bg-red text-white')    // <= -2 → strong red
   })
 })
