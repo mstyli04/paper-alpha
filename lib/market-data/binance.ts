@@ -28,6 +28,7 @@ export async function getBinanceCryptoQuote(symbol: string): Promise<Quote> {
     volume: string
   }>('/ticker/24hr', { symbol: toUSDT(symbol) })
 
+  const open = parseFloat(ticker.openPrice)
   return {
     symbol,
     name: symbol,
@@ -36,7 +37,8 @@ export async function getBinanceCryptoQuote(symbol: string): Promise<Quote> {
     changePercent: parseFloat(ticker.priceChangePercent),
     high: parseFloat(ticker.highPrice),
     low: parseFloat(ticker.lowPrice),
-    open: parseFloat(ticker.openPrice),
+    open,
+    previousClose: open,
     volume: parseFloat(ticker.volume),
     assetType: 'CRYPTO',
     timestamp: Date.now(),
