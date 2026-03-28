@@ -1,10 +1,11 @@
 import { db } from '@/lib/db'
 import { getQuote } from '@/lib/market-data'
 import { UNIVERSE } from './universe'
-import { fetchBotCandles } from './market-data'
+import { fetchBotCandles, fetchBotCandlesWeekly } from './market-data'
 import { generateSignal } from './signal-engine'
 import { calculatePositionSize } from './position-sizer'
 import { executeSignal } from './trade-executor'
+import { getSentimentScore, clearSentimentCache } from './sentiment'
 import { atr } from './indicators'
 import type { AssetType } from '@/types'
 import type { Trade } from '@prisma/client'
@@ -26,6 +27,7 @@ export interface BotRunResult {
 }
 
 export async function runBot(botAccountId: string): Promise<BotRunResult> {
+  clearSentimentCache()
   const errors: string[] = []
   let tradesExecuted = 0
   let skipped = 0
@@ -105,7 +107,9 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
     const candles = await fetchBotCandles(asset.symbol, asset.assetType)
     if (candles.length < 30) { skipped++; continue }
 
-    const signal = generateSignal(asset.symbol, candles, isHeld)
+    const weeklyCandles  = await fetchBotCandlesWeekly(asset.symbol, asset.assetType)
+    const sentimentScore = await getSentimentScore(asset.symbol, candles)
+    const signal = generateSignal(asset.symbol, candles, weeklyCandles, sentimentScore, isHeld)
 
     // SELL
     if (signal.action === 'SELL' && isHeld && holding) {
