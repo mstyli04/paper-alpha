@@ -11,6 +11,7 @@ export interface Signal {
   conviction: number  // 0.0–1.0
   strategy: 'MOMENTUM' | 'MEAN_REVERSION' | 'BREAKOUT'
   regime: Regime
+  reason?: string     // human-readable sentence; set on BUY/SELL, empty/undefined on HOLD
 }
 
 function clamp(v: number, min: number, max: number): number {
@@ -24,7 +25,7 @@ function momentumSignal(
   volumes: number[],
   isHeld: boolean
 ): Signal {
-  const base: Signal = { symbol, action: 'HOLD', conviction: 0, strategy: 'MOMENTUM', regime: 'TRENDING' }
+  const base: Signal = { symbol, action: 'HOLD', conviction: 0, strategy: 'MOMENTUM', regime: 'TRENDING', reason: '' }
   const emaValues  = ema(closes, 20)
   const rsiValues  = rsi(closes, 14)
   const macdValues = macd(closes)
@@ -39,7 +40,7 @@ function momentumSignal(
   const prevEma   = emaValues[emaValues.length - 2]
   const currRsi   = rsiValues[rsiValues.length - 1]
   const slope     = emaSlope(emaValues)
-  const currAdx   = adxValues.length > 0 ? adxValues[adxValues.length - 1].adx : 0
+  const currAdx   = adxValues[adxValues.length - 1].adx
 
   const crossedAbove       = prevPrice <= prevEma && price > currEma
   const crossedBelow       = prevPrice >= prevEma && price < currEma
@@ -48,7 +49,10 @@ function momentumSignal(
     : false
 
   if (isHeld && (crossedBelow || currRsi > 80)) {
-    return { ...base, action: 'SELL', conviction: clamp((currRsi - 50) / 30, 0, 1) }
+    const parts: string[] = []
+    if (crossedBelow) parts.push('price crossed below the 20 EMA')
+    if (currRsi > 80) parts.push(`RSI hit ${Math.round(currRsi)} (overbought)`)
+    return { ...base, action: 'SELL', conviction: clamp((currRsi - 50) / 30, 0, 1), reason: `Sold — ${parts.join(' and ')}.` }
   }
 
   const entryTrigger = crossedAbove || macdTurnedPositive
@@ -62,7 +66,13 @@ function momentumSignal(
     const volScore   = avg20Vol > 0 ? clamp(currVol / avg20Vol - 1, 0, 1) : 0
     const adxScore   = clamp((currAdx - 20) / 30, 0, 1)
     const conviction = 0.3 * emaScore + 0.3 * rsiScore + 0.2 * volScore + 0.2 * adxScore
-    return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1) }
+
+    const triggers: string[] = []
+    if (crossedAbove) triggers.push('price crossed above the 20 EMA')
+    if (macdTurnedPositive) triggers.push('MACD turned positive')
+    const reason = `Bought in a trending market — ${triggers.join(' and ')} and RSI was ${Math.round(currRsi)}.`
+
+    return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1), reason }
   }
 
   return base
@@ -73,7 +83,7 @@ function meanReversionSignal(
   closes: number[],
   isHeld: boolean
 ): Signal {
-  const base: Signal = { symbol, action: 'HOLD', conviction: 0, strategy: 'MEAN_REVERSION', regime: 'RANGING' }
+  const base: Signal = { symbol, action: 'HOLD', conviction: 0, strategy: 'MEAN_REVERSION', regime: 'RANGING', reason: '' }
   const bands     = bollingerBands(closes, 20, 2)
   const rsiValues = rsi(closes, 14)
   if (bands.length < 1 || rsiValues.length < 1) return base
@@ -83,14 +93,18 @@ function meanReversionSignal(
   const currRsi = rsiValues[rsiValues.length - 1]
 
   if (isHeld && (price >= band.middle || currRsi > 65)) {
-    return { ...base, action: 'SELL', conviction: 0.7 }
+    const parts: string[] = []
+    if (price >= band.middle) parts.push('price reached the middle Bollinger Band')
+    if (currRsi > 65) parts.push(`RSI hit ${Math.round(currRsi)} (overbought)`)
+    return { ...base, action: 'SELL', conviction: 0.7, reason: `Sold — ${parts.join(' and ')}.` }
   }
 
   if (!isHeld && price <= band.lower * 1.05 && currRsi < 50) {
     const bandScore  = clamp((band.lower * 1.05 - price) / (band.lower * 0.05), 0, 1)
     const rsiScore   = clamp((50 - currRsi) / 50, 0, 1)
     const conviction = 0.5 * bandScore + 0.5 * rsiScore
-    return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1) }
+    const reason     = `Bought near the lower Bollinger Band — RSI was ${Math.round(currRsi)} in a ranging market.`
+    return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1), reason }
   }
 
   return base
@@ -103,7 +117,7 @@ function breakoutSignal(
   volumes: number[],
   isHeld: boolean
 ): Signal {
-  const base: Signal = { symbol, action: 'HOLD', conviction: 0, strategy: 'BREAKOUT', regime: 'BREAKOUT' }
+  const base: Signal = { symbol, action: 'HOLD', conviction: 0, strategy: 'BREAKOUT', regime: 'BREAKOUT', reason: '' }
   const bands     = bollingerBands(closes, 20, 2)
   const rsiValues = rsi(closes, 14)
   const adxValues = adx(candles)
@@ -113,11 +127,13 @@ function breakoutSignal(
   const price   = closes[closes.length - 1]
   const band    = bands[bands.length - 1]
   const currRsi = rsiValues[rsiValues.length - 1]
-  const currAdx = adxValues.length > 0 ? adxValues[adxValues.length - 1].adx : 0
+  const currAdx = adxValues[adxValues.length - 1].adx
 
-  // Sell when the breakout fails (price falls back inside bands) or RSI overextended
   if (isHeld && (price < band.upper * 0.98 || currRsi > 80)) {
-    return { ...base, action: 'SELL', conviction: 0.8 }
+    const parts: string[] = []
+    if (price < band.upper * 0.98) parts.push('price closed back inside Bollinger Bands')
+    if (currRsi > 80) parts.push(`RSI hit ${Math.round(currRsi)} (overbought)`)
+    return { ...base, action: 'SELL', conviction: 0.8, reason: `Sold — ${parts.join(' and ')}.` }
   }
 
   const avg20Vol = volumes.length >= 21
@@ -129,16 +145,14 @@ function breakoutSignal(
     const volSurge   = clamp((currVol / avg20Vol - 1) / 2, 0, 1)
     const adxScore   = clamp((currAdx - 20) / 30, 0, 1)
     const conviction = 0.6 * volSurge + 0.4 * adxScore
-    return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1) }
+    const reason     = `Bought on a volatility breakout — price cleared the upper Bollinger Band on ${(currVol / avg20Vol).toFixed(1)}× average volume. ADX was ${Math.round(currAdx)}.`
+    return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1), reason }
   }
 
   return base
 }
 
 function applyWeeklyGate(signal: Signal, weeklyCandles: CandleData[]): Signal {
-  // Fewer than 15 weekly candles = insufficient data; gate is bypassed (no-op)
-  // This also handles the case where weekly fetch failed — callers should be aware
-  // that a failed weekly fetch will not block trades.
   if (signal.action !== 'BUY' || weeklyCandles.length < 15) return signal
 
   const weeklyCloses = weeklyCandles.map(c => c.close)
@@ -147,15 +161,15 @@ function applyWeeklyGate(signal: Signal, weeklyCandles: CandleData[]): Signal {
 
   const weeklySlope = emaSlope(weeklyEma)
 
-  if (weeklySlope < -0.002) return { ...signal, action: 'HOLD', conviction: 0 }
-  if (weeklySlope > 0.001)  return { ...signal, conviction: clamp(signal.conviction + 0.1, 0, 1) }
-  return signal
+  if (weeklySlope < -0.002) return { ...signal, action: 'HOLD', conviction: 0, reason: '' }
+  if (weeklySlope > 0.001)  return { ...signal, conviction: clamp(signal.conviction + 0.1, 0, 1), reason: `${signal.reason} Weekly trend was up.` }
+  return { ...signal, reason: `${signal.reason} Weekly trend was neutral.` }
 }
 
 function applySentiment(signal: Signal, sentimentScore: number): Signal {
   if (signal.action !== 'BUY') return signal
-  if (sentimentScore > 0.3)  return { ...signal, conviction: clamp(signal.conviction * 1.2, 0, 1) }
-  if (sentimentScore < -0.3) return { ...signal, conviction: signal.conviction * 0.7 }
+  if (sentimentScore > 0.3)  return { ...signal, conviction: clamp(signal.conviction * 1.2, 0, 1), reason: `${signal.reason} Sentiment was bullish (+${sentimentScore.toFixed(2)}).` }
+  if (sentimentScore < -0.3) return { ...signal, conviction: signal.conviction * 0.7,              reason: `${signal.reason} Sentiment was bearish (${sentimentScore.toFixed(2)}).` }
   return signal
 }
 
@@ -186,5 +200,11 @@ export function generateSignal(
 
   signal = applyWeeklyGate(signal, weeklyCandles)
   signal = applySentiment(signal, sentimentScore)
+
+  // Append final conviction to BUY reasons after all modifiers have run
+  if (signal.action === 'BUY') {
+    signal = { ...signal, reason: `${signal.reason} Conviction: ${signal.conviction.toFixed(2)}.` }
+  }
+
   return signal
 }
