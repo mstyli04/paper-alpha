@@ -31,6 +31,7 @@ function momentumSignal(
   const adxValues  = adx(candles)
 
   if (emaValues.length < 2 || rsiValues.length < 1) return base
+  if (adxValues.length < 1) return base
 
   const price     = closes[closes.length - 1]
   const prevPrice = closes[closes.length - 2]
@@ -107,6 +108,7 @@ function breakoutSignal(
   const rsiValues = rsi(closes, 14)
   const adxValues = adx(candles)
   if (bands.length < 1 || rsiValues.length < 1) return base
+  if (adxValues.length < 1) return base
 
   const price   = closes[closes.length - 1]
   const band    = bands[bands.length - 1]
@@ -114,7 +116,7 @@ function breakoutSignal(
   const currAdx = adxValues.length > 0 ? adxValues[adxValues.length - 1].adx : 0
 
   // Sell when the breakout fails (price falls back inside bands) or RSI overextended
-  if (isHeld && (price < band.upper || currRsi > 80)) {
+  if (isHeld && (price < band.upper * 0.98 || currRsi > 80)) {
     return { ...base, action: 'SELL', conviction: 0.8 }
   }
 
@@ -134,6 +136,9 @@ function breakoutSignal(
 }
 
 function applyWeeklyGate(signal: Signal, weeklyCandles: CandleData[]): Signal {
+  // Fewer than 15 weekly candles = insufficient data; gate is bypassed (no-op)
+  // This also handles the case where weekly fetch failed — callers should be aware
+  // that a failed weekly fetch will not block trades.
   if (signal.action !== 'BUY' || weeklyCandles.length < 15) return signal
 
   const weeklyCloses = weeklyCandles.map(c => c.close)

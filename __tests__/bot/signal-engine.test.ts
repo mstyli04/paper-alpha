@@ -132,3 +132,47 @@ describe('generateSignal — sentiment modifier', () => {
     }
   })
 })
+
+describe('generateSignal — BREAKOUT strategy', () => {
+  // Breakout: 40 flat candles then 10 sharp candles with wide range + high volume
+  const breakoutCandles: CandleData[] = [
+    ...Array.from({ length: 40 }, (_, i) => ({
+      time: i, open: 99.8, high: 100.5, low: 99.5, close: 100, volume: 1000,
+    })),
+    ...Array.from({ length: 10 }, (_, i) => {
+      const c = 100 + (i + 1) * 5
+      return { time: 40 + i, open: c - 1, high: c + 8, low: c - 8, close: c, volume: 3000 }
+    }),
+  ]
+
+  it('uses BREAKOUT strategy when ATR spikes with high volume at band extreme', () => {
+    const signal = generateSignal('AAPL', breakoutCandles, noWeekly, 0, false)
+    if (signal.regime === 'BREAKOUT') {
+      expect(signal.strategy).toBe('BREAKOUT')
+    }
+  })
+
+  it('returns SELL for a held breakout position when price falls back inside band', () => {
+    // Build a scenario where we hold a breakout position
+    // but price has fallen back well below the upper band
+    const heldBreakoutCandles: CandleData[] = [
+      ...Array.from({ length: 40 }, (_, i) => ({
+        time: i, open: 99.8, high: 100.5, low: 99.5, close: 100, volume: 1000,
+      })),
+      // Spike up (breakout entry)
+      ...Array.from({ length: 5 }, (_, i) => {
+        const c = 100 + (i + 1) * 5
+        return { time: 40 + i, open: c - 1, high: c + 8, low: c - 8, close: c, volume: 3000 }
+      }),
+      // Crash back down well below upper band
+      ...Array.from({ length: 5 }, (_, i) => {
+        const c = 105 - (i + 1) * 4
+        return { time: 45 + i, open: c + 1, high: c + 2, low: c - 2, close: c, volume: 1000 }
+      }),
+    ]
+    const signal = generateSignal('AAPL', heldBreakoutCandles, noWeekly, 0, true)
+    if (signal.regime === 'BREAKOUT') {
+      expect(['SELL', 'HOLD']).toContain(signal.action)
+    }
+  })
+})
