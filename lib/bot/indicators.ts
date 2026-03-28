@@ -123,9 +123,9 @@ export interface ADXResult {
   minusDI: number
 }
 
-/** Wilder ADX (default period 14). Requires at least period*2+1 candles. */
+/** Wilder ADX (default period 14). Requires at least period*2 candles. */
 export function adx(candles: CandleData[], period = 14): ADXResult[] {
-  if (candles.length < period * 2 + 1) return []
+  if (candles.length < period * 2) return []
 
   const plusDM: number[] = []
   const minusDM: number[] = []
