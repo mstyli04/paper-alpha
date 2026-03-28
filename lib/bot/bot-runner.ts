@@ -103,11 +103,13 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
     const isHeld    = !!holding && Number(holding.quantity) > 0
     const openCount = account.holdings.filter(h => Number(h.quantity) > 0).length
 
-    await sleep(300)
+    await sleep(200)
     const candles = await fetchBotCandles(asset.symbol, asset.assetType)
     if (candles.length < 30) { skipped++; continue }
 
+    await sleep(200)
     const weeklyCandles  = await fetchBotCandlesWeekly(asset.symbol, asset.assetType)
+    await sleep(200)
     const sentimentScore = await getSentimentScore(asset.symbol, candles)
     const signal = generateSignal(asset.symbol, candles, weeklyCandles, sentimentScore, isHeld)
 
