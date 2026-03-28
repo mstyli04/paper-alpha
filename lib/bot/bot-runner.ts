@@ -90,7 +90,10 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
           where: { id: stop.id },
           data: { status: result.success ? 'TRIGGERED' : 'FAILED', triggeredAt: new Date() },
         })
-        if (result.success) tradesExecuted++
+        if (result.success) {
+          tradesExecuted++
+          holdingMap.delete(stop.symbol)
+        }
       }
     } catch {
       // skip — retry next cycle

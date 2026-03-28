@@ -21,8 +21,9 @@ export async function fetchBotCandles(
 }
 
 /** Fetch ~52 weekly OHLCV candles for a symbol. Returns empty array on failure.
- * Note: only STOCK assets support weekly resolution. CRYPTO and COMMODITY
- * providers ignore resolution — this function returns [] for those types. */
+ * Note: only STOCK assets support weekly resolution. Returns [] for CRYPTO and
+ * COMMODITY since their data providers do not support weekly candles. This means
+ * the weekly trend gate in signal-engine.ts is bypassed for all non-STOCK assets. */
 export async function fetchBotCandlesWeekly(
   symbol: string,
   assetType: AssetType
