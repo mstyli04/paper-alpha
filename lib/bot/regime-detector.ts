@@ -4,7 +4,9 @@ import { ema, atr, emaSlope, bollingerBands } from './indicators'
 
 export type Regime = 'TRENDING' | 'RANGING' | 'BREAKOUT'
 
-const EMA_SLOPE_THRESHOLD = 0.003  // 0.3% per period
+// 0.3% per period — raised from 0.001 to prevent slow oscillating markets
+// from being misclassified as TRENDING (sine-wave slope ~0.0012)
+const EMA_SLOPE_THRESHOLD = 0.003
 
 export function detectRegime(candles: CandleData[]): Regime {
   if (candles.length < 35) return 'RANGING'
@@ -24,7 +26,7 @@ export function detectRegime(candles: CandleData[]): Regime {
   const price        = closes[closes.length - 1]
   const band         = bands[bands.length - 1]
   const nearUpperBand = price >= band.upper * 0.98
-  const nearLowerBand = price <= band.lower * 1.02
+  const nearLowerBand = price <= band.lower + Math.abs(band.lower) * 0.02
 
   if (atrSpike && (nearUpperBand || nearLowerBand)) return 'BREAKOUT'
 
