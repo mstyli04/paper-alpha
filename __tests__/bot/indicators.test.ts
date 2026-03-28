@@ -1,6 +1,6 @@
 // __tests__/bot/indicators.test.ts
 import { describe, it, expect } from 'vitest'
-import { ema, rsi, atr, bollingerBands, emaSlope } from '@/lib/bot/indicators'
+import { ema, rsi, atr, bollingerBands, emaSlope, macd, adx, type MACDResult, type ADXResult } from '@/lib/bot/indicators'
 import type { CandleData } from '@/types'
 
 // 30 synthetic closes: gentle up trend
@@ -111,5 +111,77 @@ describe('emaSlope', () => {
 
   it('returns negative slope for falling EMA', () => {
     expect(emaSlope([101, 100])).toBeLessThan(0)
+  })
+})
+
+describe('macd', () => {
+  it('returns empty array when not enough data', () => {
+    expect(macd(closes30.slice(0, 10))).toEqual([])
+  })
+
+  it('returns MACDResult objects with macd, signal, histogram', () => {
+    const closes50 = Array.from({ length: 50 }, (_, i) => 100 + i * 0.5)
+    const result = macd(closes50)
+    expect(result.length).toBeGreaterThan(0)
+    expect(result[0]).toHaveProperty('macd')
+    expect(result[0]).toHaveProperty('signal')
+    expect(result[0]).toHaveProperty('histogram')
+  })
+
+  it('histogram equals macd minus signal', () => {
+    const closes50 = Array.from({ length: 50 }, (_, i) => 100 + i * 0.5)
+    const result = macd(closes50)
+    result.forEach(r => {
+      expect(r.histogram).toBeCloseTo(r.macd - r.signal, 8)
+    })
+  })
+
+  it('histogram is positive in a strong uptrend', () => {
+    const closes50 = Array.from({ length: 50 }, (_, i) => 100 * Math.pow(1.02, i))
+    const result = macd(closes50)
+    expect(result[result.length - 1].histogram).toBeGreaterThan(0)
+  })
+})
+
+describe('adx', () => {
+  const candles50: CandleData[] = Array.from({ length: 50 }, (_, i) => {
+    const c = 100 + i * 0.5
+    return { time: i, open: c - 0.2, high: c + 1, low: c - 1, close: c, volume: 1000 }
+  })
+
+  it('returns empty array when not enough candles', () => {
+    expect(adx(candles50.slice(0, 10))).toEqual([])
+  })
+
+  it('returns ADXResult objects with adx, plusDI, minusDI', () => {
+    const result = adx(candles50)
+    expect(result.length).toBeGreaterThan(0)
+    expect(result[0]).toHaveProperty('adx')
+    expect(result[0]).toHaveProperty('plusDI')
+    expect(result[0]).toHaveProperty('minusDI')
+  })
+
+  it('ADX is between 0 and 100', () => {
+    const result = adx(candles50)
+    result.forEach(r => {
+      expect(r.adx).toBeGreaterThanOrEqual(0)
+      expect(r.adx).toBeLessThanOrEqual(100)
+    })
+  })
+
+  it('ADX is higher in a strong trend than in a ranging market', () => {
+    const trendCandles: CandleData[] = Array.from({ length: 50 }, (_, i) => {
+      const c = 100 * Math.pow(1.01, i)
+      return { time: i, open: c - 0.5, high: c + 2, low: c - 2, close: c, volume: 1000 }
+    })
+    const rangingCandles: CandleData[] = Array.from({ length: 50 }, (_, i) => {
+      const c = 100 + Math.sin(i * 0.4) * 1.5
+      return { time: i, open: c - 0.5, high: c + 2, low: c - 2, close: c, volume: 1000 }
+    })
+    const trendAdx = adx(trendCandles)
+    const rangingAdx = adx(rangingCandles)
+    const trendLast = trendAdx[trendAdx.length - 1].adx
+    const rangingLast = rangingAdx[rangingAdx.length - 1].adx
+    expect(trendLast).toBeGreaterThan(rangingLast)
   })
 })
