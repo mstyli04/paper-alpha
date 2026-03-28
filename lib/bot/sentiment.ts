@@ -19,6 +19,7 @@ export async function getSentimentScore(
   symbol: string,
   candles: CandleData[]
 ): Promise<number> {
+  if (candles.length === 0) return 0
   if (cache.has(symbol)) return cache.get(symbol)!
 
   const recent  = candles.slice(-5)
@@ -44,9 +45,11 @@ export async function getSentimentScore(
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const text   = message.content[0].type === 'text' ? message.content[0].text.trim() : ''
-    const parsed = JSON.parse(text)
-    const score  = Math.max(-1, Math.min(1, Number(parsed.score) || 0))
+    const raw_text = message.content[0].type === 'text' ? message.content[0].text.trim() : ''
+    const jsonMatch = raw_text.match(/\{[\s\S]*\}/)
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw_text)
+    const raw    = Number(parsed.score)
+    const score  = Math.max(-1, Math.min(1, Number.isFinite(raw) ? raw : 0))
     cache.set(symbol, score)
     return score
   } catch {

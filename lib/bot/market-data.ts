@@ -20,11 +20,15 @@ export async function fetchBotCandles(
   }
 }
 
-/** Fetch ~52 weekly OHLCV candles for a symbol. Returns empty array on failure. */
+/** Fetch ~52 weekly OHLCV candles for a symbol. Returns empty array on failure.
+ * Note: only STOCK assets support weekly resolution. CRYPTO and COMMODITY
+ * providers ignore resolution — this function returns [] for those types. */
 export async function fetchBotCandlesWeekly(
   symbol: string,
   assetType: AssetType
 ): Promise<CandleData[]> {
+  if (assetType !== 'STOCK') return []
+
   const to   = Math.floor(Date.now() / 1000)
   const from = to - WEEKLY_CANDLE_WEEKS * 7 * 24 * 60 * 60
 
