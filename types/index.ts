@@ -70,6 +70,7 @@ export interface TradeRecord {
   price: number
   totalValue: number
   note: string | null
+  reason: string | null
   createdAt: string
 }
 
