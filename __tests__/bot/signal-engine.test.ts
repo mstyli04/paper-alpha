@@ -1,6 +1,7 @@
 // __tests__/bot/signal-engine.test.ts
 import { describe, it, expect } from 'vitest'
 import { generateSignal } from '@/lib/bot/signal-engine'
+import { ema } from '@/lib/bot/indicators'
 import type { CandleData } from '@/types'
 
 function makeCandles(closes: number[], highLowSpread = 2, volumeMultiplier = 1): CandleData[] {
@@ -179,15 +180,26 @@ describe('generateSignal — BREAKOUT strategy', () => {
 
 // --- Reason string tests ---
 
-// Candles that produce a momentum BUY: price just crossed above EMA with RSI ~55, ADX ~30
+// Candles that produce a momentum BUY: 35-bar uptrend (1%/bar), then price touches the
+// 20 EMA on bar 36, then a strong up bar on bar 37 crosses above — RSI ~64, ADX ~89.
 const momentumBuyCandles = (() => {
   const closes: number[] = []
-  for (let i = 0; i < 40; i++) closes.push(100 * Math.pow(1.008, i))
-  const peakEma = closes[39]
-  for (let i = 0; i < 8; i++) closes.push(peakEma * 0.97 - i * 0.5)
-  closes.push(peakEma * 0.99)
-  closes.push(peakEma * 1.005)
-  return makeCandles(closes, 3, 1.8)
+  for (let i = 0; i < 35; i++) closes.push(100 * Math.pow(1.01, i))
+  const emaAtPeak = ema(closes, 20)
+  const e35 = emaAtPeak[emaAtPeak.length - 1]
+  closes.push(e35)                       // bar 36: price at EMA (prevPrice <= prevEma)
+  const emaAfterDip = ema(closes, 20)
+  const e36 = emaAfterDip[emaAfterDip.length - 1]
+  closes.push(e36 + 5)                   // bar 37: strong cross above EMA
+  return makeCandles(closes, 4, 2)
+})()
+
+// Candles that produce a momentum SELL: sustained strong uptrend pushes RSI > 80.
+const momentumSellCandles = (() => {
+  const closes: number[] = []
+  for (let i = 0; i < 30; i++) closes.push(100 + i * 1)
+  for (let i = 0; i < 15; i++) closes.push(closes[29] + (i + 1) * 2.5)
+  return makeCandles(closes, 3, 1.5)
 })()
 
 // Candles that produce a mean reversion BUY: sideways with sharp drop
@@ -202,34 +214,34 @@ const meanRevBuyCandles = (() => {
 describe('Signal reason — Momentum BUY', () => {
   it('BUY reason mentions trending market and RSI', () => {
     const signal = generateSignal('AAPL', momentumBuyCandles, noWeekly, 0, false)
-    if (signal.action !== 'BUY') return
+    expect(signal.action).toBe('BUY')
     expect(signal.reason).toContain('trending market')
     expect(signal.reason).toContain('RSI was')
   })
 
   it('BUY reason contains "Conviction:"', () => {
     const signal = generateSignal('AAPL', momentumBuyCandles, noWeekly, 0, false)
-    if (signal.action !== 'BUY') return
+    expect(signal.action).toBe('BUY')
     expect(signal.reason).toContain('Conviction:')
   })
 
   it('SELL reason mentions EMA or RSI', () => {
-    const signal = generateSignal('AAPL', momentumBuyCandles, noWeekly, 0, true)
-    if (signal.action !== 'SELL') return
+    const signal = generateSignal('AAPL', momentumSellCandles, noWeekly, 0, true)
+    expect(signal.action).toBe('SELL')
     const mentionsEma = signal.reason?.includes('20 EMA')
     const mentionsRsi = signal.reason?.includes('RSI hit')
     expect(mentionsEma || mentionsRsi).toBe(true)
   })
 
   it('SELL reason starts with "Sold"', () => {
-    const signal = generateSignal('AAPL', momentumBuyCandles, noWeekly, 0, true)
-    if (signal.action !== 'SELL') return
+    const signal = generateSignal('AAPL', momentumSellCandles, noWeekly, 0, true)
+    expect(signal.action).toBe('SELL')
     expect(signal.reason).toMatch(/^Sold/)
   })
 
   it('SELL reason does not contain "Conviction:"', () => {
-    const signal = generateSignal('AAPL', momentumBuyCandles, noWeekly, 0, true)
-    if (signal.action !== 'SELL') return
+    const signal = generateSignal('AAPL', momentumSellCandles, noWeekly, 0, true)
+    expect(signal.action).toBe('SELL')
     expect(signal.reason).not.toContain('Conviction:')
   })
 })
@@ -237,14 +249,14 @@ describe('Signal reason — Momentum BUY', () => {
 describe('Signal reason — Mean Reversion BUY', () => {
   it('BUY reason mentions Bollinger Band and RSI', () => {
     const signal = generateSignal('AAPL', meanRevBuyCandles, noWeekly, 0, false)
-    if (signal.action !== 'BUY') return
+    expect(signal.action).toBe('BUY')
     expect(signal.reason).toContain('Bollinger Band')
     expect(signal.reason).toContain('RSI was')
   })
 
   it('BUY reason contains "Conviction:"', () => {
     const signal = generateSignal('AAPL', meanRevBuyCandles, noWeekly, 0, false)
-    if (signal.action !== 'BUY') return
+    expect(signal.action).toBe('BUY')
     expect(signal.reason).toContain('Conviction:')
   })
 
@@ -257,7 +269,7 @@ describe('Signal reason — Mean Reversion BUY', () => {
     ]
     const mRevSellCandles = makeCandles(mRevSellCloses, 2)
     const signal = generateSignal('AAPL', mRevSellCandles, noWeekly, 0, true)
-    if (signal.action !== 'SELL') return
+    expect(signal.action).toBe('SELL')
     expect(signal.reason).toMatch(/^Sold/)
     const mentionsBand = signal.reason?.includes('Bollinger Band')
     const mentionsRsi  = signal.reason?.includes('RSI hit')
@@ -272,7 +284,7 @@ describe('Signal reason — weekly gate clause', () => {
 
   it('weekly uptrend appends "Weekly trend was up." to BUY reason', () => {
     const signal = generateSignal('AAPL', meanRevBuyCandles, weeklyUp, 0, false)
-    if (signal.action !== 'BUY') return
+    expect(signal.action).toBe('BUY')
     expect(signal.reason).toContain('Weekly trend was up.')
   })
 
@@ -286,7 +298,7 @@ describe('Signal reason — weekly gate clause', () => {
 
   it('neutral weekly appends "Weekly trend was neutral." to BUY reason', () => {
     const signal = generateSignal('AAPL', meanRevBuyCandles, weeklyFlat, 0, false)
-    if (signal.action !== 'BUY') return
+    expect(signal.action).toBe('BUY')
     expect(signal.reason).toContain('Weekly trend was neutral.')
   })
 })
@@ -294,19 +306,19 @@ describe('Signal reason — weekly gate clause', () => {
 describe('Signal reason — sentiment clause', () => {
   it('bullish sentiment appends "Sentiment was bullish" to BUY reason', () => {
     const signal = generateSignal('AAPL', meanRevBuyCandles, noWeekly, 0.5, false)
-    if (signal.action !== 'BUY') return
+    expect(signal.action).toBe('BUY')
     expect(signal.reason).toContain('Sentiment was bullish')
   })
 
   it('bearish sentiment appends "Sentiment was bearish" to BUY reason', () => {
     const signal = generateSignal('AAPL', meanRevBuyCandles, noWeekly, -0.5, false)
-    if (signal.action !== 'BUY') return
+    expect(signal.action).toBe('BUY')
     expect(signal.reason).toContain('Sentiment was bearish')
   })
 
   it('neutral sentiment (0.2) does not append a sentiment clause', () => {
     const signal = generateSignal('AAPL', meanRevBuyCandles, noWeekly, 0.2, false)
-    if (signal.action !== 'BUY') return
+    expect(signal.action).toBe('BUY')
     expect(signal.reason).not.toContain('Sentiment was')
   })
 })
@@ -321,24 +333,21 @@ describe('Signal reason — HOLD has no reason', () => {
 })
 
 describe('Signal reason — Breakout', () => {
-  // Breakout BUY: stable then ATR spike + price above upper band + high volume
-  const breakoutBuyCandles = (() => {
-    const stableCloses = Array.from({ length: 40 }, (_, i) => 100 + Math.sin(i * 0.5) * 2)
-    const upperBand = 106 // approximate upper band after 40 bars
-    const breakCloses = [upperBand + 2, upperBand + 3]
-    return stableCloses.concat(breakCloses).map((c, i) => ({
-      time: i,
-      open: c - 0.5,
-      high: c + (i >= 40 ? 8 : 2.5),  // spike high for ATR
-      low:  c - (i >= 40 ? 8 : 2.5),
-      close: c,
-      volume: i >= 40 ? 5000 : 1000,  // 5× volume on breakout bars
-    }))
-  })()
+  // Breakout BUY: 40 flat bars to set baseline ATR, then 8 bars with wide range
+  // (ATR spike) + price above upper band + high volume.
+  const breakoutBuyCandles: CandleData[] = [
+    ...Array.from({ length: 40 }, (_, i) => ({
+      time: i, open: 99.8, high: 101, low: 99, close: 100, volume: 1000,
+    })),
+    ...Array.from({ length: 8 }, (_, i) => {
+      const c = 100 + (i + 1) * 2.5
+      return { time: 40 + i, open: c - 1, high: c + 10, low: c - 10, close: c, volume: 3000 }
+    }),
+  ]
 
   it('breakout BUY reason mentions volatility breakout', () => {
     const signal = generateSignal('AAPL', breakoutBuyCandles, noWeekly, 0, false)
-    if (signal.action !== 'BUY') return
+    expect(signal.action).toBe('BUY')
     expect(signal.reason).toContain('volatility breakout')
     expect(signal.reason).toContain('Bollinger Band')
   })
@@ -362,7 +371,7 @@ describe('Signal reason — Breakout', () => {
       }),
     ]
     const signal = generateSignal('AAPL', heldBreakoutCandles, noWeekly, 0, true)
-    if (signal.action !== 'SELL') return
+    expect(signal.action).toBe('SELL')
     expect(signal.reason).toMatch(/^Sold/)
     const mentionsBands = signal.reason?.includes('Bollinger Bands')
     const mentionsRsi   = signal.reason?.includes('RSI hit')

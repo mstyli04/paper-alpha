@@ -67,10 +67,11 @@ function momentumSignal(
     const adxScore   = clamp((currAdx - 20) / 30, 0, 1)
     const conviction = 0.3 * emaScore + 0.3 * rsiScore + 0.2 * volScore + 0.2 * adxScore
 
-    const triggers: string[] = []
-    if (crossedAbove) triggers.push('price crossed above the 20 EMA')
-    if (macdTurnedPositive) triggers.push('MACD turned positive')
-    const reason = `Bought in a trending market — ${triggers.join(' and ')} and RSI was ${Math.round(currRsi)}.`
+    const parts: string[] = []
+    if (crossedAbove) parts.push('price crossed above the 20 EMA')
+    if (macdTurnedPositive) parts.push('MACD turned positive')
+    parts.push(`RSI was ${Math.round(currRsi)}`)
+    const reason = `Bought in a trending market — ${parts.join(' and ')}.`
 
     return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1), reason }
   }
@@ -169,7 +170,7 @@ function applyWeeklyGate(signal: Signal, weeklyCandles: CandleData[]): Signal {
 function applySentiment(signal: Signal, sentimentScore: number): Signal {
   if (signal.action !== 'BUY') return signal
   if (sentimentScore > 0.3)  return { ...signal, conviction: clamp(signal.conviction * 1.2, 0, 1), reason: `${signal.reason} Sentiment was bullish (+${sentimentScore.toFixed(2)}).` }
-  if (sentimentScore < -0.3) return { ...signal, conviction: signal.conviction * 0.7,              reason: `${signal.reason} Sentiment was bearish (${sentimentScore.toFixed(2)}).` }
+  if (sentimentScore < -0.3) return { ...signal, conviction: clamp(signal.conviction * 0.7, 0, 1), reason: `${signal.reason} Sentiment was bearish (${sentimentScore.toFixed(2)}).` }
   return signal
 }
 
