@@ -38,24 +38,31 @@ export function PriceChart({
   const mainRangeHandlerRef      = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const indicatorRangeHandlerRef = useRef<any>(null)
-  const [activeIndicator, setActiveIndicator] = useState<'RSI' | 'MACD'>('RSI')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const indicatorSeriesRef    = useRef<any[]>([])
+  const observerRef           = useRef<ResizeObserver | null>(null)
 
+  const [activeIndicator, setActiveIndicator] = useState<'RSI' | 'MACD'>('RSI')
+  // Ref mirrors state so Effect 1 can read it without it being a dependency
+  const activeIndicatorRef = useRef(activeIndicator)
+  activeIndicatorRef.current = activeIndicator
+
+  // ── Effect 1: Main chart + indicator chart container ──────────────────────
+  // Does NOT include activeIndicator — switching indicators never rebuilds the
+  // main chart or resets zoom state.
   useEffect(() => {
     if (!containerRef.current || !data.length) return
 
     let cancelled = false
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let chart: any
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let indicatorChart: any
+    const savedRange = chartRef.current?.timeScale().getVisibleLogicalRange() ?? null
 
     async function init() {
       const { createChart, ColorType, CrosshairMode } = await import('lightweight-charts')
 
       if (cancelled || !containerRef.current) return
 
-      // ── Main price chart ──────────────────────────────────────────────────
-      chart = createChart(containerRef.current, {
+      // ── Main price chart ────────────────────────────────────────────────
+      const chart = createChart(containerRef.current, {
         width: containerRef.current.clientWidth,
         height,
         layout: {
@@ -115,7 +122,7 @@ export function PriceChart({
         series.setData(data.map((d: any) => ({ time: d.time, value: d.close })))
       }
 
-      // ── Volume histogram ──────────────────────────────────────────────────
+      // ── Volume histogram ────────────────────────────────────────────────
       if (showVolume) {
         const volumeSeries = chart.addHistogramSeries({
           priceFormat: { type: 'volume' },
@@ -134,7 +141,7 @@ export function PriceChart({
         })))
       }
 
-      // ── Trade markers ─────────────────────────────────────────────────────
+      // ── Trade markers ────────────────────────────────────────────────────
       if (trades && trades.length > 0) {
         const candleTimes = data.map(d => d.time)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -159,9 +166,9 @@ export function PriceChart({
         series.setMarkers(markers)
       }
 
-      // ── Indicator chart ───────────────────────────────────────────────────
+      // ── Indicator chart ──────────────────────────────────────────────────
       if (showIndicators && indicatorContainerRef.current) {
-        indicatorChart = createChart(indicatorContainerRef.current, {
+        const indicatorChart = createChart(indicatorContainerRef.current, {
           width: indicatorContainerRef.current.clientWidth,
           height: 120,
           layout: {
@@ -185,78 +192,8 @@ export function PriceChart({
         })
         indicatorChartRef.current = indicatorChart
 
-        const closes = data.map(c => c.close)
-
-        if (activeIndicator === 'RSI') {
-          const rsiValues = rsi(closes, 14)
-          if (rsiValues.length > 0) {
-            const offset = closes.length - rsiValues.length
-            const rsiSeries = indicatorChart.addLineSeries({
-              color: '#818cf8',
-              lineWidth: 1,
-              priceScaleId: 'right',
-            })
-            indicatorChart.priceScale('right').applyOptions({
-              autoScale: false,
-              minimum: 0,
-              maximum: 100,
-            })
-            rsiSeries.setData(
-              rsiValues.map((v: number, i: number) => ({ time: data[i + offset].time, value: v }))
-            )
-            rsiSeries.createPriceLine({
-              price: 70,
-              color: 'rgba(239, 68, 68, 0.5)',
-              lineWidth: 1,
-              lineStyle: 2,
-              axisLabelVisible: false,
-            })
-            rsiSeries.createPriceLine({
-              price: 30,
-              color: 'rgba(16, 185, 129, 0.5)',
-              lineWidth: 1,
-              lineStyle: 2,
-              axisLabelVisible: false,
-            })
-          }
-        } else {
-          const macdValues = macd(closes)
-          if (macdValues.length > 0) {
-            const offset = closes.length - macdValues.length
-            const histSeries = indicatorChart.addHistogramSeries({
-              priceScaleId: 'right',
-            })
-            histSeries.setData(
-              macdValues.map((v: { histogram: number; macd: number; signal: number }, i: number) => ({
-                time: data[i + offset].time,
-                value: v.histogram,
-                color: v.histogram >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)',
-              }))
-            )
-            const macdLine = indicatorChart.addLineSeries({
-              color: '#818cf8',
-              lineWidth: 1,
-              priceScaleId: 'right',
-            })
-            macdLine.setData(
-              macdValues.map((v: { histogram: number; macd: number; signal: number }, i: number) => ({
-                time: data[i + offset].time,
-                value: v.macd,
-              }))
-            )
-            const signalLine = indicatorChart.addLineSeries({
-              color: '#f59e0b',
-              lineWidth: 1,
-              priceScaleId: 'right',
-            })
-            signalLine.setData(
-              macdValues.map((v: { histogram: number; macd: number; signal: number }, i: number) => ({
-                time: data[i + offset].time,
-                value: v.signal,
-              }))
-            )
-          }
-        }
+        // Render initial indicator series using current active indicator value
+        addIndicatorSeries(indicatorChart, data, activeIndicatorRef.current, indicatorSeriesRef)
 
         // Sync time scales bidirectionally
         const onMainRangeChange = (range: { from: number; to: number } | null) => {
@@ -271,24 +208,35 @@ export function PriceChart({
         indicatorChart.timeScale().subscribeVisibleLogicalRangeChange(onIndicatorRangeChange)
       }
 
-      chart.timeScale().fitContent()
+      // Restore previous zoom, or fit all data on first mount
+      if (savedRange) {
+        chart.timeScale().setVisibleLogicalRange(savedRange)
+      } else {
+        chart.timeScale().fitContent()
+      }
+
+      // Attach ResizeObserver after charts are ready (avoids race on early resize)
+      if (!cancelled && containerRef.current) {
+        const observer = new ResizeObserver(() => {
+          if (containerRef.current && chartRef.current) {
+            chartRef.current.applyOptions({ width: containerRef.current.clientWidth })
+          }
+          if (indicatorContainerRef.current && indicatorChartRef.current) {
+            indicatorChartRef.current.applyOptions({ width: indicatorContainerRef.current.clientWidth })
+          }
+        })
+        observer.observe(containerRef.current)
+        observerRef.current = observer
+      }
     }
 
     init()
 
-    const observer = new ResizeObserver(() => {
-      if (containerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({ width: containerRef.current.clientWidth })
-      }
-      if (indicatorContainerRef.current && indicatorChartRef.current) {
-        indicatorChartRef.current.applyOptions({ width: indicatorContainerRef.current.clientWidth })
-      }
-    })
-    observer.observe(containerRef.current)
-
     return () => {
       cancelled = true
-      observer.disconnect()
+      indicatorSeriesRef.current = []
+      observerRef.current?.disconnect()
+      observerRef.current = null
       if (chartRef.current && mainRangeHandlerRef.current) {
         chartRef.current.timeScale().unsubscribeVisibleLogicalRangeChange(mainRangeHandlerRef.current)
       }
@@ -300,7 +248,23 @@ export function PriceChart({
       indicatorChartRef.current?.remove()
       indicatorChartRef.current = null
     }
-  }, [data, type, height, trades, showVolume, showIndicators, activeIndicator])
+  }, [data, type, height, trades, showVolume, showIndicators])
+
+  // ── Effect 2: Indicator series switch ─────────────────────────────────────
+  // Runs only when the user toggles RSI ↔ MACD. Never rebuilds the main chart,
+  // never resets zoom. Skips on initial mount (indicatorChartRef is null until
+  // Effect 1's async init completes; Effect 1 handles the first render itself).
+  useEffect(() => {
+    const indicatorChart = indicatorChartRef.current
+    if (!indicatorChart || !data.length || !showIndicators) return
+
+    for (const s of indicatorSeriesRef.current) {
+      try { indicatorChart.removeSeries(s) } catch { /* already removed */ }
+    }
+    indicatorSeriesRef.current = []
+
+    addIndicatorSeries(indicatorChart, data, activeIndicator, indicatorSeriesRef)
+  }, [activeIndicator]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="w-full">
@@ -328,4 +292,65 @@ export function PriceChart({
       )}
     </div>
   )
+}
+
+// ── Module-level helper: create RSI or MACD series on an indicator chart ─────
+// Stores created series in seriesRef so the caller can remove them later.
+function addIndicatorSeries(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  indicatorChart: any,
+  data: CandleData[],
+  activeIndicator: 'RSI' | 'MACD',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  seriesRef: React.MutableRefObject<any[]>
+) {
+  const closes = data.map(c => c.close)
+
+  if (activeIndicator === 'RSI') {
+    const rsiValues = rsi(closes, 14)
+    if (rsiValues.length === 0) return
+
+    const offset    = closes.length - rsiValues.length
+    const rsiSeries = indicatorChart.addLineSeries({
+      color: '#818cf8',
+      lineWidth: 1,
+      priceScaleId: 'right',
+      // autoscaleInfoProvider pins the Y axis to 0–100 (minimum/maximum are not valid API)
+      autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }),
+    })
+    rsiSeries.setData(
+      rsiValues.map((v: number, i: number) => ({ time: data[i + offset].time, value: v }))
+    )
+    rsiSeries.createPriceLine({ price: 70, color: 'rgba(239, 68, 68, 0.5)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false })
+    rsiSeries.createPriceLine({ price: 30, color: 'rgba(16, 185, 129, 0.5)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false })
+    seriesRef.current = [rsiSeries]
+  } else {
+    const macdValues = macd(closes)
+    if (macdValues.length === 0) return
+
+    const offset     = closes.length - macdValues.length
+    const histSeries = indicatorChart.addHistogramSeries({ priceScaleId: 'right' })
+    histSeries.setData(
+      macdValues.map((v: { histogram: number; macd: number; signal: number }, i: number) => ({
+        time: data[i + offset].time,
+        value: v.histogram,
+        color: v.histogram >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)',
+      }))
+    )
+    const macdLine = indicatorChart.addLineSeries({ color: '#818cf8', lineWidth: 1, priceScaleId: 'right' })
+    macdLine.setData(
+      macdValues.map((v: { histogram: number; macd: number; signal: number }, i: number) => ({
+        time: data[i + offset].time,
+        value: v.macd,
+      }))
+    )
+    const signalLine = indicatorChart.addLineSeries({ color: '#f59e0b', lineWidth: 1, priceScaleId: 'right' })
+    signalLine.setData(
+      macdValues.map((v: { histogram: number; macd: number; signal: number }, i: number) => ({
+        time: data[i + offset].time,
+        value: v.signal,
+      }))
+    )
+    seriesRef.current = [histSeries, macdLine, signalLine]
+  }
 }
