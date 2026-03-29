@@ -233,8 +233,8 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
         quantity,
         price,
         totalValue,
-        ...(note ? { note } : {}),
-        ...(reason ? { reason } : {}),
+        note,
+        reason,
       },
     })
 
