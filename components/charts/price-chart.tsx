@@ -34,11 +34,16 @@ export function PriceChart({
   const chartRef              = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const indicatorChartRef     = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mainRangeHandlerRef      = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const indicatorRangeHandlerRef = useRef<any>(null)
   const [activeIndicator, setActiveIndicator] = useState<'RSI' | 'MACD'>('RSI')
 
   useEffect(() => {
     if (!containerRef.current || !data.length) return
 
+    let cancelled = false
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let chart: any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,7 +52,7 @@ export function PriceChart({
     async function init() {
       const { createChart, ColorType, CrosshairMode } = await import('lightweight-charts')
 
-      if (!containerRef.current) return
+      if (cancelled || !containerRef.current) return
 
       // ── Main price chart ──────────────────────────────────────────────────
       chart = createChart(containerRef.current, {
@@ -151,12 +156,7 @@ export function PriceChart({
           })
           .sort((a, b) => (a.time as number) - (b.time as number))
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const seen = new Map<number, any>()
-        for (const m of markers) seen.set(m.time as number, m)
-        const deduped = Array.from(seen.values())
-          .sort((a, b) => (a.time as number) - (b.time as number))
-        series.setMarkers(deduped)
+        series.setMarkers(markers)
       }
 
       // ── Indicator chart ───────────────────────────────────────────────────
@@ -259,12 +259,16 @@ export function PriceChart({
         }
 
         // Sync time scales bidirectionally
-        chart.timeScale().subscribeVisibleLogicalRangeChange((range: { from: number; to: number } | null) => {
+        const onMainRangeChange = (range: { from: number; to: number } | null) => {
           if (range) indicatorChart.timeScale().setVisibleLogicalRange(range)
-        })
-        indicatorChart.timeScale().subscribeVisibleLogicalRangeChange((range: { from: number; to: number } | null) => {
+        }
+        const onIndicatorRangeChange = (range: { from: number; to: number } | null) => {
           if (range) chart.timeScale().setVisibleLogicalRange(range)
-        })
+        }
+        mainRangeHandlerRef.current      = onMainRangeChange
+        indicatorRangeHandlerRef.current = onIndicatorRangeChange
+        chart.timeScale().subscribeVisibleLogicalRangeChange(onMainRangeChange)
+        indicatorChart.timeScale().subscribeVisibleLogicalRangeChange(onIndicatorRangeChange)
       }
 
       chart.timeScale().fitContent()
@@ -283,9 +287,18 @@ export function PriceChart({
     observer.observe(containerRef.current)
 
     return () => {
+      cancelled = true
       observer.disconnect()
+      if (chartRef.current && mainRangeHandlerRef.current) {
+        chartRef.current.timeScale().unsubscribeVisibleLogicalRangeChange(mainRangeHandlerRef.current)
+      }
+      if (indicatorChartRef.current && indicatorRangeHandlerRef.current) {
+        indicatorChartRef.current.timeScale().unsubscribeVisibleLogicalRangeChange(indicatorRangeHandlerRef.current)
+      }
       chartRef.current?.remove()
+      chartRef.current = null
       indicatorChartRef.current?.remove()
+      indicatorChartRef.current = null
     }
   }, [data, type, height, trades, showVolume, showIndicators, activeIndicator])
 
