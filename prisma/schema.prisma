@@ -159,3 +159,39 @@ enum StopOrderStatus {
   CANCELLED
   FAILED
 }
+
+model BotRun {
+  id                     String        @id @default(cuid())
+  startedAt              DateTime
+  finishedAt             DateTime?
+  status                 BotRunStatus  @default(OK)
+  tradesExecuted         Int           @default(0)
+  skipped                Int           @default(0)
+  portfolioValueSnapshot Decimal       @db.Decimal(20, 8)
+  errors                 String[]
+  assets                 BotRunAsset[]
+
+  @@index([startedAt])
+}
+
+model BotRunAsset {
+  id          String   @id @default(cuid())
+  runId       String
+  run         BotRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+  symbol      String
+  regime      String
+  signal      String
+  conviction  Decimal? @db.Decimal(6, 4)
+  action      String
+  skipReason  String?
+  candleCount Int
+
+  @@index([runId])
+  @@index([symbol])
+}
+
+enum BotRunStatus {
+  OK
+  ERROR
+  TIMEOUT
+}
