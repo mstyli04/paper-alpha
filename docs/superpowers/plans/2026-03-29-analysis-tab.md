@@ -1,3 +1,164 @@
+# Analysis Tab — Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Replace the single-scroll analysis page with four URL-driven tabs (Overview, Screener, News & Signals, Correlations) and surface existing orphaned components plus a new TrendingAssets widget.
+
+**Architecture:** Two files change. `TrendingAssets` is a new self-contained component. `analysis/page.tsx` is replaced with a client component that reads `?tab=` from search params and mounts only the active tab's content (lazy). Each tab is an inner component to satisfy Rules of Hooks.
+
+**Tech Stack:** TypeScript, React hooks, Next.js App Router (`useSearchParams`, `useRouter`), SWR, Tailwind CSS, Vitest
+
+---
+
+## File Map
+
+| File | Change |
+|------|--------|
+| `components/markets/trending-assets.tsx` | Create — fetches `/api/market/trending`, renders 3-column Stocks / Crypto / Commodities card |
+| `app/(dashboard)/analysis/page.tsx` | Replace — URL-driven tab layout with 4 inner tab components |
+
+---
+
+### Task 1: Build `TrendingAssets` component
+
+**Files:**
+- Create: `components/markets/trending-assets.tsx`
+
+- [ ] **Step 1: Verify baseline tests pass**
+
+```bash
+npm test 2>&1 | tail -6
+```
+
+Expected: 5 test files, 60 tests, all passing.
+
+- [ ] **Step 2: Create `components/markets/trending-assets.tsx`**
+
+```typescript
+'use client'
+
+import useSWR from 'swr'
+import { Skeleton } from '@/components/ui/skeleton'
+import { formatCurrency, pnlColor, formatPercent } from '@/lib/utils'
+import type { TrendingAsset } from '@/types'
+
+const fetcher = (url: string) => fetch(url).then(r => r.json())
+
+interface TrendingData {
+  stocks:      TrendingAsset[]
+  crypto:      TrendingAsset[]
+  commodities: TrendingAsset[]
+}
+
+function TrendingColumn({ title, items }: { title: string; items: TrendingAsset[] }) {
+  if (items.length === 0) return null
+  return (
+    <div>
+      <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">{title}</h4>
+      <div className="space-y-2.5">
+        {items.slice(0, 5).map(item => (
+          <div key={item.symbol} className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-text-primary">{item.symbol}</p>
+              <p className="text-xs text-text-muted truncate">{item.name}</p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-sm font-mono text-text-primary">{formatCurrency(item.price)}</p>
+              <p className={`text-xs font-medium ${pnlColor(item.changePercent)}`}>
+                {formatPercent(item.changePercent)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function TrendingAssets() {
+  const { data, isLoading } = useSWR<TrendingData>(
+    '/api/market/trending',
+    fetcher,
+    { revalidateOnFocus: false, refreshInterval: 120_000 }
+  )
+
+  const isEmpty = !data || (
+    data.stocks.length === 0 &&
+    data.crypto.length === 0 &&
+    data.commodities.length === 0
+  )
+
+  if (!isLoading && isEmpty) return null
+
+  return (
+    <div className="card p-5">
+      <h3 className="text-sm font-semibold text-text-primary mb-4">Trending</h3>
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-3 w-16" />
+              {Array.from({ length: 4 }).map((_, j) => <Skeleton key={j} className="h-9 w-full" />)}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <TrendingColumn title="Stocks"      items={data!.stocks} />
+          <TrendingColumn title="Crypto"      items={data!.crypto} />
+          <TrendingColumn title="Commodities" items={data!.commodities} />
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+- [ ] **Step 3: Run tests**
+
+```bash
+npm test 2>&1 | tail -6
+```
+
+Expected: 5 test files, 60 tests, all passing. (No new tests — UI-only component with no extractable logic.)
+
+- [ ] **Step 4: Verify TypeScript**
+
+```bash
+npx tsc --noEmit 2>&1 | head -20
+```
+
+Expected: no errors.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add components/markets/trending-assets.tsx
+git commit -m "feat(analysis): add TrendingAssets component"
+```
+
+---
+
+### Task 2: Replace `analysis/page.tsx` with tabbed layout
+
+**Files:**
+- Modify: `app/(dashboard)/analysis/page.tsx`
+
+The existing file is a simple server component with 4 components stacked. Read it first, then replace entirely.
+
+**Context on inner tab components:**
+
+Each tab is extracted as an inner component so that `useSWR` and `useState` hooks are called unconditionally (React Rules of Hooks). The outer `AnalysisPage` mounts only the active tab via `{tab === 'news' && <NewsTab />}` — this means the News tab's SWR fetch doesn't run until the user visits that tab.
+
+**Context on `NewsFeed` and `InsiderFeed`:**
+
+`NewsFeed` (`components/markets/news-feed.tsx`) requires `symbol` and `assetType` props — it's a per-symbol component used on the market detail page. For the analysis tab we fetch general market news directly from `/api/market/news/general` inline in `NewsTab`.
+
+`InsiderFeed` (`components/markets/insider-feed.tsx`) and `RedditActivity` (`components/markets/reddit-activity.tsx`) also require a `symbol` prop. `NewsTab` provides a symbol input (defaults to `SPY`) that drives both.
+
+- [ ] **Step 1: Replace `app/(dashboard)/analysis/page.tsx`**
+
+```typescript
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -6,7 +167,7 @@ import useSWR from 'swr'
 import Link from 'next/link'
 import { ExternalLink } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { timeAgo } from '@/lib/utils'
+import { timeAgo, pnlColor } from '@/lib/utils'
 import { MarketOverview } from '@/components/markets/market-overview'
 import { TrendingAssets } from '@/components/markets/trending-assets'
 import { Screener } from '@/components/markets/screener'
@@ -214,3 +375,43 @@ export default function AnalysisPage() {
     </div>
   )
 }
+```
+
+- [ ] **Step 2: Run tests**
+
+```bash
+npm test 2>&1 | tail -6
+```
+
+Expected: 5 test files, 60 tests, all passing.
+
+- [ ] **Step 3: Verify TypeScript**
+
+```bash
+npx tsc --noEmit 2>&1 | head -20
+```
+
+Expected: no errors.
+
+- [ ] **Step 4: Visual check in dev server**
+
+```bash
+npm run dev
+```
+
+Navigate to `/analysis`. Confirm:
+- Four tab buttons appear: Overview, Screener, News & Signals, Correlations
+- Overview tab (default) shows MarketOverview and TrendingAssets
+- Clicking Screener shows the sortable stock table, hides Overview content
+- Clicking News & Signals shows market news list + Symbol Signals section (default SPY)
+- Entering a symbol (e.g. AAPL) in the input and clicking Go updates InsiderFeed and RedditActivity
+- Clicking Correlations shows CorrelationHeatmap and EarningsCalendar
+- Refreshing the page with `?tab=screener` in the URL lands on the Screener tab
+- Browser back/forward navigates between tabs
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add 'app/(dashboard)/analysis/page.tsx'
+git commit -m "feat(analysis): tabbed layout with Overview, Screener, News & Signals, Correlations"
+```
