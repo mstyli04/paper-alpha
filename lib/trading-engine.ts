@@ -10,6 +10,7 @@ interface TradeInput {
   side: TradeSide
   quantity: number
   note?: string
+  reason?: string
 }
 
 interface TradeResult {
@@ -26,7 +27,7 @@ interface TradeResult {
 }
 
 export async function executeTrade(input: TradeInput): Promise<TradeResult> {
-  const { accountId, symbol, assetType, side, quantity, note } = input
+  const { accountId, symbol, assetType, side, quantity, note, reason } = input
 
   if (quantity <= 0) return { success: false, error: 'Quantity must be greater than 0' }
 
@@ -233,6 +234,7 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
         price,
         totalValue,
         ...(note ? { note } : {}),
+        ...(reason ? { reason } : {}),
       },
     })
 

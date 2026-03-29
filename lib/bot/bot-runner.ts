@@ -61,7 +61,7 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
     for (const holding of account.holdings.filter(h => Number(h.quantity) > 0)) {
       await executeSignal(
         botAccountId,
-        { symbol: holding.symbol, action: 'SELL', conviction: 1, strategy: 'MOMENTUM', regime: 'TRENDING' },
+        { symbol: holding.symbol, action: 'SELL', conviction: 1, strategy: 'MOMENTUM', regime: 'TRENDING', reason: 'Emergency liquidation — portfolio drawdown exceeded 15%.' },
         Number(holding.quantity),
         holding.assetType as AssetType
       )
@@ -82,7 +82,7 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
       if (breached) {
         const result = await executeSignal(
           botAccountId,
-          { symbol: stop.symbol, action: 'SELL', conviction: 1, strategy: 'MOMENTUM', regime: 'TRENDING' },
+          { symbol: stop.symbol, action: 'SELL', conviction: 1, strategy: 'MOMENTUM', regime: 'TRENDING', reason: `Stop loss triggered at $${Number(stop.triggerPrice).toFixed(2)}.` },
           Number(stop.quantity),
           stop.assetType as AssetType
         )
