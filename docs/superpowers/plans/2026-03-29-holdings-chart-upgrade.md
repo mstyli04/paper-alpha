@@ -1,3 +1,67 @@
+# Holdings Chart Upgrade — Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Rewrite `HoldingsChart` to show % return since entry per holding (readable on a shared axis) with an RSI/MACD indicator panel below for a user-selected symbol.
+
+**Architecture:** Single file rewrite — `components/charts/holdings-chart.tsx`. Two stacked lightweight-charts instances (main % return chart + indicator panel), same two-effect pattern used in `PriceChart`. All maths computed client-side from the existing API response shape. No API changes.
+
+**Tech Stack:** TypeScript, React hooks, lightweight-charts (dynamic import), `rsi`/`macd` from `@/lib/bot/indicators`, Tailwind CSS, Vitest
+
+---
+
+## File Map
+
+| File | Change |
+|------|--------|
+| `components/charts/holdings-chart.tsx` | Replace entirely |
+
+---
+
+### Task 1: Rewrite `HoldingsChart`
+
+**Files:**
+- Modify: `components/charts/holdings-chart.tsx`
+
+**Context — existing API response shape** (`/api/portfolio/holdings-history`):
+
+```typescript
+// Response shape — already returned by the existing route, no changes needed
+Record<string, {
+  assetType: string
+  candles: { time: number; close: number }[]   // unix seconds
+  trades: { time: number; side: 'BUY' | 'SELL' | 'SHORT' | 'COVER'; quantity: number; price: number }[]
+}>
+```
+
+**Context — indicator functions** (`@/lib/bot/indicators`):
+
+```typescript
+rsi(closes: number[], period = 14): number[]
+// Returns array shorter than closes by (period) — align with offset = closes.length - result.length
+
+macd(closes: number[]): { macd: number; signal: number; histogram: number }[]
+// Returns array shorter than closes — align with offset = closes.length - result.length
+// Needs ≥ 35 candles; RSI needs ≥ 15 candles
+```
+
+**Context — two-effect pattern (same as upgraded PriceChart):**
+
+- **Effect 1** deps `[data, height, hidden]` — builds both charts from scratch, renders initial indicator series via `addIndicatorSeries()` helper, sets up ResizeObserver and time-scale sync
+- **Effect 2** deps `[activeIndicator, activeIndicatorSymbol]` — tears down old indicator series, re-adds via `addIndicatorSeries()`. Bails out if `indicatorChartRef.current` is null (Effect 1 async not yet resolved)
+- **`activeIndicatorRef`** and **`activeSymbolRef`** — mirror state without being Effect 1 deps, preventing full chart rebuild on indicator/symbol toggle
+
+- [ ] **Step 1: Verify baseline tests pass**
+
+```bash
+npm test 2>&1 | tail -6
+```
+
+Expected: 5 test files, 60 tests, all passing.
+
+- [ ] **Step 2: Replace `components/charts/holdings-chart.tsx`**
+
+```typescript
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -54,13 +118,12 @@ function getAvgCostBasis(trades: TradePoint[], t: number): number {
     if (tr.side === 'BUY' || tr.side === 'COVER') {
       totalCost += tr.quantity * tr.price
       totalQty  += tr.quantity
-    } else if (tr.side === 'SELL') {
+    } else {
       const prev = totalQty
       totalQty  -= tr.quantity
       if (prev > 0 && totalQty > 0) totalCost = totalCost * (totalQty / prev)
       else if (totalQty <= 0) { totalCost = 0; totalQty = 0 }
     }
-    // SHORT opens a separate short position — does not affect long cost basis
   }
   return totalQty > 0 ? totalCost / totalQty : 0
 }
@@ -224,16 +287,13 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
 
       let firstSeries: unknown = null
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const safeData = data as Record<string, SymbolData>
-      for (const [symbol, { candles, trades }] of Object.entries(safeData)) {
+      for (const [symbol, { candles, trades }] of Object.entries(data)) {
         if (hidden.has(symbol)) continue
         const sorted = [...trades].sort((a, b) => a.time - b.time)
         const hasBuy = sorted.some(t => t.side === 'BUY' || t.side === 'COVER')
         if (!hasBuy) continue
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const valueData: { time: any; value: number }[] = []
+        const valueData: { time: number; value: number }[] = []
         for (const c of candles) {
           const qty   = getQuantityAtTime(sorted, c.time)
           const basis = getAvgCostBasis(sorted, c.time)
@@ -295,14 +355,12 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
 
       const sym = activeSymbolRef.current
       if (sym && !hidden.has(sym)) {
-        indicatorSeriesRef.current = addIndicatorSeries(indicatorChart, sym, safeData, activeIndicatorRef.current)
+        indicatorSeriesRef.current = addIndicatorSeries(indicatorChart, sym, data, activeIndicatorRef.current)
       }
 
       // Bidirectional time-scale sync
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mainHandler      = (range: any) => { if (range) indicatorChart.timeScale().setVisibleLogicalRange(range) }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const indicatorHandler = (range: any) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
+      const mainHandler      = (range: unknown) => { if (range) indicatorChart.timeScale().setVisibleLogicalRange(range) }
+      const indicatorHandler = (range: unknown) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
       chart.timeScale().subscribeVisibleLogicalRangeChange(mainHandler)
       indicatorChart.timeScale().subscribeVisibleLogicalRangeChange(indicatorHandler)
       mainRangeHandlerRef.current      = mainHandler
@@ -352,7 +410,7 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
     }
     indicatorSeriesRef.current = []
 
-    indicatorSeriesRef.current = addIndicatorSeries(indicatorChart, activeIndicatorSymbol, data!, activeIndicator)
+    indicatorSeriesRef.current = addIndicatorSeries(indicatorChart, activeIndicatorSymbol, data, activeIndicator)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeIndicator, activeIndicatorSymbol])
 
@@ -433,7 +491,6 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
           {visibleSymbols.map(sym => (
             <button
               key={sym}
-              type="button"
               onClick={() => { setActiveIndicatorSymbol(sym); activeSymbolRef.current = sym }}
               className={`px-2 py-0.5 text-xs rounded transition-colors ${
                 activeIndicatorSymbol === sym
@@ -448,7 +505,6 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
         {(['RSI', 'MACD'] as const).map(ind => (
           <button
             key={ind}
-            type="button"
             onClick={() => { setActiveIndicator(ind); activeIndicatorRef.current = ind }}
             className={`px-2 py-0.5 text-xs rounded transition-colors ${
               activeIndicator === ind
@@ -466,3 +522,46 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
     </div>
   )
 }
+```
+
+- [ ] **Step 3: Run tests**
+
+```bash
+npm test 2>&1 | tail -6
+```
+
+Expected: 5 test files, 60 tests, all passing.
+
+- [ ] **Step 4: Verify TypeScript**
+
+```bash
+npx tsc --noEmit 2>&1 | head -20
+```
+
+Expected: no errors.
+
+- [ ] **Step 5: Visual check in dev server**
+
+```bash
+npm run dev
+```
+
+Navigate to `/portfolio`. Confirm:
+- Each holding line shows `+X.X%` or `-X.X%` in the legend (green/red)
+- All lines start near 0% and diverge from there — no line squashed flat
+- Dashed 0% reference line visible across the chart
+- Buy arrows (green, below bar) and Sell arrows (red, above bar) appear at trade timestamps
+- Clicking a holding button in the legend hides/shows that line
+- Indicator row shows symbol buttons (one per visible holding) + RSI/MACD buttons
+- Clicking a symbol button updates the indicator panel for that symbol
+- Clicking MACD shows histogram + two lines
+- Clicking RSI shows purple line with 70/30 reference lines
+- Zooming/panning the main chart moves the indicator chart in sync
+- Hiding the currently-selected indicator symbol auto-advances to the next visible one
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add components/charts/holdings-chart.tsx
+git commit -m "feat(portfolio): % return chart with RSI/MACD indicator panel"
+```
