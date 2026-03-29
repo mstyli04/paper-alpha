@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { rsi, macd } from '@/lib/bot/indicators'
 
 type TradeSide = 'BUY' | 'SELL' | 'SHORT' | 'COVER'
 
@@ -32,101 +33,212 @@ const COLORS = [
   '#a855f7', '#84cc16',
 ]
 
-// Compute net quantity held at a given unix timestamp based on trade history
-function getQuantityAtTime(trades: TradePoint[], time: number): number {
+// Net quantity held at unix time t (trades must be sorted ascending)
+function getQuantityAtTime(trades: TradePoint[], t: number): number {
   let qty = 0
-  for (const t of trades) {
-    if (t.time > time) break
-    if (t.side === 'BUY' || t.side === 'COVER') qty += t.quantity
-    else qty -= t.quantity // SELL or SHORT
+  for (const tr of trades) {
+    if (tr.time > t) break
+    if (tr.side === 'BUY' || tr.side === 'COVER') qty += tr.quantity
+    else qty -= tr.quantity
   }
   return qty
 }
 
-// Find the nearest time value in a series to snap a marker to
-function nearestSeriesTime(
-  tradeTime: number,
-  valueData: { time: number; value: number }[],
-  prefer: 'after' | 'before'
-): number | null {
-  if (!valueData.length) return null
-  if (prefer === 'after') {
-    const found = valueData.find(p => p.time >= tradeTime)
-    return found?.time ?? valueData[valueData.length - 1].time
-  } else {
-    const found = [...valueData].reverse().find(p => p.time <= tradeTime)
-    return found?.time ?? valueData[0].time
+// Weighted average cost basis at unix time t (trades must be sorted ascending)
+// Returns 0 if no open position exists yet
+function getAvgCostBasis(trades: TradePoint[], t: number): number {
+  let totalCost = 0
+  let totalQty   = 0
+  for (const tr of trades) {
+    if (tr.time > t) break
+    if (tr.side === 'BUY' || tr.side === 'COVER') {
+      totalCost += tr.quantity * tr.price
+      totalQty  += tr.quantity
+    } else if (tr.side === 'SELL') {
+      const prev = totalQty
+      totalQty  -= tr.quantity
+      if (prev > 0 && totalQty > 0) totalCost = totalCost * (totalQty / prev)
+      else if (totalQty <= 0) { totalCost = 0; totalQty = 0 }
+    }
+    // SHORT opens a separate short position — does not affect long cost basis
   }
+  return totalQty > 0 ? totalCost / totalQty : 0
 }
 
-export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [data, setData] = useState<Record<string, SymbolData> | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [hidden, setHidden] = useState<Set<string>>(new Set())
+// Module-level helper — adds RSI or MACD series to an existing indicatorChart instance.
+// Returns the created series so the caller can store them for later removal.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function addIndicatorSeries(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  indicatorChart: any,
+  symbol: string,
+  data: Record<string, SymbolData>,
+  activeIndicator: 'RSI' | 'MACD',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any[] {
+  const symbolData = data[symbol]
+  if (!symbolData) return []
+  const closes = symbolData.candles.map(c => c.close)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const series: any[] = []
 
+  if (activeIndicator === 'RSI') {
+    if (closes.length < 15) return []
+    const rsiValues = rsi(closes, 14)
+    const offset    = closes.length - rsiValues.length
+    const rsiSeries = indicatorChart.addLineSeries({
+      color: '#818cf8',
+      lineWidth: 1,
+      priceScaleId: 'right',
+      autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }),
+    })
+    rsiSeries.setData(
+      rsiValues.map((v: number, i: number) => ({ time: symbolData.candles[i + offset].time, value: v }))
+    )
+    rsiSeries.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.5)',   lineWidth: 1, lineStyle: 2 })
+    rsiSeries.createPriceLine({ price: 30, color: 'rgba(16,185,129,0.5)', lineWidth: 1, lineStyle: 2 })
+    series.push(rsiSeries)
+  } else {
+    if (closes.length < 35) return []
+    const macdValues = macd(closes)
+    const offset     = closes.length - macdValues.length
+    const histSeries = indicatorChart.addHistogramSeries({ priceScaleId: 'right' })
+    histSeries.setData(
+      macdValues.map((v: { macd: number; signal: number; histogram: number }, i: number) => ({
+        time:  symbolData.candles[i + offset].time,
+        value: v.histogram,
+        color: v.histogram >= 0 ? 'rgba(16,185,129,0.6)' : 'rgba(239,68,68,0.6)',
+      }))
+    )
+    const macdLine = indicatorChart.addLineSeries({ color: '#818cf8', lineWidth: 1, priceScaleId: 'right' })
+    macdLine.setData(
+      macdValues.map((v: { macd: number; signal: number; histogram: number }, i: number) => ({
+        time: symbolData.candles[i + offset].time, value: v.macd,
+      }))
+    )
+    const signalLine = indicatorChart.addLineSeries({ color: '#f59e0b', lineWidth: 1, priceScaleId: 'right' })
+    signalLine.setData(
+      macdValues.map((v: { macd: number; signal: number; histogram: number }, i: number) => ({
+        time: symbolData.candles[i + offset].time, value: v.signal,
+      }))
+    )
+    series.push(histSeries, macdLine, signalLine)
+  }
+  return series
+}
+
+export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
+  // ── Refs ──────────────────────────────────────────────────────────────────
+  const containerRef          = useRef<HTMLDivElement>(null)
+  const indicatorContainerRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chartRef              = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const indicatorChartRef     = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mainRangeHandlerRef   = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const indicatorRangeHandlerRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const indicatorSeriesRef    = useRef<any[]>([])
+  const observerRef           = useRef<ResizeObserver | null>(null)
+  const activeIndicatorRef    = useRef<'RSI' | 'MACD'>('RSI')
+  const activeSymbolRef       = useRef<string | null>(null)
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  const [data,                 setData]                = useState<Record<string, SymbolData> | null>(null)
+  const [loading,              setLoading]             = useState(true)
+  const [hidden,               setHidden]              = useState<Set<string>>(new Set())
+  const [activeIndicatorSymbol, setActiveIndicatorSymbol] = useState<string | null>(null)
+  const [activeIndicator,      setActiveIndicator]     = useState<'RSI' | 'MACD'>('RSI')
+
+  // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetch('/api/portfolio/holdings-history')
       .then(r => r.json())
-      .then(d => { setData(d); setLoading(false) })
+      .then(d => {
+        const syms = Object.keys(d)
+        setData(d)
+        if (syms.length > 0) {
+          setActiveIndicatorSymbol(syms[0])
+          activeSymbolRef.current = syms[0]
+        }
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [])
 
   const symbols = data ? Object.keys(data) : []
+
   const colorMap: Record<string, string> = {}
   symbols.forEach((sym, i) => { colorMap[sym] = COLORS[i % COLORS.length] })
 
+  // ── Auto-advance indicator symbol when active symbol is hidden ────────────
   useEffect(() => {
-    if (!containerRef.current || !data || symbols.length === 0) return
+    if (!activeIndicatorSymbol) return
+    if (!hidden.has(activeIndicatorSymbol)) return
+    const next = symbols.find(s => !hidden.has(s)) ?? null
+    setActiveIndicatorSymbol(next)
+    activeSymbolRef.current = next
+  }, [hidden, symbols, activeIndicatorSymbol])
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let chart: any
+  // ── Compute last % return for legend labels ───────────────────────────────
+  const lastPct: Record<string, number | null> = {}
+  if (data) {
+    for (const [symbol, { candles, trades }] of Object.entries(data)) {
+      const sorted = [...trades].sort((a, b) => a.time - b.time)
+      const hasBuy = sorted.some(t => t.side === 'BUY' || t.side === 'COVER')
+      if (!hasBuy) { lastPct[symbol] = null; continue }
+      let last: number | null = null
+      for (const c of candles) {
+        const qty   = getQuantityAtTime(sorted, c.time)
+        const basis = getAvgCostBasis(sorted, c.time)
+        if (qty > 0 && basis > 0) last = (c.close / basis - 1) * 100
+      }
+      lastPct[symbol] = last
+    }
+  }
+
+  // ── Effect 1: build both charts ───────────────────────────────────────────
+  useEffect(() => {
+    if (!containerRef.current || !indicatorContainerRef.current || !data || symbols.length === 0) return
+    let cancelled = false
 
     async function init() {
       const { createChart, ColorType, LineStyle } = await import('lightweight-charts')
-      if (!containerRef.current) return
+      if (cancelled || !containerRef.current || !indicatorContainerRef.current) return
 
-      chart = createChart(containerRef.current, {
+      // Main chart
+      const chart = createChart(containerRef.current, {
         width: containerRef.current.clientWidth,
         height,
-        layout: {
-          background: { type: ColorType.Solid, color: 'transparent' },
-          textColor: '#94a3b8',
-        },
-        grid: {
-          vertLines: { visible: false },
-          horzLines: { color: '#1e2334' },
-        },
+        layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: '#94a3b8' },
+        grid:   { vertLines: { visible: false }, horzLines: { color: '#1e2334' } },
         rightPriceScale: { borderColor: '#1e2334' },
         timeScale: { borderColor: '#1e2334', timeVisible: false },
         handleScroll: true,
         handleScale: true,
-        localization: {
-          priceFormatter: (p: number) =>
-            '$' + p.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
-        },
+        localization: { priceFormatter: (p: number) => (p >= 0 ? '+' : '') + p.toFixed(1) + '%' },
       })
+      chartRef.current = chart
 
-      // Track all timestamps across visible symbols for the total line
-      const allTimes = new Set<number>()
-      const symbolValueMap: Record<string, { time: number; value: number }[]> = {}
+      let firstSeries: unknown = null
 
-      for (const [symbol, { candles, trades }] of Object.entries(data!)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const safeData = data as Record<string, SymbolData>
+      for (const [symbol, { candles, trades }] of Object.entries(safeData)) {
         if (hidden.has(symbol)) continue
+        const sorted = [...trades].sort((a, b) => a.time - b.time)
+        const hasBuy = sorted.some(t => t.side === 'BUY' || t.side === 'COVER')
+        if (!hasBuy) continue
 
-        const sortedTrades = [...trades].sort((a, b) => a.time - b.time)
-
-        // Build value series: value of this holding at each candle point
-        const valueData: { time: number; value: number }[] = []
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const valueData: { time: any; value: number }[] = []
         for (const c of candles) {
-          const qty = getQuantityAtTime(sortedTrades, c.time)
-          if (qty !== 0) {
-            valueData.push({ time: c.time, value: Math.abs(qty) * c.close })
-            allTimes.add(c.time)
-          }
+          const qty   = getQuantityAtTime(sorted, c.time)
+          const basis = getAvgCostBasis(sorted, c.time)
+          if (qty > 0 && basis > 0) valueData.push({ time: c.time, value: (c.close / basis - 1) * 100 })
         }
-
-        symbolValueMap[symbol] = valueData
         if (valueData.length === 0) continue
 
         const series = chart.addLineSeries({
@@ -139,19 +251,24 @@ export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
         })
         series.setData(valueData)
 
-        // Add buy/sell markers
+        if (!firstSeries) {
+          firstSeries = series
+          series.createPriceLine({ price: 0, color: '#475569', lineWidth: 1, lineStyle: LineStyle.Dashed })
+        }
+
+        // Trade markers
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const markers: any[] = []
-        for (const trade of sortedTrades) {
+        for (const trade of sorted) {
           const isBuy = trade.side === 'BUY' || trade.side === 'COVER'
-          const snapTime = nearestSeriesTime(trade.time, valueData, isBuy ? 'after' : 'before')
-          if (snapTime === null) continue
-
+          const snapTime = isBuy
+            ? (valueData.find(p => p.time >= trade.time) ?? valueData[valueData.length - 1]).time
+            : ([...valueData].reverse().find(p => p.time <= trade.time) ?? valueData[0]).time
           markers.push({
-            time: snapTime,
+            time:     snapTime,
             position: isBuy ? 'belowBar' : 'aboveBar',
-            color: isBuy ? '#10b981' : '#ef4444',
-            shape: isBuy ? 'arrowUp' : 'arrowDown',
+            color:    isBuy ? '#10b981'  : '#ef4444',
+            shape:    isBuy ? 'arrowUp'  : 'arrowDown',
             text: `${trade.side} ${trade.quantity % 1 === 0 ? trade.quantity : trade.quantity.toFixed(4)} @ $${trade.price.toFixed(2)}`,
             size: 1,
           })
@@ -161,62 +278,85 @@ export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
         }
       }
 
-      // --- Total holdings line ---
-      const sortedTimes = Array.from(allTimes).sort((a, b) => a - b)
-      if (sortedTimes.length > 1) {
-        const totalData: { time: number; value: number }[] = []
+      chart.timeScale().fitContent()
 
-        for (const t of sortedTimes) {
-          let total = 0
-          for (const [symbol, valuePoints] of Object.entries(symbolValueMap)) {
-            if (hidden.has(symbol)) continue
-            const exact = valuePoints.find(p => p.time === t)
-            if (exact) {
-              total += exact.value
-            } else {
-              // Use last known value before this timestamp
-              const prev = [...valuePoints].reverse().find(p => p.time < t)
-              if (prev) total += prev.value
-            }
-          }
-          if (total > 0) totalData.push({ time: t, value: total })
-        }
+      // Indicator chart
+      const indicatorChart = createChart(indicatorContainerRef.current!, {
+        width: indicatorContainerRef.current!.clientWidth,
+        height: 120,
+        layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: '#94a3b8' },
+        grid:   { vertLines: { visible: false }, horzLines: { color: '#1e2334' } },
+        rightPriceScale: { borderColor: '#1e2334' },
+        timeScale: { borderColor: '#1e2334', visible: false },
+        handleScroll: false,
+        handleScale: false,
+      })
+      indicatorChartRef.current = indicatorChart
 
-        if (totalData.length > 1) {
-          // Put total on the left scale so it doesn't compress the individual holding lines
-          const totalSeries = chart.addLineSeries({
-            color: '#e2e8f0',
-            lineWidth: 2,
-            lineStyle: LineStyle.Dashed,
-            priceLineVisible: false,
-            lastValueVisible: true,
-            title: 'Total',
-            priceScaleId: 'left',
-          })
-          totalSeries.setData(totalData)
-          chart.priceScale('left').applyOptions({ visible: true, borderColor: '#1e2334' })
-        }
+      const sym = activeSymbolRef.current
+      if (sym && !hidden.has(sym)) {
+        indicatorSeriesRef.current = addIndicatorSeries(indicatorChart, sym, safeData, activeIndicatorRef.current)
       }
 
-      chart.timeScale().fitContent()
+      // Bidirectional time-scale sync
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mainHandler      = (range: any) => { if (range) indicatorChart.timeScale().setVisibleLogicalRange(range) }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const indicatorHandler = (range: any) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
+      chart.timeScale().subscribeVisibleLogicalRangeChange(mainHandler)
+      indicatorChart.timeScale().subscribeVisibleLogicalRangeChange(indicatorHandler)
+      mainRangeHandlerRef.current      = mainHandler
+      indicatorRangeHandlerRef.current = indicatorHandler
+
+      // ResizeObserver
+      const observer = new ResizeObserver(() => {
+        chartRef.current?.applyOptions({ width: containerRef.current!.clientWidth })
+        indicatorChartRef.current?.applyOptions({ width: containerRef.current!.clientWidth })
+      })
+      observer.observe(containerRef.current!)
+      observerRef.current = observer
     }
 
     init()
 
-    const observer = new ResizeObserver(() => {
-      if (containerRef.current && chart) {
-        chart.applyOptions({ width: containerRef.current.clientWidth })
-      }
-    })
-    observer.observe(containerRef.current)
-
     return () => {
-      observer.disconnect()
-      chart?.remove()
+      cancelled = true
+      observerRef.current?.disconnect()
+      observerRef.current = null
+      if (chartRef.current) {
+        mainRangeHandlerRef.current &&
+          chartRef.current.timeScale().unsubscribeVisibleLogicalRangeChange(mainRangeHandlerRef.current)
+        chartRef.current.remove()
+        chartRef.current = null
+      }
+      if (indicatorChartRef.current) {
+        indicatorRangeHandlerRef.current &&
+          indicatorChartRef.current.timeScale().unsubscribeVisibleLogicalRangeChange(indicatorRangeHandlerRef.current)
+        indicatorChartRef.current.remove()
+        indicatorChartRef.current = null
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, height, hidden])
 
+  // ── Effect 2: switch indicator/symbol without rebuilding main chart ────────
+  useEffect(() => {
+    activeIndicatorRef.current = activeIndicator
+    activeSymbolRef.current    = activeIndicatorSymbol
+
+    const indicatorChart = indicatorChartRef.current
+    if (!indicatorChart || !data || !activeIndicatorSymbol) return
+
+    for (const s of indicatorSeriesRef.current) {
+      try { indicatorChart.removeSeries(s) } catch { /* series already removed */ }
+    }
+    indicatorSeriesRef.current = []
+
+    indicatorSeriesRef.current = addIndicatorSeries(indicatorChart, activeIndicatorSymbol, data!, activeIndicator)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndicator, activeIndicatorSymbol])
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div style={{ height }} className="flex items-center justify-center text-text-muted text-sm">
@@ -233,12 +373,15 @@ export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
     )
   }
 
+  const visibleSymbols = symbols.filter(s => !hidden.has(s))
+
   return (
     <div>
       {/* Legend / toggle buttons */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {symbols.map(sym => {
           const isVisible = !hidden.has(sym)
+          const pct       = lastPct[sym]
           return (
             <button
               key={sym}
@@ -252,9 +395,7 @@ export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
                 })
               }
               className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border transition-colors ${
-                isVisible
-                  ? 'border-border/60 text-text-primary'
-                  : 'border-border/30 text-text-muted opacity-50'
+                isVisible ? 'border-border/60 text-text-primary' : 'border-border/30 text-text-muted opacity-50'
               }`}
             >
               <span
@@ -262,14 +403,15 @@ export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
                 style={{ backgroundColor: isVisible ? colorMap[sym] : '#64748b' }}
               />
               {sym}
+              {isVisible && pct !== null && (
+                <span className={pct >= 0 ? 'text-green' : 'text-red'}>
+                  {pct >= 0 ? '+' : ''}{pct.toFixed(1)}%
+                </span>
+              )}
             </button>
           )
         })}
-        <span className="flex items-center gap-1.5 text-xs text-text-muted ml-1">
-          <span className="inline-block w-4 border-t-2 border-dashed border-slate-300" />
-          Total
-        </span>
-        <span className="flex items-center gap-3 text-xs text-text-muted ml-auto">
+        <span className="ml-auto flex items-center gap-3 text-xs text-text-muted">
           <span className="flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-full bg-green" />
             Buy
@@ -280,7 +422,47 @@ export function HoldingsChart({ height = 320 }: HoldingsChartProps) {
           </span>
         </span>
       </div>
+
+      {/* Main chart */}
       <div ref={containerRef} className="w-full" style={{ height }} />
+
+      {/* Indicator controls */}
+      <div className="flex items-center gap-1 px-1 py-1 border-t border-border flex-wrap">
+        <span className="text-xs text-text-muted mr-1">Indicator</span>
+        <div className="flex gap-1 mr-3">
+          {visibleSymbols.map(sym => (
+            <button
+              key={sym}
+              type="button"
+              onClick={() => { setActiveIndicatorSymbol(sym); activeSymbolRef.current = sym }}
+              className={`px-2 py-0.5 text-xs rounded transition-colors ${
+                activeIndicatorSymbol === sym
+                  ? 'bg-brand/10 text-brand'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              {sym}
+            </button>
+          ))}
+        </div>
+        {(['RSI', 'MACD'] as const).map(ind => (
+          <button
+            key={ind}
+            type="button"
+            onClick={() => { setActiveIndicator(ind); activeIndicatorRef.current = ind }}
+            className={`px-2 py-0.5 text-xs rounded transition-colors ${
+              activeIndicator === ind
+                ? 'bg-brand/10 text-brand'
+                : 'text-text-muted hover:text-text-primary'
+            }`}
+          >
+            {ind}
+          </button>
+        ))}
+      </div>
+
+      {/* Indicator chart */}
+      <div ref={indicatorContainerRef} className="w-full" style={{ height: 120 }} />
     </div>
   )
 }
