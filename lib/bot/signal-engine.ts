@@ -67,11 +67,11 @@ function momentumSignal(
     const adxScore   = clamp((currAdx - 20) / 30, 0, 1)
     const conviction = 0.3 * emaScore + 0.3 * rsiScore + 0.2 * volScore + 0.2 * adxScore
 
-    const parts: string[] = []
-    if (crossedAbove) parts.push('price crossed above the 20 EMA')
-    if (macdTurnedPositive) parts.push('MACD turned positive')
-    parts.push(`RSI was ${Math.round(currRsi)}`)
-    const reason = `Bought in a trending market — ${parts.join(' and ')}.`
+    const triggers: string[] = []
+    if (crossedAbove) triggers.push('price crossed above the 20 EMA')
+    if (macdTurnedPositive) triggers.push('MACD turned positive')
+    const triggerText = triggers.join(' and ')
+    const reason = `Bought in a trending market — ${triggerText}, RSI was ${Math.round(currRsi)}.`
 
     return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1), reason }
   }
