@@ -4,7 +4,7 @@ export const maxDuration = 60 // seconds
 import { NextResponse } from 'next/server'
 import { runBot } from '@/lib/bot/bot-runner'
 
-// Called daily by Vercel Cron at 09:30 UTC. Protected by CRON_SECRET.
+// Called daily by Vercel Cron in 3 batches (20:10, 20:20, 20:30 UTC). Protected by CRON_SECRET.
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -16,8 +16,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'BOT_ACCOUNT_ID not configured' }, { status: 500 })
   }
 
+  const url    = new URL(req.url)
+  const offset = parseInt(url.searchParams.get('offset') ?? '0', 10)
+  const limit  = parseInt(url.searchParams.get('limit')  ?? '43', 10)
+
   try {
-    const result = await runBot(botAccountId)
+    const result = await runBot(botAccountId, offset, limit)
     return NextResponse.json({
       ok: true,
       tradesExecuted: result.tradesExecuted,

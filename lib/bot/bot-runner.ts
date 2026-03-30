@@ -27,7 +27,7 @@ export interface BotRunResult {
   errors: string[]
 }
 
-export async function runBot(botAccountId: string): Promise<BotRunResult> {
+export async function runBot(botAccountId: string, offset = 0, limit = UNIVERSE.length): Promise<BotRunResult> {
   clearSentimentCache()
   const errors: string[] = []
   let tradesExecuted = 0
@@ -124,7 +124,7 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
   }
 
   // 6. Process signals
-  for (const asset of UNIVERSE) {
+  for (const asset of UNIVERSE.slice(offset, offset + limit)) {
     const holding   = holdingMap.get(asset.symbol)
     const isHeld    = !!holding && Number(holding.quantity) > 0
     const openCount = account.holdings.filter(h => Number(h.quantity) > 0).length
