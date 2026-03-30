@@ -76,6 +76,7 @@ export default function HistoryPage() {
                   <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Quantity</th>
                   <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Price</th>
                   <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Total</th>
+                  <th className="text-left text-xs text-text-muted font-medium py-3 px-4">Reason</th>
                   <th className="text-right text-xs text-text-muted font-medium py-3 px-5">Time</th>
                 </tr>
               </thead>
@@ -110,6 +111,18 @@ export default function HistoryPage() {
                     </td>
                     <td className="py-3 px-4 text-right font-mono font-medium text-text-primary">
                       {formatCurrency(trade.totalValue)}
+                    </td>
+                    <td className="py-3 px-4 max-w-xs">
+                      {trade.reason ? (
+                        <span
+                          className="text-xs text-text-muted block truncate"
+                          title={trade.reason}
+                        >
+                          {trade.reason}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-text-muted">—</span>
+                      )}
                     </td>
                     <td className="py-3 px-5 text-right text-text-muted text-xs">
                       <p>{timeAgo(trade.createdAt)}</p>

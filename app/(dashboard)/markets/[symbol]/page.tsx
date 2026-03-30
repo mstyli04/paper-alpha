@@ -33,6 +33,7 @@ export default function AssetDetailPage() {
   const symbol = (params.symbol as string).toUpperCase()
   const assetType = (searchParams.get('type') || 'STOCK') as AssetType
   const [range, setRange] = useState<Range>('1M')
+  const [chartType, setChartType] = useState<'area' | 'candlestick'>('area')
 
   const { quote, isLoading: quoteLoading } = useQuote(symbol, assetType)
   const { portfolio } = usePortfolio()
@@ -128,12 +129,25 @@ export default function AssetDetailPage() {
                 1-min intraday
               </span>
             )}
+            <div className="ml-auto flex items-center gap-1">
+              {(['area', 'candlestick'] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setChartType(t)}
+                  className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                    chartType === t ? 'bg-brand/10 text-brand' : 'text-text-muted hover:text-text-primary'
+                  }`}
+                >
+                  {t === 'area' ? 'Area' : 'Candles'}
+                </button>
+              ))}
+            </div>
           </div>
 
           {candlesLoading ? (
             <Skeleton className="h-72 w-full" />
           ) : candles && candles.length > 0 ? (
-            <PriceChart data={candles} type="area" height={288} trades={trades} />
+            <PriceChart data={candles} type={chartType} height={288} trades={trades} />
           ) : (
             <div className="h-72 flex items-center justify-center text-text-muted text-sm">
               No chart data available

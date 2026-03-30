@@ -9,6 +9,7 @@ import { getSentimentScore, clearSentimentCache } from './sentiment'
 import { atr } from './indicators'
 import type { AssetType } from '@/types'
 import type { Trade } from '@prisma/client'
+import Decimal from 'decimal.js'
 
 const MAX_POSITIONS      = 10
 const MAX_CRYPTO_PERCENT = 0.30
@@ -32,7 +33,7 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
   let tradesExecuted = 0
   let skipped = 0
 
-  // 1. Circuit breaker check
+  // 1. Circuit breaker check — bail before creating a run record
   if (circuitBreakerTriggeredAt !== null) {
     const daysSince = (Date.now() - circuitBreakerTriggeredAt) / (1000 * 60 * 60 * 24)
     if (daysSince < CIRCUIT_BREAKER_CYCLES) {
@@ -54,24 +55,34 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
   const holdingsValue   = account.holdings.reduce((sum, h) => sum + Number(h.quantity) * Number(h.avgCostBasis), 0)
   const portfolioValue  = cashBalance + holdingsValue
 
-  // 3. Drawdown circuit breaker
+  // 3. Create run record now that we have the portfolio snapshot
+  const run = await db.botRun.create({
+    data: { startedAt: new Date(), portfolioValueSnapshot: new Decimal(portfolioValue.toFixed(8)), status: 'OK' },
+  })
+
+  // 4. Drawdown circuit breaker
   const drawdown = startingBalance > 0 ? (startingBalance - portfolioValue) / startingBalance : 0
   if (drawdown > MAX_DRAWDOWN) {
     circuitBreakerTriggeredAt = Date.now()
     for (const holding of account.holdings.filter(h => Number(h.quantity) > 0)) {
       await executeSignal(
         botAccountId,
-        { symbol: holding.symbol, action: 'SELL', conviction: 1, strategy: 'MOMENTUM', regime: 'TRENDING' },
+        { symbol: holding.symbol, action: 'SELL', conviction: 1, strategy: 'MOMENTUM', regime: 'TRENDING', reason: 'Sold — emergency liquidation, portfolio drawdown exceeded 15%.' },
         Number(holding.quantity),
         holding.assetType as AssetType
       )
     }
-    return { tradesExecuted: 0, skipped: 0, errors: [`Drawdown ${(drawdown * 100).toFixed(1)}% exceeded 15% — liquidated all positions`] }
+    const msg = `Drawdown ${(drawdown * 100).toFixed(1)}% exceeded 15% — liquidated all positions`
+    await db.botRun.update({
+      where: { id: run.id },
+      data: { finishedAt: new Date(), status: 'ERROR', tradesExecuted: 0, skipped: 0, errors: [msg] },
+    })
+    return { tradesExecuted: 0, skipped: 0, errors: [msg] }
   }
 
   const holdingMap = new Map(account.holdings.map(h => [h.symbol, h]))
 
-  // 4. Check ATR stop losses
+  // 5. Check ATR stop losses
   const activeStops = await db.stopOrder.findMany({ where: { accountId: botAccountId, status: 'ACTIVE' } })
   for (const stop of activeStops) {
     try {
@@ -82,13 +93,25 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
       if (breached) {
         const result = await executeSignal(
           botAccountId,
-          { symbol: stop.symbol, action: 'SELL', conviction: 1, strategy: 'MOMENTUM', regime: 'TRENDING' },
+          { symbol: stop.symbol, action: 'SELL', conviction: 1, strategy: 'MOMENTUM', regime: 'TRENDING', reason: `Sold — stop loss triggered at $${Number(stop.triggerPrice).toFixed(2)}.` },
           Number(stop.quantity),
           stop.assetType as AssetType
         )
         await db.stopOrder.update({
           where: { id: stop.id },
           data: { status: result.success ? 'TRIGGERED' : 'FAILED', triggeredAt: new Date() },
+        })
+        await db.botRunAsset.create({
+          data: {
+            runId:       run.id,
+            symbol:      stop.symbol,
+            regime:      'UNKNOWN',
+            signal:      'SELL',
+            conviction:  1,
+            action:      result.success ? 'SOLD' : 'ERROR',
+            skipReason:  result.success ? null : `execution error: ${result.error}`,
+            candleCount: 0,
+          },
         })
         if (result.success) {
           tradesExecuted++
@@ -100,7 +123,7 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
     }
   }
 
-  // 5. Process signals
+  // 6. Process signals
   for (const asset of UNIVERSE) {
     const holding   = holdingMap.get(asset.symbol)
     const isHeld    = !!holding && Number(holding.quantity) > 0
@@ -108,7 +131,22 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
 
     await sleep(200)
     const candles = await fetchBotCandles(asset.symbol, asset.assetType)
-    if (candles.length < 30) { skipped++; continue }
+    if (candles.length < 30) {
+      await db.botRunAsset.create({
+        data: {
+          runId:       run.id,
+          symbol:      asset.symbol,
+          regime:      'UNKNOWN',
+          signal:      'UNKNOWN',
+          conviction:  null,
+          action:      'SKIPPED',
+          skipReason:  `candles < 30 (got ${candles.length})`,
+          candleCount: candles.length,
+        },
+      })
+      skipped++
+      continue
+    }
 
     await sleep(200)
     const weeklyCandles  = await fetchBotCandlesWeekly(asset.symbol, asset.assetType)
@@ -119,6 +157,18 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
     // SELL
     if (signal.action === 'SELL' && isHeld && holding) {
       const result = await executeSignal(botAccountId, signal, Number(holding.quantity), asset.assetType)
+      await db.botRunAsset.create({
+        data: {
+          runId:       run.id,
+          symbol:      asset.symbol,
+          regime:      signal.regime,
+          signal:      signal.action,
+          conviction:  signal.conviction,
+          action:      result.success ? 'SOLD' : 'ERROR',
+          skipReason:  result.success ? null : `execution error: ${result.error}`,
+          candleCount: candles.length,
+        },
+      })
       if (result.success) tradesExecuted++
       else errors.push(`SELL ${asset.symbol}: ${result.error}`)
       continue
@@ -126,25 +176,85 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
 
     // BUY
     if (signal.action === 'BUY' && !isHeld) {
-      if (openCount >= MAX_POSITIONS) { skipped++; continue }
+      if (openCount >= MAX_POSITIONS) {
+        await db.botRunAsset.create({
+          data: {
+            runId:       run.id,
+            symbol:      asset.symbol,
+            regime:      signal.regime,
+            signal:      signal.action,
+            conviction:  signal.conviction,
+            action:      'SKIPPED',
+            skipReason:  'max positions (10)',
+            candleCount: candles.length,
+          },
+        })
+        skipped++
+        continue
+      }
 
       if (asset.assetType === 'CRYPTO') {
         const cryptoValue = account.holdings
           .filter(h => h.assetType === 'CRYPTO' && Number(h.quantity) > 0)
           .reduce((sum, h) => sum + Number(h.quantity) * Number(h.avgCostBasis), 0)
-        if (portfolioValue > 0 && cryptoValue / portfolioValue >= MAX_CRYPTO_PERCENT) { skipped++; continue }
+        if (portfolioValue > 0 && cryptoValue / portfolioValue >= MAX_CRYPTO_PERCENT) {
+          await db.botRunAsset.create({
+            data: {
+              runId:       run.id,
+              symbol:      asset.symbol,
+              regime:      signal.regime,
+              signal:      signal.action,
+              conviction:  signal.conviction,
+              action:      'SKIPPED',
+              skipReason:  'crypto cap 30%',
+              candleCount: candles.length,
+            },
+          })
+          skipped++
+          continue
+        }
       }
 
       const sectorSymbols = UNIVERSE.filter(u => u.sector === asset.sector).map(u => u.symbol)
       const sectorValue = account.holdings
         .filter(h => sectorSymbols.includes(h.symbol) && Number(h.quantity) > 0)
         .reduce((sum, h) => sum + Number(h.quantity) * Number(h.avgCostBasis), 0)
-      if (portfolioValue > 0 && sectorValue / portfolioValue >= MAX_SECTOR_PERCENT) { skipped++; continue }
+      if (portfolioValue > 0 && sectorValue / portfolioValue >= MAX_SECTOR_PERCENT) {
+        await db.botRunAsset.create({
+          data: {
+            runId:       run.id,
+            symbol:      asset.symbol,
+            regime:      signal.regime,
+            signal:      signal.action,
+            conviction:  signal.conviction,
+            action:      'SKIPPED',
+            skipReason:  'sector cap 40%',
+            candleCount: candles.length,
+          },
+        })
+        skipped++
+        continue
+      }
 
       let price: number
       try {
         price = await getQuoteForSymbol(asset.symbol, asset.assetType)
-      } catch { skipped++; continue }
+      } catch {
+        await db.botRunAsset.create({
+          data: {
+            runId:       run.id,
+            symbol:      asset.symbol,
+            regime:      signal.regime,
+            signal:      signal.action,
+            conviction:  signal.conviction,
+            action:      'SKIPPED',
+            skipReason:  'price fetch failed',
+            candleCount: candles.length,
+          },
+        })
+        skipped++
+        continue
+      }
 
       const trades = await db.trade.findMany({
         where: { accountId: botAccountId, symbol: asset.symbol },
@@ -161,9 +271,54 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
         winRate,
         avgWinLossRatio,
       })
-      if (quantity <= 0 || price * quantity > cashBalance) { skipped++; continue }
+
+      if (quantity <= 0) {
+        await db.botRunAsset.create({
+          data: {
+            runId:       run.id,
+            symbol:      asset.symbol,
+            regime:      signal.regime,
+            signal:      signal.action,
+            conviction:  signal.conviction,
+            action:      'SKIPPED',
+            skipReason:  'quantity 0 (low conviction or price too high)',
+            candleCount: candles.length,
+          },
+        })
+        skipped++
+        continue
+      }
+
+      if (price * quantity > cashBalance) {
+        await db.botRunAsset.create({
+          data: {
+            runId:       run.id,
+            symbol:      asset.symbol,
+            regime:      signal.regime,
+            signal:      signal.action,
+            conviction:  signal.conviction,
+            action:      'SKIPPED',
+            skipReason:  'insufficient cash',
+            candleCount: candles.length,
+          },
+        })
+        skipped++
+        continue
+      }
 
       const result = await executeSignal(botAccountId, signal, quantity, asset.assetType)
+      await db.botRunAsset.create({
+        data: {
+          runId:       run.id,
+          symbol:      asset.symbol,
+          regime:      signal.regime,
+          signal:      signal.action,
+          conviction:  signal.conviction,
+          action:      result.success ? 'BOUGHT' : 'ERROR',
+          skipReason:  result.success ? null : `execution error: ${result.error}`,
+          candleCount: candles.length,
+        },
+      })
       if (result.success) {
         tradesExecuted++
         // Create ATR stop loss
@@ -186,8 +341,41 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
       } else {
         errors.push(`BUY ${asset.symbol}: ${result.error}`)
       }
+      continue
     }
+
+    // HOLD (or SELL-not-held, or BUY-already-held) — log as skipped
+    await db.botRunAsset.create({
+      data: {
+        runId:       run.id,
+        symbol:      asset.symbol,
+        regime:      signal.regime,
+        signal:      signal.action,
+        conviction:  signal.conviction,
+        action:      'SKIPPED',
+        skipReason:  signal.skipReason ?? `signal ${signal.action} (no action taken)`,
+        candleCount: candles.length,
+      },
+    })
+    skipped++
   }
+
+  // 7. Finalise run record
+  await db.botRun.update({
+    where: { id: run.id },
+    data: {
+      finishedAt:     new Date(),
+      status:         errors.length > 0 ? 'ERROR' : 'OK',
+      tradesExecuted,
+      skipped,
+      errors,
+    },
+  })
+
+  // 8. Purge runs older than 90 days (cascades to BotRunAsset)
+  await db.botRun.deleteMany({
+    where: { startedAt: { lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) } },
+  })
 
   return { tradesExecuted, skipped, errors }
 }

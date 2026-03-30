@@ -32,6 +32,7 @@ export async function executeSignal(
     side,
     quantity,
     note,
+    reason: signal.reason,
   })
 
   return {
