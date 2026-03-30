@@ -11,6 +11,7 @@ export interface Signal {
   conviction: number  // 0.0–1.0
   strategy: 'MOMENTUM' | 'MEAN_REVERSION' | 'BREAKOUT'
   regime: Regime
+  skipReason?: string  // populated on HOLD signals where reason is knowable
   reason?: string     // human-readable sentence; set on BUY/SELL, empty/undefined on HOLD
 }
 
@@ -75,6 +76,8 @@ function momentumSignal(
 
     return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1), reason }
   }
+  if (!isHeld && entryTrigger && currAdx <= 20) return { ...base, skipReason: 'ADX < 20' }
+  if (!isHeld && entryTrigger && (currRsi < 45 || currRsi > 75)) return { ...base, skipReason: 'RSI out of range' }
 
   return base
 }
@@ -107,6 +110,7 @@ function meanReversionSignal(
     const reason     = `Bought near the lower Bollinger Band — RSI was ${Math.round(currRsi)} in a ranging market.`
     return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1), reason }
   }
+  if (!isHeld && price > band.lower * 1.05) return { ...base, skipReason: 'mean reversion: price above lower band' }
 
   return base
 }
@@ -162,7 +166,7 @@ function applyWeeklyGate(signal: Signal, weeklyCandles: CandleData[]): Signal {
 
   const weeklySlope = emaSlope(weeklyEma)
 
-  if (weeklySlope < -0.002) return { ...signal, action: 'HOLD', conviction: 0, reason: '' }
+  if (weeklySlope < -0.002) return { ...signal, action: 'HOLD', conviction: 0, skipReason: 'weekly gate: negative EMA slope', reason: '' }
   if (weeklySlope > 0.001)  return { ...signal, conviction: clamp(signal.conviction + 0.1, 0, 1), reason: `${signal.reason} Weekly trend was up.` }
   return { ...signal, reason: `${signal.reason} Weekly trend was neutral.` }
 }
