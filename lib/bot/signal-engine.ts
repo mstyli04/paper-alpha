@@ -95,7 +95,7 @@ function meanReversionSignal(
     const conviction = 0.5 * bandScore + 0.5 * rsiScore
     return { ...base, action: 'BUY', conviction: clamp(conviction, 0, 1) }
   }
-  if (!isHeld && price > band.lower * 1.05) return { ...base, skipReason: 'mean reversion: price above mid-band' }
+  if (!isHeld && price > band.lower * 1.05) return { ...base, skipReason: 'mean reversion: price above lower band' }
 
   return base
 }
