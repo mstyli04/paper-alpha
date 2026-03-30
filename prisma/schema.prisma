@@ -162,7 +162,7 @@ enum StopOrderStatus {
 
 model BotRun {
   id                     String        @id @default(cuid())
-  startedAt              DateTime
+  startedAt              DateTime      // supplied explicitly by runner — records when bot begins, not DB insert time
   finishedAt             DateTime?
   status                 BotRunStatus  @default(OK)
   tradesExecuted         Int           @default(0)
