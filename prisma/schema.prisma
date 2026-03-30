@@ -66,6 +66,7 @@ model Trade {
   price      Decimal      @db.Decimal(20, 8)
   totalValue Decimal      @db.Decimal(20, 8)
   note       String?
+  reason     String?
   createdAt  DateTime     @default(now())
 
   @@index([accountId])
