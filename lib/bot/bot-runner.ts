@@ -9,6 +9,7 @@ import { getSentimentScore, clearSentimentCache } from './sentiment'
 import { atr } from './indicators'
 import type { AssetType } from '@/types'
 import type { Trade } from '@prisma/client'
+import Decimal from 'decimal.js'
 
 const MAX_POSITIONS      = 10
 const MAX_CRYPTO_PERCENT = 0.30
@@ -56,7 +57,7 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
 
   // 3. Create run record now that we have the portfolio snapshot
   const run = await db.botRun.create({
-    data: { startedAt: new Date(), portfolioValueSnapshot: portfolioValue, status: 'OK' },
+    data: { startedAt: new Date(), portfolioValueSnapshot: new Decimal(portfolioValue.toFixed(8)), status: 'OK' },
   })
 
   // 4. Drawdown circuit breaker
@@ -100,20 +101,20 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
           where: { id: stop.id },
           data: { status: result.success ? 'TRIGGERED' : 'FAILED', triggeredAt: new Date() },
         })
+        await db.botRunAsset.create({
+          data: {
+            runId:       run.id,
+            symbol:      stop.symbol,
+            regime:      'UNKNOWN',
+            signal:      'SELL',
+            conviction:  1,
+            action:      result.success ? 'SOLD' : 'ERROR',
+            skipReason:  result.success ? null : `execution error: ${result.error}`,
+            candleCount: 0,
+          },
+        })
         if (result.success) {
           tradesExecuted++
-          await db.botRunAsset.create({
-            data: {
-              runId:       run.id,
-              symbol:      stop.symbol,
-              regime:      'UNKNOWN',
-              signal:      'SELL',
-              conviction:  1,
-              action:      'SOLD',
-              skipReason:  null,
-              candleCount: 0,
-            },
-          })
           holdingMap.delete(stop.symbol)
         }
       }
@@ -352,7 +353,7 @@ export async function runBot(botAccountId: string): Promise<BotRunResult> {
         signal:      signal.action,
         conviction:  signal.conviction,
         action:      'SKIPPED',
-        skipReason:  signal.skipReason ?? 'signal HOLD',
+        skipReason:  signal.skipReason ?? `signal ${signal.action} (no action taken)`,
         candleCount: candles.length,
       },
     })
