@@ -14,6 +14,7 @@ import {
   Newspaper,
   SlidersHorizontal,
   User,
+  Activity,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -44,7 +45,8 @@ const navGroups = [
   {
     label: 'Account',
     items: [
-      { href: '/history', label: 'History', icon: History },
+      { href: '/history',  label: 'History',  icon: History },
+      { href: '/bot-logs', label: 'Bot Logs', icon: Activity },
       { href: '/settings', label: 'Settings', icon: Settings },
     ],
   },
