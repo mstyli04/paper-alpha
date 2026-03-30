@@ -45,7 +45,7 @@ const navGroups = [
   {
     label: 'Account',
     items: [
-      { href: '/history',  label: 'History',  icon: History },
+      { href: '/history', label: 'History', icon: History },
       { href: '/bot-logs', label: 'Bot Logs', icon: Activity },
       { href: '/settings', label: 'Settings', icon: Settings },
     ],

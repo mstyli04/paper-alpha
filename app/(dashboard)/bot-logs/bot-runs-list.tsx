@@ -81,7 +81,7 @@ function AssetTable({ assets }: { assets: BotRunAsset[] }) {
                   asset.action === 'ERROR' ? 'text-red' : ''
                 }`}>{asset.action}</td>
                 <td className="py-2 pr-4 font-mono">{asset.candleCount}</td>
-                <td className="py-2 text-text-muted">{asset.skipReason ?? '—'}</td>
+                <td className="py-2 text-text-muted max-w-[200px] break-words">{asset.skipReason ?? '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -108,6 +108,7 @@ export function BotRunsList({ runs }: { runs: RunWithAssets[] }) {
             {/* Run row */}
             <button
               type="button"
+              aria-expanded={expanded}
               onClick={() => setExpandedId(expanded ? null : run.id)}
               className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-surface-2/50 transition-colors text-left"
             >
@@ -136,7 +137,7 @@ export function BotRunsList({ runs }: { runs: RunWithAssets[] }) {
               <div className="bg-surface-2/30 border-t border-border">
                 {run.errors.length > 0 && (
                   <div className="mx-5 mt-4 p-3 bg-red/10 border border-red/20 rounded text-xs text-red space-y-1">
-                    {run.errors.map((e, i) => <p key={i}>{e}</p>)}
+                    {run.errors.map((e, i) => <p key={`${i}-${e}`} className="break-words">{e}</p>)}
                   </div>
                 )}
                 <AssetTable assets={run.assets} />
