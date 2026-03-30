@@ -116,8 +116,8 @@ export function BotRunsList({ runs }: { runs: RunWithAssets[] }) {
                 {formatRunDate(run.startedAt)}
               </span>
               <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                run.status === 'ERROR' ? 'bg-red/10 text-red' :
                 !run.finishedAt ? 'bg-yellow-500/10 text-yellow-500' :
+                run.status === 'ERROR' ? 'bg-red/10 text-red' :
                 'bg-green/10 text-green'
               }`}>
                 {!run.finishedAt ? 'TIMEOUT' : run.status}
