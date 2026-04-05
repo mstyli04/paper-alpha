@@ -122,6 +122,7 @@ enum AssetType {
   STOCK
   CRYPTO
   COMMODITY
+  PREDICTION
 }
 
 enum TradeSide {
