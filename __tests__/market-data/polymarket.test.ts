@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mapCLOBMarketToQuote, mapGammaMarketToTrendingAsset, mapPriceHistoryToCandles } from '@/lib/market-data/polymarket'
 
 // --- mapCLOBMarketToQuote ---
@@ -56,7 +56,7 @@ describe('mapCLOBMarketToQuote', () => {
   it('truncates long question in name field', () => {
     const longQ = { ...CLOB_MARKET, question: 'A'.repeat(80) }
     const quote = mapCLOBMarketToQuote(longQ, '0xabc123')
-    expect(quote.name.length).toBeLessThanOrEqual(63) // 60 chars + '...'
+    expect(quote.name.length).toBe(60) // 57 content chars + '...'
   })
 })
 

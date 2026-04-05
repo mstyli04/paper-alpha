@@ -74,8 +74,13 @@ export function mapCLOBMarketToQuote(market: CLOBMarket, symbolWithSuffix: strin
 }
 
 export function mapGammaMarketToTrendingAsset(market: GammaMarket): TrendingAsset {
-  const prices = JSON.parse(market.outcomePrices) as [string, string]
-  const yesPrice = parseFloat(prices[0])
+  let yesPrice = 0
+  try {
+    const prices = JSON.parse(market.outcomePrices) as [string, string]
+    yesPrice = parseFloat(prices[0]) || 0
+  } catch {
+    // malformed field — default to 0
+  }
   const tag = market.tags?.[0]?.label ?? 'Prediction'
 
   return {
