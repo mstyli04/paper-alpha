@@ -3,10 +3,21 @@ export const dynamic = 'force-dynamic'
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { makeLimiter, checkRateLimit } from '@/lib/rate-limit'
+
+const limiter = makeLimiter(3, '1 h')
 
 export async function POST() {
   const { userId } = auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = await checkRateLimit(limiter, userId)
+  if (rl && !rl.success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.reset - Date.now()) / 1000)) } }
+    )
+  }
 
   const user = await db.user.findUnique({
     where: { clerkId: userId },
