@@ -24,15 +24,6 @@ const TAB_LABELS: Record<Tab, string> = {
 const PREDICTION_CATEGORIES = ['All', 'Politics', 'Crypto', 'Sports', 'Business', 'News & Economy'] as const
 type PredictionCategory = typeof PREDICTION_CATEGORIES[number]
 
-const CATEGORY_SLUG_MAP: Record<PredictionCategory, string | null> = {
-  'All': null,
-  'Politics': 'politics',
-  'Crypto': 'crypto',
-  'Sports': 'sports',
-  'Business': 'business',
-  'News & Economy': 'news-economy',
-}
-
 export default function MarketsPage() {
   const [tab, setTab] = useState<Tab>('stocks')
   const [predCategory, setPredCategory] = useState<PredictionCategory>('All')
@@ -62,11 +53,10 @@ export default function MarketsPage() {
     return found ?? { symbol: w.symbol, name: w.symbol, price: 0, changePercent: 0, assetType: w.assetType }
   })
 
-  const slug = CATEGORY_SLUG_MAP[predCategory]
   const allPredictions = data?.predictions ?? []
-  const filteredPredictions = slug
-    ? allPredictions.filter(a => a.description?.toLowerCase() === predCategory.toLowerCase())
-    : allPredictions
+  const filteredPredictions = predCategory === 'All'
+    ? allPredictions
+    : allPredictions.filter(a => a.description?.toLowerCase() === predCategory.toLowerCase())
 
   const assets =
     tab === 'stocks' ? (data?.stocks ?? []) :
@@ -143,6 +133,8 @@ export default function MarketsPage() {
               <><TrendingUp className="w-8 h-8 mx-auto mb-3 opacity-40" />No gainers found right now.</>
             ) : tab === 'watchlist' ? (
               <><Star className="w-8 h-8 mx-auto mb-3 opacity-40" />No symbols in your watchlist yet.<br />Star any asset to add it here.</>
+            ) : tab === 'predictions' ? (
+              <><TrendingUp className="w-8 h-8 mx-auto mb-3 opacity-40" />No prediction markets found.</>
             ) : (
               <><TrendingUp className="w-8 h-8 mx-auto mb-3 opacity-40" />Failed to load market data.</>
             )}
