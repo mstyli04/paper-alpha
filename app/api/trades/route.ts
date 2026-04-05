@@ -7,8 +7,11 @@ import { db } from '@/lib/db'
 import { executeTrade } from '@/lib/trading-engine'
 
 const TradeSchema = z.object({
-  symbol: z.string().min(1).max(20).toUpperCase(),
-  assetType: z.enum(['STOCK', 'CRYPTO', 'COMMODITY']),
+  symbol: z.string().min(1).max(100).transform((s, ctx) => {
+    const isPrediction = s.includes(':')
+    return isPrediction ? s : s.toUpperCase()
+  }),
+  assetType: z.enum(['STOCK', 'CRYPTO', 'COMMODITY', 'PREDICTION']),
   side: z.enum(['BUY', 'SELL', 'SHORT', 'COVER']),
   quantity: z.number().positive(),
   note: z.string().max(500).optional(),

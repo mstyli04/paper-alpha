@@ -23,8 +23,9 @@ export function formatPercent(value: number | undefined | null): string {
   return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`
 }
 
-export function formatQuantity(value: number | undefined | null, assetType: 'STOCK' | 'CRYPTO' | 'COMMODITY'): string {
+export function formatQuantity(value: number | undefined | null, assetType: 'STOCK' | 'CRYPTO' | 'COMMODITY' | 'PREDICTION'): string {
   const n = value ?? 0
+  if (assetType === 'PREDICTION') return n.toFixed(0)
   if (assetType === 'CRYPTO') return n.toFixed(6)
   return n.toFixed(4)
 }
