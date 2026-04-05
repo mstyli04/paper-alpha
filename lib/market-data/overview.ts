@@ -1,5 +1,6 @@
 import YahooFinance from 'yahoo-finance2'
 import { UNIVERSE } from '@/lib/bot/universe'
+import { withCache } from '@/lib/cache'
 
 const yf = new YahooFinance()
 
@@ -76,36 +77,42 @@ export function pickMovers(
 }
 
 export async function getIndices(): Promise<IndexData[]> {
-  const results = await Promise.allSettled(INDEX_LIST.map(({ ticker }) => fetchQuote(ticker)))
-  return results.map((r, i) => ({
-    label: INDEX_LIST[i].label,
-    ticker: INDEX_LIST[i].ticker,
-    price: r.status === 'fulfilled' ? (r.value?.regularMarketPrice ?? 0) : 0,
-    change: r.status === 'fulfilled' ? (r.value?.regularMarketChange ?? 0) : 0,
-    changePercent: r.status === 'fulfilled' ? (r.value?.regularMarketChangePercent ?? 0) : 0,
-  }))
+  return withCache('market:indices', 300, async () => {
+    const results = await Promise.allSettled(INDEX_LIST.map(({ ticker }) => fetchQuote(ticker)))
+    return results.map((r, i) => ({
+      label: INDEX_LIST[i].label,
+      ticker: INDEX_LIST[i].ticker,
+      price: r.status === 'fulfilled' ? (r.value?.regularMarketPrice ?? 0) : 0,
+      change: r.status === 'fulfilled' ? (r.value?.regularMarketChange ?? 0) : 0,
+      changePercent: r.status === 'fulfilled' ? (r.value?.regularMarketChangePercent ?? 0) : 0,
+    }))
+  })
 }
 
 export async function getSectors(): Promise<SectorData[]> {
-  const results = await Promise.allSettled(SECTOR_LIST.map(({ ticker }) => fetchQuote(ticker)))
-  return results.map((r, i) => ({
-    name: SECTOR_LIST[i].name,
-    ticker: SECTOR_LIST[i].ticker,
-    changePercent: r.status === 'fulfilled' ? (r.value?.regularMarketChangePercent ?? 0) : 0,
-  }))
+  return withCache('market:sectors', 300, async () => {
+    const results = await Promise.allSettled(SECTOR_LIST.map(({ ticker }) => fetchQuote(ticker)))
+    return results.map((r, i) => ({
+      name: SECTOR_LIST[i].name,
+      ticker: SECTOR_LIST[i].ticker,
+      changePercent: r.status === 'fulfilled' ? (r.value?.regularMarketChangePercent ?? 0) : 0,
+    }))
+  })
 }
 
 export async function getTopMovers(): Promise<{ gainers: MoverData[]; losers: MoverData[] }> {
-  const stockSymbols = UNIVERSE.filter(a => a.assetType === 'STOCK').map(a => a.symbol)
-  const results = await Promise.allSettled(stockSymbols.map(s => fetchQuote(s)))
+  return withCache('market:movers', 300, async () => {
+    const stockSymbols = UNIVERSE.filter(a => a.assetType === 'STOCK').map(a => a.symbol)
+    const results = await Promise.allSettled(stockSymbols.map(s => fetchQuote(s)))
 
-  const movers: MoverData[] = results
-    .map((r, i) => ({
-      symbol: stockSymbols[i],
-      price: r.status === 'fulfilled' ? (r.value?.regularMarketPrice ?? 0) : 0,
-      changePercent: r.status === 'fulfilled' ? (r.value?.regularMarketChangePercent ?? 0) : 0,
-    }))
-    .filter(m => m.price > 0)
+    const movers: MoverData[] = results
+      .map((r, i) => ({
+        symbol: stockSymbols[i],
+        price: r.status === 'fulfilled' ? (r.value?.regularMarketPrice ?? 0) : 0,
+        changePercent: r.status === 'fulfilled' ? (r.value?.regularMarketChangePercent ?? 0) : 0,
+      }))
+      .filter(m => m.price > 0)
 
-  return pickMovers(movers, 3)
+    return pickMovers(movers, 3)
+  })
 }

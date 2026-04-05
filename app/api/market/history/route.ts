@@ -3,12 +3,23 @@ export const dynamic = 'force-dynamic'
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { getCandles } from '@/lib/market-data'
+import { makeLimiter, checkRateLimit } from '@/lib/rate-limit'
 import type { AssetType } from '@/types'
 import type { CandleResolution } from '@/lib/market-data/types'
+
+const limiter = makeLimiter(30, '1 m')
 
 export async function GET(req: Request) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = await checkRateLimit(limiter, userId)
+  if (rl && !rl.success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.reset - Date.now()) / 1000)) } }
+    )
+  }
 
   const { searchParams } = new URL(req.url)
   const symbol = searchParams.get('symbol')
@@ -20,17 +31,13 @@ export async function GET(req: Request) {
 
   const to = Math.floor(Date.now() / 1000)
 
-  // Choose the finest resolution that keeps data density high without
-  // blowing past API rate limits. For crypto, CoinGecko ignores the
-  // resolution and auto-selects granularity from the days window:
-  //   ≤1 day → minutely, 2–90 days → hourly, >90 days → daily.
   const rangeResolutionMap: Record<string, CandleResolution> = {
-    '1D': '1',   // 1-min  — stocks ~390 pts, crypto minutely
-    '1W': '60',  // 1-hour — stocks ~56 pts,  crypto ~168 pts (hourly)
-    '1M': '60',  // 1-hour — stocks ~168 pts, crypto ~720 pts (hourly)
-    '3M': 'D',   // daily  — stocks ~63 pts,  crypto ~90 pts (daily)
-    '1Y': 'D',   // daily  — stocks ~252 pts, crypto ~365 pts
-    '5Y': 'W',   // weekly — stocks ~260 pts, crypto uses 'max' (see coingecko.ts)
+    '1D': '1',
+    '1W': '60',
+    '1M': '60',
+    '3M': 'D',
+    '1Y': 'D',
+    '5Y': 'W',
   }
   const resolvedResolution: CandleResolution = rangeResolutionMap[range] ?? resolution
 

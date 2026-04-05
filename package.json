@@ -20,6 +20,8 @@
     "@anthropic-ai/sdk": "^0.80.0",
     "@clerk/nextjs": "^5.2.0",
     "@prisma/client": "^5.16.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "clsx": "^2.1.1",
     "decimal.js": "^10.4.3",
     "lightweight-charts": "^4.1.7",

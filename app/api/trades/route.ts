@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { executeTrade } from '@/lib/trading-engine'
+import { makeLimiter, checkRateLimit } from '@/lib/rate-limit'
 
 const TradeSchema = z.object({
   symbol: z.string().min(1).max(20).toUpperCase(),
@@ -14,9 +15,19 @@ const TradeSchema = z.object({
   note: z.string().max(500).optional(),
 })
 
+const limiter = makeLimiter(10, '1 m')
+
 export async function POST(req: Request) {
   const { userId } = auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = await checkRateLimit(limiter, userId)
+  if (rl && !rl.success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.reset - Date.now()) / 1000)) } }
+    )
+  }
 
   const body = await req.json().catch(() => null)
   const parsed = TradeSchema.safeParse(body)
