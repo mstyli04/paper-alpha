@@ -238,8 +238,6 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
       },
     })
 
-    await saveSnapshot(tx, accountId)
-
     return {
       success: true,
       trade: {
@@ -251,32 +249,6 @@ export async function executeTrade(input: TradeInput): Promise<TradeResult> {
         totalValue: Number(trade.totalValue),
       },
     }
-  })
-}
-
-async function saveSnapshot(
-  tx: Parameters<Parameters<typeof db.$transaction>[0]>[0],
-  accountId: string
-) {
-  const account = await tx.paperAccount.findUnique({
-    where: { id: accountId },
-    include: { holdings: true },
-  })
-  if (!account) return
-
-  // Longs: qty * price (positive contribution)
-  // Shorts: qty is negative, so qty * price is negative (short is a liability at cost basis)
-  const holdingsValue = account.holdings.reduce(
-    (sum, h) => sum + Number(h.quantity) * Number(h.avgCostBasis),
-    0
-  )
-
-  await tx.portfolioSnapshot.create({
-    data: {
-      accountId,
-      totalValue: Number(account.cashBalance) + holdingsValue,
-      cashBalance: Number(account.cashBalance),
-    },
   })
 }
 
