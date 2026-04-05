@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db as prisma } from '@/lib/db'
+import { makeLimiter, checkRateLimit } from '@/lib/rate-limit'
 
 const AlertSchema = z.object({
   symbol: z.string().min(1).toUpperCase(),
@@ -11,6 +12,8 @@ const AlertSchema = z.object({
   targetPrice: z.number().positive(),
   condition: z.enum(['ABOVE', 'BELOW']),
 })
+
+const limiter = makeLimiter(20, '1 h')
 
 export async function GET() {
   const { userId: clerkId } = auth()
@@ -30,6 +33,14 @@ export async function GET() {
 export async function POST(req: Request) {
   const { userId: clerkId } = auth()
   if (!clerkId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = await checkRateLimit(limiter, clerkId)
+  if (rl && !rl.success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.reset - Date.now()) / 1000)) } }
+    )
+  }
 
   const user = await prisma.user.findUnique({ where: { clerkId } })
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
