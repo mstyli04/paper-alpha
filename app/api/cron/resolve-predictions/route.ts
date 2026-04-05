@@ -78,7 +78,6 @@ export async function GET(req: Request) {
 
     // Determine settlement price
     const yesToken = market.tokens.find(t => t.outcome === 'Yes')
-    const noToken = market.tokens.find(t => t.outcome === 'No')
 
     // On Polymarket: resolved YES token → price ~1.0, resolved NO token → price ~0.0
     const resolvedYes = yesToken ? yesToken.price > 0.99 : false
