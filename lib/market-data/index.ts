@@ -35,7 +35,8 @@ export async function getCandles(
   from: number,
   to: number
 ): Promise<CandleData[]> {
-  const key = `market:candles:${symbol.toUpperCase()}:${assetType}:${resolution}:${from}`
+  const bucketedFrom = Math.floor(from / 300) * 300
+  const key = `market:candles:${symbol.toUpperCase()}:${assetType}:${resolution}:${bucketedFrom}`
   return withCache(key, 300, async () => {
     if (assetType === 'COMMODITY') {
       if (resolution === '1') return getCommodityIntradayCandles(symbol)
