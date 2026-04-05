@@ -10,40 +10,69 @@ import type { TrendingAsset } from '@/types'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
-type Tab = 'stocks' | 'crypto' | 'commodities' | 'gainers' | 'watchlist'
+type Tab = 'stocks' | 'crypto' | 'commodities' | 'predictions' | 'gainers' | 'watchlist'
 
 const TAB_LABELS: Record<Tab, string> = {
   stocks: 'Stocks',
   crypto: 'Crypto',
   commodities: 'Commodities',
+  predictions: 'Predictions',
   gainers: '🔥 Gainers',
   watchlist: '⭐ Watchlist',
 }
 
+const PREDICTION_CATEGORIES = ['All', 'Politics', 'Crypto', 'Sports', 'Business', 'News & Economy'] as const
+type PredictionCategory = typeof PREDICTION_CATEGORIES[number]
+
+const CATEGORY_SLUG_MAP: Record<PredictionCategory, string | null> = {
+  'All': null,
+  'Politics': 'politics',
+  'Crypto': 'crypto',
+  'Sports': 'sports',
+  'Business': 'business',
+  'News & Economy': 'news-economy',
+}
+
 export default function MarketsPage() {
   const [tab, setTab] = useState<Tab>('stocks')
-  const { data, isLoading } = useSWR<{ stocks: TrendingAsset[]; crypto: TrendingAsset[]; commodities: TrendingAsset[] }>(
+  const [predCategory, setPredCategory] = useState<PredictionCategory>('All')
+  const { data, isLoading } = useSWR<{
+    stocks: TrendingAsset[]
+    crypto: TrendingAsset[]
+    commodities: TrendingAsset[]
+    predictions: TrendingAsset[]
+  }>(
     '/api/market/trending',
     fetcher,
     { refreshInterval: 30000 }
   )
   const { watchlist, watchedSymbols, toggle } = useWatchlist()
 
-  const allAssets = [...(data?.stocks ?? []), ...(data?.crypto ?? []), ...(data?.commodities ?? [])]
+  const allAssets = [
+    ...(data?.stocks ?? []),
+    ...(data?.crypto ?? []),
+    ...(data?.commodities ?? []),
+  ]
   const gainers = [...allAssets]
     .filter(a => a.changePercent > 0)
     .sort((a, b) => b.changePercent - a.changePercent)
 
-  // For watchlist tab: match watchlist items against loaded assets, or show with price from quote
   const watchlistAssets: TrendingAsset[] = watchlist.map(w => {
     const found = allAssets.find(a => a.symbol === w.symbol)
     return found ?? { symbol: w.symbol, name: w.symbol, price: 0, changePercent: 0, assetType: w.assetType }
   })
 
+  const slug = CATEGORY_SLUG_MAP[predCategory]
+  const allPredictions = data?.predictions ?? []
+  const filteredPredictions = slug
+    ? allPredictions.filter(a => a.description?.toLowerCase() === predCategory.toLowerCase())
+    : allPredictions
+
   const assets =
     tab === 'stocks' ? (data?.stocks ?? []) :
     tab === 'crypto' ? (data?.crypto ?? []) :
     tab === 'commodities' ? (data?.commodities ?? []) :
+    tab === 'predictions' ? filteredPredictions :
     tab === 'gainers' ? gainers :
     watchlistAssets
 
@@ -51,7 +80,7 @@ export default function MarketsPage() {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-text-primary">Markets</h1>
-        <p className="text-text-muted text-sm mt-1">Live prices for stocks, crypto and commodities</p>
+        <p className="text-text-muted text-sm mt-1">Live prices for stocks, crypto, commodities and prediction markets</p>
       </div>
 
       <div className="card overflow-hidden">
@@ -71,13 +100,34 @@ export default function MarketsPage() {
           ))}
         </div>
 
+        {/* Category filter for predictions tab */}
+        {tab === 'predictions' && (
+          <div className="flex gap-2 px-4 py-2.5 border-b border-border overflow-x-auto">
+            {PREDICTION_CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setPredCategory(cat)}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  predCategory === cat
+                    ? 'bg-brand/10 text-brand border border-brand/30'
+                    : 'text-text-muted border border-border hover:text-text-primary'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-2 border-b border-border">
           <span className="w-6" />
           <div className="flex items-center gap-3">
             <div className="w-9" />
             <span className="text-xs text-text-muted font-medium">Asset</span>
           </div>
-          <span className="text-xs text-text-muted font-medium text-right w-32">Price / Change</span>
+          <span className="text-xs text-text-muted font-medium text-right w-32">
+            {tab === 'predictions' ? 'YES Price / Chg' : 'Price / Change'}
+          </span>
           <span className="w-8" />
         </div>
 
@@ -111,7 +161,7 @@ export default function MarketsPage() {
       </div>
 
       <p className="text-xs text-text-muted text-center">
-        Prices refresh every 30 seconds. Stocks: Finnhub · Crypto: CoinGecko · Commodities: Yahoo Finance.
+        Prices refresh every 30 seconds. Stocks: Finnhub · Crypto: CoinGecko · Commodities: Yahoo Finance · Predictions: Polymarket.
         Paper trading only — not financial advice.
       </p>
     </div>
