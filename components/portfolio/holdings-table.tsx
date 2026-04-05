@@ -323,19 +323,31 @@ export function HoldingsTable({ holdings, loading, onTradeSuccess }: HoldingsTab
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/markets/${h.symbol}?type=${h.assetType}`}
+                        href={
+                          h.assetType === 'PREDICTION'
+                            ? `/markets/${h.symbol.split(':')[0]}?type=PREDICTION`
+                            : `/markets/${h.symbol}?type=${h.assetType}`
+                        }
                         className="hover:text-brand transition-colors"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-text-primary">{h.symbol}</p>
+                          <p className="font-medium text-text-primary truncate max-w-[200px]">
+                            {h.assetType === 'PREDICTION'
+                              ? (h.name ?? h.symbol)
+                              : h.symbol}
+                          </p>
                           {isShort && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 font-semibold border border-orange-500/20">
                               SHORT
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-text-muted capitalize">{h.assetType.toLowerCase()}</p>
+                        <p className="text-xs text-text-muted capitalize">
+                          {h.assetType === 'PREDICTION'
+                            ? `${h.symbol.endsWith(':YES') ? 'YES' : 'NO'} · Prediction`
+                            : h.assetType.toLowerCase()}
+                        </p>
                       </Link>
                       <span className="text-text-muted ml-auto">
                         {isExpanded

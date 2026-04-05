@@ -47,6 +47,7 @@ export async function getPortfolio(accountId: string): Promise<Portfolio> {
       quantity,
       avgCostBasis,
       realizedPnl: Number(h.realizedPnl),
+      name: priceResult.status === 'fulfilled' ? priceResult.value.name : undefined,
       currentPrice,
       currentValue,
       unrealizedPnl,

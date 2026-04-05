@@ -9,6 +9,7 @@ import { useQuote } from '@/hooks/use-quote'
 import { useWatchlist } from '@/hooks/use-watchlist'
 import { usePortfolio } from '@/hooks/use-portfolio'
 import { OrderForm } from '@/components/trading/order-form'
+import { PredictionOrderForm } from '@/components/trading/prediction-order-form'
 import { PriceChart } from '@/components/charts/price-chart'
 import type { TradeMarker } from '@/components/charts/price-chart'
 import { NewsFeed } from '@/components/markets/news-feed'
@@ -30,8 +31,9 @@ const fetcher = (url: string) => fetch(url).then(r => r.json())
 export default function AssetDetailPage() {
   const params = useParams()
   const searchParams = useSearchParams()
-  const symbol = (params.symbol as string).toUpperCase()
+  const rawSymbol = params.symbol as string
   const assetType = (searchParams.get('type') || 'STOCK') as AssetType
+  const symbol = assetType === 'PREDICTION' ? rawSymbol : rawSymbol.toUpperCase()
   const [range, setRange] = useState<Range>('1M')
   const [chartType, setChartType] = useState<'area' | 'candlestick'>('area')
 
@@ -69,7 +71,7 @@ export default function AssetDetailPage() {
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-text-primary">{symbol}</h1>
               <span className="text-xs px-2 py-0.5 rounded bg-surface-2 border border-border text-text-muted">
-                {assetType === 'CRYPTO' ? 'Crypto' : 'Stock'}
+                {assetType === 'CRYPTO' ? 'Crypto' : assetType === 'PREDICTION' ? 'Prediction Market' : 'Stock'}
               </span>
             </div>
             {quoteLoading ? (
@@ -157,18 +159,27 @@ export default function AssetDetailPage() {
 
         <div className="space-y-4">
           {quote ? (
-            <OrderForm symbol={symbol} assetType={assetType} currentPrice={quote.price} />
+            assetType === 'PREDICTION' ? (
+              <PredictionOrderForm
+                conditionId={symbol}
+                yesPrice={quote.yesPrice ?? quote.price}
+                noPrice={quote.noPrice ?? (1 - quote.price)}
+                question={quote.question ?? quote.name}
+              />
+            ) : (
+              <OrderForm symbol={symbol} assetType={assetType} currentPrice={quote.price} />
+            )
           ) : (
             <Skeleton className="h-80 w-full rounded-xl" />
           )}
 
-          {/* Price Alert */}
-          {quote && (
+          {/* Price Alert — not supported for prediction markets */}
+          {quote && assetType !== 'PREDICTION' && (
             <AlertForm symbol={symbol} assetType={assetType} currentPrice={quote.price} />
           )}
 
-          {/* Stop-Loss / Take-Profit */}
-          {quote && (
+          {/* Stop-Loss / Take-Profit — not supported for prediction markets */}
+          {quote && assetType !== 'PREDICTION' && (
             <StopOrderForm
               symbol={symbol}
               assetType={assetType}
@@ -182,10 +193,16 @@ export default function AssetDetailPage() {
             <div className="card p-5 space-y-3">
               <h3 className="text-sm font-semibold text-text-primary">Market Stats</h3>
               {[
-                { label: 'Open', value: formatCurrency(quote.open) },
-                { label: "Today's High", value: formatCurrency(quote.high) },
-                { label: "Today's Low", value: formatCurrency(quote.low) },
-                { label: 'Prev. Close', value: formatCurrency(quote.previousClose) },
+                ...(assetType !== 'PREDICTION' ? [
+                  { label: 'Open', value: formatCurrency(quote.open) },
+                  { label: "Today's High", value: formatCurrency(quote.high) },
+                  { label: "Today's Low", value: formatCurrency(quote.low) },
+                  { label: 'Prev. Close', value: formatCurrency(quote.previousClose) },
+                ] : [
+                  { label: 'YES Price', value: `${((quote.yesPrice ?? quote.price) * 100).toFixed(1)}¢` },
+                  { label: 'NO Price', value: `${((quote.noPrice ?? (1 - quote.price)) * 100).toFixed(1)}¢` },
+                  ...(quote.resolvesAt ? [{ label: 'Resolves', value: new Date(quote.resolvesAt * 1000).toLocaleDateString() }] : []),
+                ]),
                 ...(quote.marketCap ? [{ label: 'Market Cap', value: formatMarketCap(quote.marketCap) }] : []),
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between text-sm">

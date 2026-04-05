@@ -1,4 +1,4 @@
-export type AssetType = 'STOCK' | 'CRYPTO' | 'COMMODITY'
+export type AssetType = 'STOCK' | 'CRYPTO' | 'COMMODITY' | 'PREDICTION'
 export type TradeSide = 'BUY' | 'SELL' | 'SHORT' | 'COVER'
 
 export interface Quote {
@@ -16,6 +16,14 @@ export interface Quote {
   assetType: AssetType
   logoUrl?: string
   timestamp: number
+  // Prediction market fields (only present when assetType === 'PREDICTION')
+  question?: string
+  yesPrice?: number
+  noPrice?: number
+  resolvesAt?: number
+  resolved?: boolean
+  resolvedOutcome?: 'YES' | 'NO'
+  conditionId?: string
 }
 
 export interface CandleData {
@@ -41,6 +49,7 @@ export interface Holding {
   quantity: number
   avgCostBasis: number
   realizedPnl: number
+  name?: string          // populated from quote.name; useful for prediction market question text
   currentPrice?: number
   currentValue?: number
   unrealizedPnl?: number
