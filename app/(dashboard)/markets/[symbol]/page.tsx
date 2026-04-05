@@ -31,8 +31,9 @@ const fetcher = (url: string) => fetch(url).then(r => r.json())
 export default function AssetDetailPage() {
   const params = useParams()
   const searchParams = useSearchParams()
-  const symbol = (params.symbol as string).toUpperCase()
+  const rawSymbol = params.symbol as string
   const assetType = (searchParams.get('type') || 'STOCK') as AssetType
+  const symbol = assetType === 'PREDICTION' ? rawSymbol : rawSymbol.toUpperCase()
   const [range, setRange] = useState<Range>('1M')
   const [chartType, setChartType] = useState<'area' | 'candlestick'>('area')
 
