@@ -18,3 +18,4 @@ prisma/migrations/
 *.log
 .vercel
 .worktrees/
+.gstack/

@@ -87,8 +87,7 @@ Write 2-3 sentences explaining what is driving ${symbol}'s recent price action b
 
     return NextResponse.json({ commentary, symbol, assetType })
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error('Commentary error:', message)
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('Commentary error:', err instanceof Error ? err.message : err)
+    return NextResponse.json({ error: 'Failed to generate commentary' }, { status: 500 })
   }
 }
