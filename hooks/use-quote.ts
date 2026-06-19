@@ -8,7 +8,7 @@ const fetcher = async (url: string) => {
   return data
 }
 
-export function useQuote(symbol: string, assetType: 'STOCK' | 'CRYPTO' | 'COMMODITY') {
+export function useQuote(symbol: string, assetType: 'STOCK' | 'CRYPTO' | 'COMMODITY' | 'PREDICTION') {
   const { data, error, isLoading } = useSWR<Quote>(
     `/api/market/quote?symbol=${symbol}&assetType=${assetType}`,
     fetcher,

@@ -3,6 +3,7 @@
 import useSWR from 'swr'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import type { AssetType } from '@/types'
 
 interface Metrics {
   annualizedVol: number
@@ -47,7 +48,7 @@ function MetricRow({
   )
 }
 
-export function VolatilityMetrics({ symbol, assetType }: { symbol: string; assetType: 'STOCK' | 'CRYPTO' | 'COMMODITY' }) {
+export function VolatilityMetrics({ symbol, assetType }: { symbol: string; assetType: AssetType }) {
   const { data, isLoading } = useSWR<Metrics>(
     `/api/market/metrics?symbol=${symbol}&assetType=${assetType}`,
     fetcher

@@ -4,6 +4,7 @@ import useSWR from 'swr'
 import { ExternalLink } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { timeAgo } from '@/lib/utils'
+import type { AssetType } from '@/types'
 
 interface NewsItem {
   id: string | number
@@ -32,7 +33,7 @@ const sentimentLabel = {
 
 interface NewsFeedProps {
   symbol: string
-  assetType: 'STOCK' | 'CRYPTO' | 'COMMODITY'
+  assetType: AssetType
 }
 
 export function NewsFeed({ symbol, assetType }: NewsFeedProps) {
