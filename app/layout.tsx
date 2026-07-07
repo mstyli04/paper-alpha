@@ -10,7 +10,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider afterSignOutUrl="/">
+    <ClerkProvider
+      afterSignOutUrl="/"
+      appearance={{
+        variables: {
+          colorPrimary: '#22c55e',
+          borderRadius: '0px',
+          fontFamily: "'Space Grotesk', system-ui, sans-serif",
+          colorBackground: 'var(--surface)',
+          colorForeground: 'var(--text-primary)',
+          colorInput: 'var(--surface-2)',
+          colorInputForeground: 'var(--text-primary)',
+          colorPrimaryForeground: '#0a0a0a',
+        },
+      }}
+    >
       <html lang="en" suppressHydrationWarning>
         <body className="bg-background text-text-primary antialiased">
           <ThemeProvider>
