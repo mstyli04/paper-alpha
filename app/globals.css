@@ -129,6 +129,15 @@
   .data-label {
     @apply text-xs text-text-muted;
   }
+
+  /* Phase 2: hybrid list patterns */
+  .row-boxed {
+    @apply border-2 border-border bg-surface px-3 py-2 hover:bg-surface-2 transition-colors;
+  }
+
+  .table-head {
+    @apply border-b-2 border-border text-xs font-bold uppercase tracking-widest text-text-secondary;
+  }
 }
 
 /* Lightweight charts override */
