@@ -1,15 +1,22 @@
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60 // seconds
 
+import crypto from 'crypto'
 import { NextResponse } from 'next/server'
 import { runBot } from '@/lib/bot/bot-runner'
 
 // Called daily by Vercel Cron in 3 batches (20:10, 20:20, 20:30 UTC). Protected by CRON_SECRET.
 export async function GET(req: Request) {
-  const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const authHeader = req.headers.get('authorization') ?? ''
+  const expected   = `Bearer ${cronSecret}`
+  let authorized   = false
+  try {
+    authorized = authHeader.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
+  } catch { authorized = false }
+  if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const botAccountId = process.env.BOT_ACCOUNT_ID
   if (!botAccountId) {

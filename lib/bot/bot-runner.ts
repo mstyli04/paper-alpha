@@ -118,16 +118,16 @@ export async function runBot(botAccountId: string, offset = 0, limit = UNIVERSE.
           holdingMap.delete(stop.symbol)
         }
       }
-    } catch {
-      // skip — retry next cycle
+    } catch (err) {
+      errors.push(`Stop check ${stop.symbol}: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
   // 6. Process signals
+  let openCount = account.holdings.filter(h => Number(h.quantity) > 0).length
   for (const asset of UNIVERSE.slice(offset, offset + limit)) {
     const holding   = holdingMap.get(asset.symbol)
     const isHeld    = !!holding && Number(holding.quantity) > 0
-    const openCount = account.holdings.filter(h => Number(h.quantity) > 0).length
 
     await sleep(200)
     const candles = await fetchBotCandles(asset.symbol, asset.assetType)
@@ -321,6 +321,7 @@ export async function runBot(botAccountId: string, offset = 0, limit = UNIVERSE.
       })
       if (result.success) {
         tradesExecuted++
+        openCount++
         // Create ATR stop loss
         const atrValues = atr(candles, 14)
         if (atrValues.length > 0) {
