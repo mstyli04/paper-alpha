@@ -83,19 +83,19 @@ export function AlertsDropdown() {
     <div ref={ref} className="relative">
       <button
         onClick={handleOpen}
-        className="relative p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
+        className="relative p-2 text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
         aria-label="Alerts"
       >
         <Bell className="w-5 h-5" />
         {badgeCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red text-[#0a0a0a] text-[10px] font-bold rounded-full flex items-center justify-center">
             {badgeCount > 9 ? '9+' : badgeCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-surface border-2 border-border z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <span className="text-sm font-semibold text-text-primary">Price Alerts</span>
             <span className="text-xs text-text-muted">{active.length} active</span>
@@ -110,24 +110,28 @@ export function AlertsDropdown() {
               <>
                 {triggered.length > 0 && (
                   <div>
-                    <p className="px-4 py-2 text-xs font-medium text-text-muted uppercase tracking-wider bg-surface-2">
+                    <p className="px-4 py-2 text-xs font-bold text-text-secondary uppercase tracking-widest bg-surface-2">
                       Triggered
                     </p>
-                    {triggered.map(alert => (
-                      <AlertRow key={alert.id} alert={alert} onDelete={deleteAlert} />
-                    ))}
+                    <div className="p-3 space-y-2">
+                      {triggered.map(alert => (
+                        <AlertRow key={alert.id} alert={alert} onDelete={deleteAlert} />
+                      ))}
+                    </div>
                   </div>
                 )}
                 {active.length > 0 && (
                   <div>
                     {triggered.length > 0 && (
-                      <p className="px-4 py-2 text-xs font-medium text-text-muted uppercase tracking-wider bg-surface-2">
+                      <p className="px-4 py-2 text-xs font-bold text-text-secondary uppercase tracking-widest bg-surface-2">
                         Watching
                       </p>
                     )}
-                    {active.map(alert => (
-                      <AlertRow key={alert.id} alert={alert} onDelete={deleteAlert} />
-                    ))}
+                    <div className="p-3 space-y-2">
+                      {active.map(alert => (
+                        <AlertRow key={alert.id} alert={alert} onDelete={deleteAlert} />
+                      ))}
+                    </div>
                   </div>
                 )}
               </>
@@ -154,26 +158,22 @@ function AlertRow({
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0 ${
-        alert.triggered ? 'bg-brand/5' : ''
+      className={`row-boxed flex items-center gap-3 ${
+        alert.triggered ? 'border-brand' : ''
       }`}
     >
-      <div
-        className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-          alert.condition === 'ABOVE' ? 'bg-green-500/10' : 'bg-red-500/10'
-        }`}
-      >
+      <div className="w-7 h-7 rounded-full bg-surface-2 flex items-center justify-center flex-shrink-0">
         {alert.condition === 'ABOVE' ? (
-          <TrendingUp className="w-3.5 h-3.5 text-green-400" />
+          <TrendingUp className="w-3.5 h-3.5 text-green" />
         ) : (
-          <TrendingDown className="w-3.5 h-3.5 text-red-400" />
+          <TrendingDown className="w-3.5 h-3.5 text-red" />
         )}
       </div>
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-text-primary">
           {alert.symbol}{' '}
-          <span className={alert.condition === 'ABOVE' ? 'text-green-400' : 'text-red-400'}>
+          <span className={alert.condition === 'ABOVE' ? 'text-green' : 'text-red'}>
             {alert.condition === 'ABOVE' ? '↑' : '↓'}
           </span>{' '}
           {price}
@@ -187,7 +187,7 @@ function AlertRow({
 
       <button
         onClick={() => onDelete(alert.id)}
-        className="p-1 rounded text-text-muted hover:text-red-400 transition-colors flex-shrink-0"
+        className="p-1 text-text-muted hover:text-red transition-colors flex-shrink-0"
         aria-label="Delete alert"
       >
         <X className="w-3.5 h-3.5" />

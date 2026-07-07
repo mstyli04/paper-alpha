@@ -116,7 +116,7 @@ export function AvatarDisplay({ avatarUrl, username, size = 40, className, isOwn
     <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
       <AvatarInner avatarUrl={avatarUrl} username={username} size={size} className={className} />
       <span
-        className="absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow-sm select-none pointer-events-none"
+        className="absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none"
         style={{ fontSize: crownSize }}
         title="Owner"
       >

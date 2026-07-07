@@ -46,10 +46,10 @@ function AssetTable({ assets }: { assets: BotRunAsset[] }) {
             key={t.key}
             type="button"
             onClick={() => setFilter(t.key)}
-            className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+            className={`px-3 py-1 text-xs font-bold uppercase tracking-wide border-2 transition-colors ${
               filter === t.key
-                ? 'bg-brand/10 text-brand'
-                : 'text-text-muted hover:text-text-primary'
+                ? 'bg-brand text-[#0a0a0a] border-border'
+                : 'text-text-secondary border-transparent hover:text-text-primary'
             }`}
           >
             {t.label} ({t.count})
@@ -61,13 +61,13 @@ function AssetTable({ assets }: { assets: BotRunAsset[] }) {
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr className="text-left text-text-muted border-b border-border">
-              <th className="pb-2 pr-4 font-medium">Symbol</th>
-              <th className="pb-2 pr-4 font-medium">Regime</th>
-              <th className="pb-2 pr-4 font-medium">Signal</th>
-              <th className="pb-2 pr-4 font-medium">Action</th>
-              <th className="pb-2 pr-4 font-medium">Candles</th>
-              <th className="pb-2 font-medium">Skip Reason / Notes</th>
+            <tr className="text-left table-head">
+              <th className="pb-2 pr-4">Symbol</th>
+              <th className="pb-2 pr-4">Regime</th>
+              <th className="pb-2 pr-4">Signal</th>
+              <th className="pb-2 pr-4">Action</th>
+              <th className="pb-2 pr-4">Candles</th>
+              <th className="pb-2">Skip Reason / Notes</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/50">
@@ -116,10 +116,10 @@ export function BotRunsList({ runs }: { runs: RunWithAssets[] }) {
               <span className="text-sm text-text-primary flex-1">
                 {formatRunDate(run.startedAt)}
               </span>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                !run.finishedAt ? 'bg-yellow-500/10 text-yellow-500' :
-                run.status === 'ERROR' ? 'bg-red/10 text-red' :
-                'bg-green/10 text-green'
+              <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 ${
+                !run.finishedAt ? 'bg-yellow-500 text-[#0a0a0a]' :
+                run.status === 'ERROR' ? 'bg-red text-[#0a0a0a]' :
+                'bg-green text-[#0a0a0a]'
               }`}>
                 {!run.finishedAt ? 'TIMEOUT' : run.status}
               </span>
@@ -136,7 +136,7 @@ export function BotRunsList({ runs }: { runs: RunWithAssets[] }) {
             {expanded && (
               <div className="bg-surface-2/30 border-t border-border">
                 {run.errors.length > 0 && (
-                  <div className="mx-5 mt-4 p-3 bg-red/10 border border-red/20 rounded text-xs text-red space-y-1">
+                  <div className="mx-5 mt-4 p-3 border-2 border-red text-xs text-red space-y-1">
                     {run.errors.map((e, i) => <p key={`${i}-${e}`} className="break-words">{e}</p>)}
                   </div>
                 )}

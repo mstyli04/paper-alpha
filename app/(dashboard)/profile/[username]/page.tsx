@@ -24,10 +24,10 @@ interface ProfileData {
 }
 
 const sideStyles: Record<string, string> = {
-  BUY:   'bg-green/10 text-green',
-  SELL:  'bg-red/10 text-red',
-  SHORT: 'bg-orange-500/10 text-orange-500',
-  COVER: 'bg-blue-500/10 text-blue-500',
+  BUY:   'bg-green text-[#0a0a0a]',
+  SELL:  'bg-red text-[#0a0a0a]',
+  SHORT: 'bg-orange-500 text-[#0a0a0a]',
+  COVER: 'bg-blue-500 text-[#0a0a0a]',
 }
 
 export default function ProfilePage() {
@@ -100,10 +100,10 @@ export default function ProfilePage() {
               {isOwnProfile && (
                 <button
                   onClick={() => setShowPicker(v => !v)}
-                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand flex items-center justify-center shadow-lg hover:bg-brand-dim transition-colors"
+                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand flex items-center justify-center border-2 border-border hover:bg-brand-dim transition-colors"
                   title="Change avatar"
                 >
-                  <Pencil className="w-3 h-3 text-white" />
+                  <Pencil className="w-3 h-3 text-[#0a0a0a]" />
                 </button>
               )}
             </div>
@@ -112,12 +112,12 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-bold text-text-primary">@{profileUser?.username}</h1>
                 {isOwner && (
-                  <span className="text-xs bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 px-2 py-0.5 rounded-full font-semibold">
+                  <span className="text-xs bg-yellow-400 text-[#0a0a0a] px-2 py-0.5 font-bold uppercase tracking-wide">
                     👑 admin
                   </span>
                 )}
                 {isOwnProfile && !isOwner && (
-                  <span className="text-xs bg-brand/10 text-brand px-2 py-0.5 rounded-full">You</span>
+                  <span className="text-xs bg-brand text-[#0a0a0a] px-2 py-0.5 font-bold uppercase tracking-wide">You</span>
                 )}
               </div>
               {portfolio && (
@@ -261,10 +261,10 @@ export default function ProfilePage() {
           ) : trades.length === 0 ? (
             <div className="py-12 text-center text-text-muted text-sm">No trades yet.</div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="p-4 space-y-2">
               {trades.map(trade => (
-                <div key={trade.id} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors">
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${sideStyles[trade.side]}`}>
+                <div key={trade.id} className="row-boxed flex items-center gap-3">
+                  <span className={`text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 flex-shrink-0 ${sideStyles[trade.side]}`}>
                     {trade.side}
                   </span>
                   <div className="flex-1 min-w-0">

@@ -35,7 +35,7 @@ export default function LeaderboardPage() {
               <Link
                 key={entry.userId}
                 href={`/profile/${entry.username}`}
-                className={`card p-5 text-center hover:border-border-2 transition-colors ${isFirst ? 'border-yellow-400/30 bg-yellow-400/5' : ''}`}
+                className={`card p-5 text-center hover:border-border-2 transition-colors ${isFirst ? 'border-yellow-400' : ''}`}
               >
                 <div className={`text-2xl font-bold mb-2 ${rankColors[actualIndex]}`}>
                   {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
@@ -45,7 +45,7 @@ export default function LeaderboardPage() {
                 </div>
                 <p className="text-sm font-semibold text-text-primary truncate">{entry.username}</p>
                 {entry.isBot && (
-                  <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">
+                  <span className="text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 bg-brand text-[#0a0a0a]">
                     BOT
                   </span>
                 )}
@@ -79,13 +79,13 @@ export default function LeaderboardPage() {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border">
-                <th className="text-left text-xs text-text-muted font-medium py-3 px-5">Rank</th>
-                <th className="text-left text-xs text-text-muted font-medium py-3 px-4">Trader</th>
-                <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Portfolio Value</th>
-                <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Total Return</th>
-                <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Today</th>
-                <th className="text-right text-xs text-text-muted font-medium py-3 px-5">P&L</th>
+              <tr className="table-head">
+                <th className="text-left py-3 px-5">Rank</th>
+                <th className="text-left py-3 px-4">Trader</th>
+                <th className="text-right py-3 px-4">Portfolio Value</th>
+                <th className="text-right py-3 px-4">Total Return</th>
+                <th className="text-right py-3 px-4">Today</th>
+                <th className="text-right py-3 px-5">P&L</th>
               </tr>
             </thead>
             <tbody>
@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
                 return (
                   <tr
                     key={entry.userId}
-                    className={`border-b border-border last:border-0 ${isMe ? 'bg-brand/5' : 'hover:bg-surface-2/50'} transition-colors`}
+                    className={`table-row last:border-0 ${isMe ? 'bg-surface-2' : ''}`}
                   >
                     <td className="py-3 px-5">
                       <div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ export default function LeaderboardPage() {
                           <div className="flex items-center gap-1.5">
                             {isMe && <span className="text-xs text-brand">You</span>}
                             {entry.isBot && (
-                              <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">
+                              <span className="text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 bg-brand text-[#0a0a0a]">
                                 BOT
                               </span>
                             )}

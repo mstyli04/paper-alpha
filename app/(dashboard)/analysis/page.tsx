@@ -51,9 +51,9 @@ interface NewsItem {
 }
 
 const sentimentStyles = {
-  positive: 'bg-green/10 text-green',
-  negative: 'bg-red/10 text-red',
-  neutral:  'bg-text-muted/10 text-text-muted',
+  positive: 'bg-green text-[#0a0a0a]',
+  negative: 'bg-red text-[#0a0a0a]',
+  neutral:  'border-2 border-border text-text-secondary',
 }
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
@@ -113,7 +113,7 @@ function NewsTab() {
                     <ExternalLink className="w-3 h-3 text-text-muted flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${sentimentStyles[item.sentiment]}`}>
+                    <span className={`text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 ${sentimentStyles[item.sentiment]}`}>
                       {item.sentiment}
                     </span>
                     <span className="text-xs text-text-muted">{item.source}</span>
@@ -195,10 +195,10 @@ function AnalysisPageInner() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium rounded-t transition-colors -mb-px ${
+            className={`px-4 py-2 text-sm font-bold uppercase tracking-wide border-2 transition-colors -mb-px ${
               tab === t
-                ? 'bg-brand/10 text-brand border border-border border-b-surface-1'
-                : 'text-text-muted hover:text-text-primary'
+                ? 'bg-brand text-[#0a0a0a] border-border'
+                : 'text-text-secondary border-transparent hover:text-text-primary'
             }`}
           >
             {TAB_LABELS[t]}

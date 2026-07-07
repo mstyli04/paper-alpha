@@ -30,9 +30,9 @@ const CATEGORIES: { id: Category; label: string }[] = [
 ]
 
 const sentimentStyles = {
-  positive: 'bg-green/10 text-green border-green/20',
-  negative: 'bg-red/10 text-red border-red/20',
-  neutral: 'bg-text-muted/10 text-text-muted border-text-muted/20',
+  positive: 'bg-green text-[#0a0a0a]',
+  negative: 'bg-red text-[#0a0a0a]',
+  neutral: 'border-2 border-border text-text-secondary',
 }
 
 export default function NewsPage() {
@@ -72,10 +72,10 @@ export default function NewsPage() {
           <button
             key={c.id}
             onClick={() => setCategory(c.id)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide border-2 transition-colors ${
               category === c.id
-                ? 'bg-brand/10 text-brand border border-brand/30'
-                : 'text-text-muted border border-border hover:text-text-primary hover:bg-surface-2'
+                ? 'bg-brand text-[#0a0a0a] border-border'
+                : 'text-text-secondary border-transparent hover:text-text-primary hover:bg-surface-2'
             }`}
           >
             {c.label}
@@ -112,7 +112,7 @@ export default function NewsPage() {
                 <img
                   src={item.image}
                   alt=""
-                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0 bg-surface-2"
+                  className="w-16 h-16 object-cover flex-shrink-0 bg-surface-2"
                   onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                 />
               )}
@@ -127,7 +127,7 @@ export default function NewsPage() {
                   <p className="text-xs text-text-muted line-clamp-2 mb-2 leading-relaxed">{item.summary}</p>
                 )}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${sentimentStyles[item.sentiment]}`}>
+                  <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 ${sentimentStyles[item.sentiment]}`}>
                     {item.sentiment}
                   </span>
                   <span className="text-[10px] text-text-muted">{item.source}</span>

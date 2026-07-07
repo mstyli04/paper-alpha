@@ -35,15 +35,15 @@ export default function HistoryPage() {
         </div>
 
         {/* Filter */}
-        <div className="flex rounded-lg overflow-hidden border border-border text-sm">
+        <div className="flex overflow-hidden border-2 border-border text-sm">
           {(['', 'BUY', 'SELL'] as const).map(f => (
             <button
               key={f}
               onClick={() => { setSideFilter(f); setPage(1) }}
-              className={`px-4 py-2 transition-colors ${
+              className={`px-4 py-2 font-bold uppercase tracking-wide transition-colors ${
                 sideFilter === f
-                  ? 'bg-brand/10 text-brand'
-                  : 'text-text-muted hover:text-text-primary'
+                  ? 'bg-brand text-[#0a0a0a]'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-2'
               }`}
             >
               {f || 'All'}
@@ -70,14 +70,14 @@ export default function HistoryPage() {
           <>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left text-xs text-text-muted font-medium py-3 px-5">Asset</th>
-                  <th className="text-left text-xs text-text-muted font-medium py-3 px-4">Side</th>
-                  <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Quantity</th>
-                  <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Price</th>
-                  <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Total</th>
-                  <th className="text-left text-xs text-text-muted font-medium py-3 px-4">Reason</th>
-                  <th className="text-right text-xs text-text-muted font-medium py-3 px-5">Time</th>
+                <tr className="table-head">
+                  <th className="text-left py-3 px-5">Asset</th>
+                  <th className="text-left py-3 px-4">Side</th>
+                  <th className="text-right py-3 px-4">Quantity</th>
+                  <th className="text-right py-3 px-4">Price</th>
+                  <th className="text-right py-3 px-4">Total</th>
+                  <th className="text-left py-3 px-4">Reason</th>
+                  <th className="text-right py-3 px-5">Time</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,11 +90,11 @@ export default function HistoryPage() {
                       </Link>
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded ${
-                        trade.side === 'BUY' ? 'bg-green/10 text-green' :
-                        trade.side === 'SELL' ? 'bg-red/10 text-red' :
-                        trade.side === 'SHORT' ? 'bg-orange-500/10 text-orange-500' :
-                        'bg-blue-500/10 text-blue-500'
+                      <span className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide px-2 py-1 ${
+                        trade.side === 'BUY' ? 'bg-green text-[#0a0a0a]' :
+                        trade.side === 'SELL' ? 'bg-red text-[#0a0a0a]' :
+                        trade.side === 'SHORT' ? 'bg-orange-500 text-[#0a0a0a]' :
+                        'bg-blue-500 text-[#0a0a0a]'
                       }`}>
                         {(trade.side === 'BUY' || trade.side === 'COVER')
                           ? <ArrowUpRight className="w-3 h-3" />
@@ -148,14 +148,14 @@ export default function HistoryPage() {
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="p-1.5 rounded text-text-muted hover:text-text-primary disabled:opacity-40 hover:bg-surface-2 transition-colors"
+                    className="p-1.5 text-text-muted hover:text-text-primary disabled:opacity-40 hover:bg-surface-2 transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
                     disabled={page === data.totalPages}
-                    className="p-1.5 rounded text-text-muted hover:text-text-primary disabled:opacity-40 hover:bg-surface-2 transition-colors"
+                    className="p-1.5 text-text-muted hover:text-text-primary disabled:opacity-40 hover:bg-surface-2 transition-colors"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>

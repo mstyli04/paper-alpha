@@ -36,9 +36,9 @@ export default function ProfileRedirect() {
   return (
     <div className="space-y-4 animate-fade-in">
       <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-32 w-full rounded-xl" />
+      <Skeleton className="h-32 w-full" />
       <div className="grid grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
       </div>
     </div>
   )
