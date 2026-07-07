@@ -219,7 +219,7 @@ export default function SettingsPage() {
       </Section>
 
       {/* Disclaimer */}
-      <div className="card p-5">
+      <div className="card p-5 border-brand">
         <h3 className="text-xs font-bold uppercase tracking-widest text-brand mb-2">Disclaimer</h3>
         <p className="text-xs text-text-secondary leading-relaxed">
           Paper Alpha is a simulated trading platform for educational and entertainment purposes only.
