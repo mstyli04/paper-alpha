@@ -7,6 +7,17 @@ const config: Config = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    borderRadius: {
+      none: '0px',
+      sm: '0px',
+      DEFAULT: '0px',
+      md: '0px',
+      lg: '0px',
+      xl: '0px',
+      '2xl': '0px',
+      '3xl': '0px',
+      full: '9999px',
+    },
     extend: {
       colors: {
         background: 'var(--background)',
@@ -14,10 +25,10 @@ const config: Config = {
         'surface-2': 'var(--surface-2)',
         border: 'var(--border)',
         'border-2': 'var(--border-2)',
-        brand: '#6366f1',
-        'brand-dim': '#4f46e5',
-        green: '#10b981',
-        'green-dim': '#059669',
+        brand: '#22c55e',
+        'brand-dim': '#16a34a',
+        green: '#22c55e',
+        'green-dim': '#16a34a',
         red: '#ef4444',
         'red-dim': '#dc2626',
         'text-primary': 'var(--text-primary)',
@@ -25,7 +36,7 @@ const config: Config = {
         'text-muted': 'var(--text-muted)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       backgroundImage: {
