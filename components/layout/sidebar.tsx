@@ -71,14 +71,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       )}
 
       <aside className={cn(
-        'fixed left-0 top-0 h-full w-56 bg-surface border-r border-border flex flex-col z-30 transition-transform duration-300',
+        'fixed left-0 top-0 h-full w-56 bg-surface border-r-2 border-border flex flex-col z-30 transition-transform duration-300',
         'lg:translate-x-0',
         open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}>
         {/* Logo */}
-        <div className="flex items-center justify-between px-4 h-14 border-b border-border shrink-0">
+        <div className="flex items-center justify-between px-4 h-14 border-b-2 border-border shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md overflow-hidden shrink-0 border border-brand/30">
+            <div className="w-7 h-7 overflow-hidden shrink-0 border-2 border-border">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shapeRendering="crispEdges" width="28" height="28">
                 <rect width="16" height="16" fill="#0c0f1a"/>
                 <rect x="6" y="0" width="2" height="1" fill="#22c55e"/>
@@ -133,15 +133,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                       href={href}
                       onClick={onClose}
                       className={cn(
-                        'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all relative',
+                        'flex items-center gap-2.5 px-3 py-2 text-sm font-bold uppercase tracking-wide transition-all border-2',
                         active
-                          ? 'bg-brand/10 text-brand'
-                          : 'text-text-secondary hover:text-text-primary hover:bg-surface-2'
+                          ? 'bg-brand text-[#0a0a0a] border-border'
+                          : 'text-text-secondary hover:text-text-primary hover:bg-surface-2 border-transparent'
                       )}
                     >
-                      {active && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-brand rounded-r-full" />
-                      )}
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       {label}
                     </Link>
@@ -153,8 +150,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-3 border-t border-border shrink-0">
-          <div className="px-3 py-2.5 rounded-lg bg-surface-2 border border-border/50">
+        <div className="p-3 border-t-2 border-border shrink-0">
+          <div className="px-3 py-2.5 bg-surface-2 border-2 border-border">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-semibold text-brand uppercase tracking-widest">Simulation</span>
               <span className="text-[10px] text-text-muted">v1.0</span>
