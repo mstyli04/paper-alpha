@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { rsi, macd } from '@/lib/bot/indicators'
+import { useChartPalette } from '@/components/charts/palette'
 
 type TradeSide = 'BUY' | 'SELL' | 'SHORT' | 'COVER'
 
@@ -26,12 +27,6 @@ interface SymbolData {
 interface HoldingsChartProps {
   height?: number
 }
-
-const COLORS = [
-  '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6',
-  '#ec4899', '#14b8a6', '#f97316', '#06b6d4',
-  '#a855f7', '#84cc16',
-]
 
 // Net quantity held at unix time t (trades must be sorted ascending)
 function getQuantityAtTime(trades: TradePoint[], t: number): number {
@@ -74,6 +69,7 @@ function addIndicatorSeries(
   symbol: string,
   data: Record<string, SymbolData>,
   activeIndicator: 'RSI' | 'MACD',
+  palette: { categorical: string[]; signal: { up: string; down: string } },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any[] {
   const symbolData = data[symbol]
@@ -81,13 +77,14 @@ function addIndicatorSeries(
   const closes = symbolData.candles.map(c => c.close)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const series: any[] = []
+  const { categorical, signal } = palette
 
   if (activeIndicator === 'RSI') {
     if (closes.length < 15) return []
     const rsiValues = rsi(closes, 14)
     const offset    = closes.length - rsiValues.length
     const rsiSeries = indicatorChart.addLineSeries({
-      color: '#818cf8',
+      color: categorical[0],
       lineWidth: 1,
       priceScaleId: 'right',
       autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }),
@@ -95,8 +92,8 @@ function addIndicatorSeries(
     rsiSeries.setData(
       rsiValues.map((v: number, i: number) => ({ time: symbolData.candles[i + offset].time, value: v }))
     )
-    rsiSeries.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.5)',   lineWidth: 1, lineStyle: 2 })
-    rsiSeries.createPriceLine({ price: 30, color: 'rgba(16,185,129,0.5)', lineWidth: 1, lineStyle: 2 })
+    rsiSeries.createPriceLine({ price: 70, color: `${signal.down}80`, lineWidth: 1, lineStyle: 2 })
+    rsiSeries.createPriceLine({ price: 30, color: `${signal.up}80`,   lineWidth: 1, lineStyle: 2 })
     series.push(rsiSeries)
   } else {
     if (closes.length < 35) return []
@@ -107,16 +104,16 @@ function addIndicatorSeries(
       macdValues.map((v: { macd: number; signal: number; histogram: number }, i: number) => ({
         time:  symbolData.candles[i + offset].time,
         value: v.histogram,
-        color: v.histogram >= 0 ? 'rgba(16,185,129,0.6)' : 'rgba(239,68,68,0.6)',
+        color: v.histogram >= 0 ? `${signal.up}99` : `${signal.down}99`,
       }))
     )
-    const macdLine = indicatorChart.addLineSeries({ color: '#818cf8', lineWidth: 1, priceScaleId: 'right' })
+    const macdLine = indicatorChart.addLineSeries({ color: categorical[0], lineWidth: 1, priceScaleId: 'right' })
     macdLine.setData(
       macdValues.map((v: { macd: number; signal: number; histogram: number }, i: number) => ({
         time: symbolData.candles[i + offset].time, value: v.macd,
       }))
     )
-    const signalLine = indicatorChart.addLineSeries({ color: '#f59e0b', lineWidth: 1, priceScaleId: 'right' })
+    const signalLine = indicatorChart.addLineSeries({ color: categorical[1], lineWidth: 1, priceScaleId: 'right' })
     signalLine.setData(
       macdValues.map((v: { macd: number; signal: number; histogram: number }, i: number) => ({
         time: symbolData.candles[i + offset].time, value: v.signal,
@@ -153,6 +150,8 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
   const activeIndicatorRef    = useRef<'RSI' | 'MACD'>('RSI')
   const activeSymbolRef       = useRef<string | null>(null)
 
+  const { mode, categorical, chrome, signal } = useChartPalette()
+
   // ── State ─────────────────────────────────────────────────────────────────
   const [data,                 setData]                = useState<Record<string, SymbolData> | null>(null)
   const [loading,              setLoading]             = useState(true)
@@ -181,7 +180,7 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
   const symbols = data ? Object.keys(data) : []
 
   const colorMap: Record<string, string> = {}
-  symbols.forEach((sym, i) => { colorMap[sym] = COLORS[i % COLORS.length] })
+  symbols.forEach((sym, i) => { colorMap[sym] = categorical[i % categorical.length] })
 
   // ── Auto-advance indicator symbol when active symbol is hidden ────────────
   useEffect(() => {
@@ -222,10 +221,10 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
       const chart = createChart(containerRef.current, {
         width: containerRef.current.clientWidth,
         height,
-        layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: '#94a3b8' },
-        grid:   { vertLines: { visible: false }, horzLines: { color: '#1e2334' } },
-        rightPriceScale: { borderColor: '#1e2334' },
-        timeScale: { borderColor: '#1e2334', timeVisible: false },
+        layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: chrome.text },
+        grid:   { vertLines: { visible: false }, horzLines: { color: chrome.grid } },
+        rightPriceScale: { borderColor: chrome.grid },
+        timeScale: { borderColor: chrome.grid, timeVisible: false },
         handleScroll: true,
         handleScale: true,
         localization: { priceFormatter: (p: number) => (p >= 0 ? '+' : '') + p.toFixed(1) + '%' },
@@ -263,7 +262,7 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
 
         if (!firstSeries) {
           firstSeries = series
-          series.createPriceLine({ price: 0, color: '#475569', lineWidth: 1, lineStyle: LineStyle.Dashed })
+          series.createPriceLine({ price: 0, color: chrome.grid, lineWidth: 1, lineStyle: LineStyle.Dashed })
         }
 
         // Trade markers
@@ -277,7 +276,7 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
           markers.push({
             time:     snapTime,
             position: isBuy ? 'belowBar' : 'aboveBar',
-            color:    isBuy ? '#10b981'  : '#ef4444',
+            color:    isBuy ? signal.up  : signal.down,
             shape:    isBuy ? 'arrowUp'  : 'arrowDown',
             text: `${trade.side} ${trade.quantity % 1 === 0 ? trade.quantity : trade.quantity.toFixed(4)} @ $${trade.price.toFixed(2)}`,
             size: 1,
@@ -295,10 +294,10 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
       const indicatorChart = createChart(indicatorContainerRef.current!, {
         width: indicatorContainerRef.current!.clientWidth,
         height: 120,
-        layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: '#94a3b8' },
-        grid:   { vertLines: { visible: false }, horzLines: { color: '#1e2334' } },
-        rightPriceScale: { borderColor: '#1e2334' },
-        timeScale: { borderColor: '#1e2334', visible: false },
+        layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: chrome.text },
+        grid:   { vertLines: { visible: false }, horzLines: { color: chrome.grid } },
+        rightPriceScale: { borderColor: chrome.grid },
+        timeScale: { borderColor: chrome.grid, visible: false },
         handleScroll: false,
         handleScale: false,
       })
@@ -306,7 +305,9 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
 
       const sym = activeSymbolRef.current
       if (sym && !hidden.has(sym)) {
-        indicatorSeriesRef.current = addIndicatorSeries(indicatorChart, sym, safeData, activeIndicatorRef.current)
+        indicatorSeriesRef.current = addIndicatorSeries(
+          indicatorChart, sym, safeData, activeIndicatorRef.current, { categorical, signal }
+        )
       }
 
       // Bidirectional time-scale sync
@@ -348,7 +349,7 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, height, hidden])
+  }, [data, height, hidden, mode])
 
   // ── Effect 2: switch indicator/symbol without rebuilding main chart ────────
   useEffect(() => {
@@ -363,7 +364,9 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
     }
     indicatorSeriesRef.current = []
 
-    indicatorSeriesRef.current = addIndicatorSeries(indicatorChart, activeIndicatorSymbol, data!, activeIndicator)
+    indicatorSeriesRef.current = addIndicatorSeries(
+      indicatorChart, activeIndicatorSymbol, data!, activeIndicator, { categorical, signal }
+    )
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeIndicator, activeIndicatorSymbol])
 
@@ -401,9 +404,9 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
             key={p}
             type="button"
             onClick={() => setPeriod(p)}
-            className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${
+            className={`text-xs px-2.5 py-1 border transition-colors ${
               period === p
-                ? 'border-brand/40 text-brand bg-brand/10'
+                ? 'border-brand bg-brand text-[#0a0a0a] font-bold'
                 : 'border-border text-text-muted hover:text-text-primary'
             }`}
           >
@@ -429,13 +432,13 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
                   return next
                 })
               }
-              className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border transition-colors ${
+              className={`flex items-center gap-1.5 text-xs px-2.5 py-1 border transition-colors ${
                 isVisible ? 'border-border/60 text-text-primary' : 'border-border/30 text-text-muted opacity-50'
               }`}
             >
               <span
-                className="w-3 h-0.5 rounded inline-block"
-                style={{ backgroundColor: isVisible ? colorMap[sym] : '#64748b' }}
+                className="w-3 h-0.5 inline-block"
+                style={{ backgroundColor: isVisible ? colorMap[sym] : chrome.text }}
               />
               {sym}
               {isVisible && pct !== null && (
@@ -470,9 +473,9 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
               key={sym}
               type="button"
               onClick={() => { setActiveIndicatorSymbol(sym); activeSymbolRef.current = sym }}
-              className={`px-2 py-0.5 text-xs rounded transition-colors ${
+              className={`px-2 py-0.5 text-xs transition-colors ${
                 activeIndicatorSymbol === sym
-                  ? 'bg-brand/10 text-brand'
+                  ? 'bg-brand text-[#0a0a0a] font-bold'
                   : 'text-text-muted hover:text-text-primary'
               }`}
             >
@@ -485,9 +488,9 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
             key={ind}
             type="button"
             onClick={() => { setActiveIndicator(ind); activeIndicatorRef.current = ind }}
-            className={`px-2 py-0.5 text-xs rounded transition-colors ${
+            className={`px-2 py-0.5 text-xs transition-colors ${
               activeIndicator === ind
-                ? 'bg-brand/10 text-brand'
+                ? 'bg-brand text-[#0a0a0a] font-bold'
                 : 'text-text-muted hover:text-text-primary'
             }`}
           >

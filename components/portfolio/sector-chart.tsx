@@ -1,6 +1,7 @@
 'use client'
 
 import type { Holding } from '@/types'
+import { useChartPalette } from '@/components/charts/palette'
 
 // Sector mapping for common stocks and commodities
 const SECTOR_MAP: Record<string, string> = {
@@ -33,18 +34,6 @@ const SECTOR_MAP: Record<string, string> = {
   'PL=F': 'Commodities', 'ZW=F': 'Commodities', 'ZC=F': 'Commodities',
 }
 
-const SECTOR_COLORS: Record<string, string> = {
-  Technology:  '#6366f1',
-  Finance:     '#10b981',
-  Healthcare:  '#06b6d4',
-  Energy:      '#f59e0b',
-  Consumer:    '#ec4899',
-  Industrials: '#8b5cf6',
-  Commodities: '#f97316',
-  Crypto:      '#eab308',
-  Other:       '#64748b',
-}
-
 function getSector(symbol: string, assetType: string): string {
   if (assetType === 'CRYPTO') return 'Crypto'
   return SECTOR_MAP[symbol.toUpperCase()] ?? 'Other'
@@ -55,6 +44,8 @@ interface SectorChartProps {
 }
 
 export function SectorChart({ holdings }: SectorChartProps) {
+  const { categorical } = useChartPalette()
+
   if (!holdings.length) return null
 
   // Only long positions for sector breakdown
@@ -74,6 +65,7 @@ export function SectorChart({ holdings }: SectorChartProps) {
   const sectors = Object.entries(sectorTotals)
     .map(([name, value]) => ({ name, value, pct: (value / total) * 100 }))
     .sort((a, b) => b.value - a.value)
+    .map((s, i) => ({ ...s, color: categorical[i % categorical.length] }))
 
   // Build SVG donut segments
   const r = 54
@@ -104,7 +96,7 @@ export function SectorChart({ holdings }: SectorChartProps) {
                 cy={cy}
                 r={r}
                 fill="none"
-                stroke={SECTOR_COLORS[s.name] ?? SECTOR_COLORS.Other}
+                stroke={s.color}
                 strokeWidth="18"
                 strokeDasharray={s.dashArray}
                 strokeDashoffset={s.offset}
@@ -122,7 +114,7 @@ export function SectorChart({ holdings }: SectorChartProps) {
             <div key={s.name} className="flex items-center gap-2">
               <div
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: SECTOR_COLORS[s.name] ?? SECTOR_COLORS.Other }}
+                style={{ backgroundColor: s.color }}
               />
               <span className="text-xs text-text-secondary flex-1 truncate">{s.name}</span>
               <span className="text-xs font-mono text-text-primary font-medium">

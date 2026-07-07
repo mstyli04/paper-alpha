@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CandleData } from '@/types'
 import { rsi, macd } from '@/lib/bot/indicators'
+import { useChartPalette } from '@/components/charts/palette'
 
 export interface TradeMarker {
   time: number  // unix seconds
@@ -47,6 +48,8 @@ export function PriceChart({
   const activeIndicatorRef = useRef(activeIndicator)
   activeIndicatorRef.current = activeIndicator
 
+  const { mode, categorical, chrome, signal } = useChartPalette()
+
   // ── Effect 1: Main chart + indicator chart container ──────────────────────
   // Does NOT include activeIndicator — switching indicators never rebuilds the
   // main chart or resets zoom state.
@@ -67,19 +70,19 @@ export function PriceChart({
         height,
         layout: {
           background: { type: ColorType.Solid, color: 'transparent' },
-          textColor: '#94a3b8',
+          textColor: chrome.text,
         },
         grid: {
-          vertLines: { color: '#1e2334' },
-          horzLines: { color: '#1e2334' },
+          vertLines: { color: chrome.grid },
+          horzLines: { color: chrome.grid },
         },
         crosshair: { mode: CrosshairMode.Normal },
         rightPriceScale: {
-          borderColor: '#1e2334',
-          textColor: '#94a3b8',
+          borderColor: chrome.grid,
+          textColor: chrome.text,
         },
         timeScale: {
-          borderColor: '#1e2334',
+          borderColor: chrome.grid,
           timeVisible: true,
           secondsVisible: false,
         },
@@ -87,8 +90,8 @@ export function PriceChart({
       chartRef.current = chart
 
       const isPositive = data.length > 1 ? data[data.length - 1].close >= data[0].close : true
-      const upColor    = '#10b981'
-      const downColor  = '#ef4444'
+      const upColor    = signal.up
+      const downColor  = signal.down
       const lineColor  = isPositive ? upColor : downColor
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,8 +139,8 @@ export function PriceChart({
           time: d.time,
           value: d.volume ?? 0,
           color: d.close >= d.open
-            ? 'rgba(16, 185, 129, 0.4)'
-            : 'rgba(239, 68, 68, 0.4)',
+            ? `${signal.up}66`
+            : `${signal.down}66`,
         })))
       }
 
@@ -156,7 +159,7 @@ export function PriceChart({
             return {
               time: nearest,
               position: trade.side === 'BUY' ? 'belowBar' : 'aboveBar',
-              color: trade.side === 'BUY' ? '#10b981' : '#ef4444',
+              color: trade.side === 'BUY' ? signal.up : signal.down,
               shape: trade.side === 'BUY' ? 'arrowUp' : 'arrowDown',
               text: trade.side === 'BUY' ? `B ${trade.quantity}` : `S ${trade.quantity}`,
             }
@@ -173,19 +176,19 @@ export function PriceChart({
           height: 120,
           layout: {
             background: { type: ColorType.Solid, color: 'transparent' },
-            textColor: '#94a3b8',
+            textColor: chrome.text,
           },
           grid: {
-            vertLines: { color: '#1e2334' },
-            horzLines: { color: '#1e2334' },
+            vertLines: { color: chrome.grid },
+            horzLines: { color: chrome.grid },
           },
           crosshair: { mode: CrosshairMode.Normal },
           rightPriceScale: {
-            borderColor: '#1e2334',
-            textColor: '#94a3b8',
+            borderColor: chrome.grid,
+            textColor: chrome.text,
           },
           timeScale: {
-            borderColor: '#1e2334',
+            borderColor: chrome.grid,
             timeVisible: false,
             visible: false,
           },
@@ -193,7 +196,7 @@ export function PriceChart({
         indicatorChartRef.current = indicatorChart
 
         // Render initial indicator series using current active indicator value
-        addIndicatorSeries(indicatorChart, data, activeIndicatorRef.current, indicatorSeriesRef)
+        addIndicatorSeries(indicatorChart, data, activeIndicatorRef.current, indicatorSeriesRef, { categorical, signal })
 
         // Sync time scales bidirectionally
         const onMainRangeChange = (range: { from: number; to: number } | null) => {
@@ -248,7 +251,8 @@ export function PriceChart({
       indicatorChartRef.current?.remove()
       indicatorChartRef.current = null
     }
-  }, [data, type, height, trades, showVolume, showIndicators])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, type, height, trades, showVolume, showIndicators, mode])
 
   // ── Effect 2: Indicator series switch ─────────────────────────────────────
   // Runs only when the user toggles RSI ↔ MACD. Never rebuilds the main chart,
@@ -263,7 +267,7 @@ export function PriceChart({
     }
     indicatorSeriesRef.current = []
 
-    addIndicatorSeries(indicatorChart, data, activeIndicator, indicatorSeriesRef)
+    addIndicatorSeries(indicatorChart, data, activeIndicator, indicatorSeriesRef, { categorical, signal })
   }, [activeIndicator]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -277,9 +281,9 @@ export function PriceChart({
               <button
                 key={ind}
                 onClick={() => setActiveIndicator(ind)}
-                className={`px-2 py-0.5 text-xs rounded transition-colors ${
+                className={`px-2 py-0.5 text-xs transition-colors ${
                   activeIndicator === ind
-                    ? 'bg-brand/10 text-brand'
+                    ? 'bg-brand text-[#0a0a0a] font-bold'
                     : 'text-text-muted hover:text-text-primary'
                 }`}
               >
@@ -302,9 +306,11 @@ function addIndicatorSeries(
   data: CandleData[],
   activeIndicator: 'RSI' | 'MACD',
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  seriesRef: React.MutableRefObject<any[]>
+  seriesRef: React.MutableRefObject<any[]>,
+  palette: { categorical: string[]; signal: { up: string; down: string } }
 ) {
   const closes = data.map(c => c.close)
+  const { categorical, signal } = palette
 
   if (activeIndicator === 'RSI') {
     const rsiValues = rsi(closes, 14)
@@ -312,7 +318,7 @@ function addIndicatorSeries(
 
     const offset    = closes.length - rsiValues.length
     const rsiSeries = indicatorChart.addLineSeries({
-      color: '#818cf8',
+      color: categorical[0],
       lineWidth: 1,
       priceScaleId: 'right',
       // autoscaleInfoProvider pins the Y axis to 0–100 (minimum/maximum are not valid API)
@@ -321,8 +327,8 @@ function addIndicatorSeries(
     rsiSeries.setData(
       rsiValues.map((v: number, i: number) => ({ time: data[i + offset].time, value: v }))
     )
-    rsiSeries.createPriceLine({ price: 70, color: 'rgba(239, 68, 68, 0.5)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false })
-    rsiSeries.createPriceLine({ price: 30, color: 'rgba(16, 185, 129, 0.5)', lineWidth: 1, lineStyle: 2, axisLabelVisible: false })
+    rsiSeries.createPriceLine({ price: 70, color: `${signal.down}80`, lineWidth: 1, lineStyle: 2, axisLabelVisible: false })
+    rsiSeries.createPriceLine({ price: 30, color: `${signal.up}80`,   lineWidth: 1, lineStyle: 2, axisLabelVisible: false })
     seriesRef.current = [rsiSeries]
   } else {
     const macdValues = macd(closes)
@@ -334,17 +340,17 @@ function addIndicatorSeries(
       macdValues.map((v: { histogram: number; macd: number; signal: number }, i: number) => ({
         time: data[i + offset].time,
         value: v.histogram,
-        color: v.histogram >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)',
+        color: v.histogram >= 0 ? `${signal.up}99` : `${signal.down}99`,
       }))
     )
-    const macdLine = indicatorChart.addLineSeries({ color: '#818cf8', lineWidth: 1, priceScaleId: 'right' })
+    const macdLine = indicatorChart.addLineSeries({ color: categorical[0], lineWidth: 1, priceScaleId: 'right' })
     macdLine.setData(
       macdValues.map((v: { histogram: number; macd: number; signal: number }, i: number) => ({
         time: data[i + offset].time,
         value: v.macd,
       }))
     )
-    const signalLine = indicatorChart.addLineSeries({ color: '#f59e0b', lineWidth: 1, priceScaleId: 'right' })
+    const signalLine = indicatorChart.addLineSeries({ color: categorical[1], lineWidth: 1, priceScaleId: 'right' })
     signalLine.setData(
       macdValues.map((v: { histogram: number; macd: number; signal: number }, i: number) => ({
         time: data[i + offset].time,

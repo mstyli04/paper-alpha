@@ -2,23 +2,11 @@
 
 import { formatCurrency } from '@/lib/utils'
 import type { Holding } from '@/types'
+import { useChartPalette } from '@/components/charts/palette'
 
 interface AllocationChartProps {
   holdings: Holding[]
 }
-
-const SEGMENT_COLORS = [
-  '#6366f1', // brand/indigo
-  '#22c55e', // green
-  '#ef4444', // red
-  '#f97316', // orange
-  '#a855f7', // purple
-  '#06b6d4', // cyan
-  '#eab308', // yellow
-  '#ec4899', // pink
-  '#14b8a6', // teal
-  '#3b82f6', // blue
-]
 
 interface Slice {
   symbol: string
@@ -43,6 +31,8 @@ function arcPath(cx: number, cy: number, r: number, startAngle: number, endAngle
 }
 
 export function AllocationChart({ holdings }: AllocationChartProps) {
+  const { mode, categorical } = useChartPalette()
+  const pageBg = mode === 'dark' ? '#0a0a0a' : '#ffffff'
   const positiveHoldings = holdings.filter(h => (h.currentValue ?? 0) > 0)
 
   if (positiveHoldings.length === 0) {
@@ -60,7 +50,7 @@ export function AllocationChart({ holdings }: AllocationChartProps) {
     symbol: h.symbol,
     value: h.currentValue ?? 0,
     pct: total > 0 ? ((h.currentValue ?? 0) / total) * 100 : 0,
-    color: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
+    color: categorical[i % categorical.length],
   }))
 
   // Build SVG pie arcs
@@ -88,12 +78,12 @@ export function AllocationChart({ holdings }: AllocationChartProps) {
                 key={p.symbol}
                 d={p.path}
                 fill={p.color}
-                stroke="var(--color-surface, #1a1a2e)"
-                strokeWidth="1.5"
+                stroke={pageBg}
+                strokeWidth="2"
               />
             ))}
             {/* Inner circle for donut effect */}
-            <circle cx={cx} cy={cy} r={32} fill="var(--color-surface, #1a1a2e)" />
+            <circle cx={cx} cy={cy} r={32} fill={pageBg} />
           </svg>
         </div>
 
@@ -103,7 +93,7 @@ export function AllocationChart({ holdings }: AllocationChartProps) {
             <div key={slice.symbol} className="flex items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2 min-w-0">
                 <span
-                  className="flex-shrink-0 w-2.5 h-2.5 rounded-sm"
+                  className="flex-shrink-0 w-2.5 h-2.5"
                   style={{ backgroundColor: slice.color }}
                 />
                 <span className="font-medium text-text-primary truncate">{slice.symbol}</span>

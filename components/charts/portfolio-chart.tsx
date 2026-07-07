@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { PortfolioSnapshot } from '@/types'
+import { useChartPalette } from '@/components/charts/palette'
 
 interface BenchmarkPoint {
   time: number
@@ -19,6 +20,7 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200, showB
   const containerRef = useRef<HTMLDivElement>(null)
   const [benchmark, setBenchmark] = useState<BenchmarkPoint[]>([])
   const [activeBenchmark, setActiveBenchmark] = useState<'SPY' | 'QQQ' | 'BTC-USD'>('SPY')
+  const { mode, chrome, signal } = useChartPalette()
 
   useEffect(() => {
     if (!showBenchmark || !snapshots.length) return
@@ -45,21 +47,21 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200, showB
         height,
         layout: {
           background: { type: ColorType.Solid, color: 'transparent' },
-          textColor: '#94a3b8',
+          textColor: chrome.text,
         },
         grid: {
           vertLines: { visible: false },
-          horzLines: { color: '#1e2334' },
+          horzLines: { color: chrome.grid },
         },
-        rightPriceScale: { borderColor: '#1e2334' },
-        timeScale: { borderColor: '#1e2334', timeVisible: true },
+        rightPriceScale: { borderColor: chrome.grid },
+        timeScale: { borderColor: chrome.grid, timeVisible: true },
         handleScroll: false,
         handleScale: false,
       })
 
       const lastValue = snapshots[snapshots.length - 1]?.totalValue ?? startingBalance
       const isPositive = lastValue >= startingBalance
-      const lineColor = isPositive ? '#10b981' : '#ef4444'
+      const lineColor = isPositive ? signal.up : signal.down
 
       const series = chart.addAreaSeries({
         lineColor,
@@ -91,7 +93,7 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200, showB
         }))
 
         const benchSeries = chart.addLineSeries({
-          color: '#64748b',
+          color: chrome.text,
           lineWidth: 1,
           lineStyle: LineStyle.Dashed,
           priceLineVisible: false,
@@ -116,7 +118,8 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200, showB
       observer.disconnect()
       chart?.remove()
     }
-  }, [snapshots, startingBalance, height, showBenchmark, benchmark])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshots, startingBalance, height, showBenchmark, benchmark, mode])
 
   if (!snapshots.length) {
     return (
@@ -135,9 +138,9 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200, showB
             <button
               key={b}
               onClick={() => setActiveBenchmark(b)}
-              className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${
+              className={`text-xs px-2.5 py-1 border transition-colors ${
                 activeBenchmark === b
-                  ? 'border-brand/40 text-brand bg-brand/10'
+                  ? 'border-brand bg-brand text-[#0a0a0a] font-bold'
                   : 'border-border text-text-muted hover:text-text-primary'
               }`}
             >
@@ -146,11 +149,14 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200, showB
           ))}
           <div className="ml-auto flex items-center gap-4 text-xs text-text-muted">
             <span className="flex items-center gap-1.5">
-              <span className="w-5 h-0.5 bg-green inline-block rounded" />
+              <span className="w-5 h-0.5 bg-green inline-block" />
               Portfolio
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-5 h-px border-t border-dashed border-[#64748b] inline-block" />
+              <span
+                className="w-5 h-px border-t border-dashed inline-block"
+                style={{ borderColor: chrome.text }}
+              />
               {activeBenchmark === 'BTC-USD' ? 'BTC' : activeBenchmark}
             </span>
           </div>
