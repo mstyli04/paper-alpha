@@ -36,7 +36,7 @@ function MetricRow({
   const color = colorize ? (isGood ? 'text-green' : 'text-red') : 'text-text-primary'
 
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
+    <div className="row-boxed flex items-center justify-between">
       <div>
         <span className="text-sm text-text-secondary">{label}</span>
         {tooltip && <p className="text-xs text-text-muted mt-0.5">{tooltip}</p>}
@@ -65,7 +65,7 @@ export function VolatilityMetrics({ symbol, assetType }: { symbol: string; asset
       ) : !data || 'error' in data ? (
         <p className="text-sm text-text-muted">Not enough historical data</p>
       ) : (
-        <div>
+        <div className="space-y-2">
           <MetricRow
             label="Annualized Volatility"
             value={data.annualizedVol}

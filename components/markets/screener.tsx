@@ -121,25 +121,25 @@ export function Screener() {
           <thead>
             <tr className="table-head">
               <th className="px-4 py-2.5 text-left">
-                <button onClick={() => handleSort('symbol')} className="flex items-center gap-1 text-xs font-medium text-text-muted hover:text-text-primary">
+                <button onClick={() => handleSort('symbol')} className="flex items-center gap-1 hover:text-text-primary">
                   Symbol <SortIcon k="symbol" />
                 </button>
               </th>
               <th className="px-4 py-2.5 text-left hidden sm:table-cell">
-                <span className="text-xs font-medium text-text-muted">Sector</span>
+                <span>Sector</span>
               </th>
               <th className="px-4 py-2.5 text-right">
-                <button onClick={() => handleSort('price')} className="flex items-center gap-1 text-xs font-medium text-text-muted hover:text-text-primary ml-auto">
+                <button onClick={() => handleSort('price')} className="flex items-center gap-1 hover:text-text-primary ml-auto">
                   Price <SortIcon k="price" />
                 </button>
               </th>
               <th className="px-4 py-2.5 text-right">
-                <button onClick={() => handleSort('changePercent')} className="flex items-center gap-1 text-xs font-medium text-text-muted hover:text-text-primary ml-auto">
+                <button onClick={() => handleSort('changePercent')} className="flex items-center gap-1 hover:text-text-primary ml-auto">
                   Change <SortIcon k="changePercent" />
                 </button>
               </th>
               <th className="px-4 py-2.5 text-right hidden md:table-cell">
-                <button onClick={() => handleSort('marketCap')} className="flex items-center gap-1 text-xs font-medium text-text-muted hover:text-text-primary ml-auto">
+                <button onClick={() => handleSort('marketCap')} className="flex items-center gap-1 hover:text-text-primary ml-auto">
                   Mkt Cap <SortIcon k="marketCap" />
                 </button>
               </th>

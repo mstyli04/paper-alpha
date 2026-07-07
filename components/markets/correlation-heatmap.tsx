@@ -102,10 +102,10 @@ export function CorrelationHeatmap() {
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
-              <tr>
+              <tr className="table-head">
                 <th className="w-12" />
                 {data.symbols.map(s => (
-                  <th key={s} className="text-center text-text-muted font-medium pb-2 px-1 w-12">
+                  <th key={s} className="text-center pb-2 px-1 w-12">
                     {displayName(s)}
                   </th>
                 ))}
