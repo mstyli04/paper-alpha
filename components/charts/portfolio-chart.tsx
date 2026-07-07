@@ -140,7 +140,7 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200, showB
               onClick={() => setActiveBenchmark(b)}
               className={`text-xs px-2.5 py-1 border transition-colors ${
                 activeBenchmark === b
-                  ? 'border-brand bg-brand text-[#0a0a0a] font-bold'
+                  ? 'border-brand bg-brand text-[#0a0a0a] font-bold uppercase tracking-wide'
                   : 'border-border text-text-muted hover:text-text-primary'
               }`}
             >

@@ -84,7 +84,7 @@ function addIndicatorSeries(
     const rsiValues = rsi(closes, 14)
     const offset    = closes.length - rsiValues.length
     const rsiSeries = indicatorChart.addLineSeries({
-      color: categorical[0],
+      color: categorical[2],
       lineWidth: 1,
       priceScaleId: 'right',
       autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }),
@@ -107,13 +107,13 @@ function addIndicatorSeries(
         color: v.histogram >= 0 ? `${signal.up}99` : `${signal.down}99`,
       }))
     )
-    const macdLine = indicatorChart.addLineSeries({ color: categorical[0], lineWidth: 1, priceScaleId: 'right' })
+    const macdLine = indicatorChart.addLineSeries({ color: categorical[2], lineWidth: 1, priceScaleId: 'right' })
     macdLine.setData(
       macdValues.map((v: { macd: number; signal: number; histogram: number }, i: number) => ({
         time: symbolData.candles[i + offset].time, value: v.macd,
       }))
     )
-    const signalLine = indicatorChart.addLineSeries({ color: categorical[1], lineWidth: 1, priceScaleId: 'right' })
+    const signalLine = indicatorChart.addLineSeries({ color: categorical[3], lineWidth: 1, priceScaleId: 'right' })
     signalLine.setData(
       macdValues.map((v: { macd: number; signal: number; histogram: number }, i: number) => ({
         time: symbolData.candles[i + offset].time, value: v.signal,
@@ -406,7 +406,7 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
             onClick={() => setPeriod(p)}
             className={`text-xs px-2.5 py-1 border transition-colors ${
               period === p
-                ? 'border-brand bg-brand text-[#0a0a0a] font-bold'
+                ? 'border-brand bg-brand text-[#0a0a0a] font-bold uppercase tracking-wide'
                 : 'border-border text-text-muted hover:text-text-primary'
             }`}
           >
@@ -475,7 +475,7 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
               onClick={() => { setActiveIndicatorSymbol(sym); activeSymbolRef.current = sym }}
               className={`px-2 py-0.5 text-xs transition-colors ${
                 activeIndicatorSymbol === sym
-                  ? 'bg-brand text-[#0a0a0a] font-bold'
+                  ? 'bg-brand text-[#0a0a0a] font-bold uppercase tracking-wide'
                   : 'text-text-muted hover:text-text-primary'
               }`}
             >
@@ -490,7 +490,7 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
             onClick={() => { setActiveIndicator(ind); activeIndicatorRef.current = ind }}
             className={`px-2 py-0.5 text-xs transition-colors ${
               activeIndicator === ind
-                ? 'bg-brand text-[#0a0a0a] font-bold'
+                ? 'bg-brand text-[#0a0a0a] font-bold uppercase tracking-wide'
                 : 'text-text-muted hover:text-text-primary'
             }`}
           >

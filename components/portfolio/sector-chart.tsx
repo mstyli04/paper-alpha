@@ -44,7 +44,8 @@ interface SectorChartProps {
 }
 
 export function SectorChart({ holdings }: SectorChartProps) {
-  const { categorical } = useChartPalette()
+  const { mode, categorical } = useChartPalette()
+  const pageBg = mode === 'dark' ? '#0a0a0a' : '#ffffff'
 
   if (!holdings.length) return null
 
@@ -74,9 +75,16 @@ export function SectorChart({ holdings }: SectorChartProps) {
   const circumference = 2 * Math.PI * r
   let cumPct = 0
 
+  // 2px page-background gap between adjacent slices, split evenly off each
+  // end of a segment. Skipped for a single sector (full ring) so it doesn't
+  // show a spurious cut into an otherwise unbroken circle.
+  const gap = sectors.length > 1 ? 2 : 0
+  const halfGap = gap / 2
+
   const segments = sectors.map(s => {
-    const offset = circumference * (1 - cumPct / 100)
-    const dashArray = `${(s.pct / 100) * circumference} ${circumference}`
+    const rawLength = (s.pct / 100) * circumference
+    const offset = circumference * (1 - cumPct / 100) - halfGap
+    const dashArray = `${Math.max(rawLength - gap, 0)} ${circumference}`
     cumPct += s.pct
     return { ...s, offset, dashArray }
   })
@@ -88,7 +96,7 @@ export function SectorChart({ holdings }: SectorChartProps) {
         {/* Donut */}
         <div className="flex-shrink-0">
           <svg width="140" height="140" viewBox="0 0 140 140">
-            <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--surface-2)" strokeWidth="18" />
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke={pageBg} strokeWidth="18" />
             {segments.map(s => (
               <circle
                 key={s.name}
