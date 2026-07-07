@@ -7,7 +7,7 @@ import { getStockQuote } from '@/lib/market-data/finnhub'
 import { getCryptoQuote } from '@/lib/market-data/coingecko'
 
 export async function POST() {
-  const { userId: clerkId } = auth()
+  const { userId: clerkId } = await auth()
   if (!clerkId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const user = await prisma.user.findUnique({ where: { clerkId } })

@@ -6,7 +6,7 @@ import { db } from '@/lib/db'
 
 // GET /api/user — get or create the current user's record
 export async function GET() {
-  const { userId } = auth()
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let user = await db.user.findUnique({
@@ -50,7 +50,7 @@ export async function GET() {
 
 // PATCH /api/user — update username or avatarUrl
 export async function PATCH(req: Request) {
-  const { userId } = auth()
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()

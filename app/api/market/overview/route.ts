@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 import { getIndices, getSectors, getTopMovers } from '@/lib/market-data/overview'
 
 export async function GET() {
-  const { userId } = auth()
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const [indicesResult, sectorsResult, moversResult] = await Promise.allSettled([

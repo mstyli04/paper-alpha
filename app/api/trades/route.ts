@@ -18,7 +18,7 @@ const TradeSchema = z.object({
 })
 
 export async function POST(req: Request) {
-  const { userId } = auth()
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => null)

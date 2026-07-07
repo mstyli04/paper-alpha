@@ -125,7 +125,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         <ThemeToggle />
 
         <AlertsDropdown />
-        <UserButton afterSignOutUrl="/" />
+        <UserButton />
       </div>
     </header>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import useSWR from 'swr'
 import Link from 'next/link'
 import { ExternalLink } from 'lucide-react'
@@ -171,7 +171,7 @@ function CorrelationsTab() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function AnalysisPage() {
+function AnalysisPageInner() {
   const searchParams = useSearchParams()
   const router       = useRouter()
 
@@ -212,5 +212,13 @@ export default function AnalysisPage() {
       {tab === 'news'         && <NewsTab />}
       {tab === 'correlations' && <CorrelationsTab />}
     </div>
+  )
+}
+
+export default function AnalysisPage() {
+  return (
+    <Suspense fallback={null}>
+      <AnalysisPageInner />
+    </Suspense>
   )
 }

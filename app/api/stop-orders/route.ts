@@ -6,7 +6,7 @@ import { db } from '@/lib/db'
 import type { AssetType, TradeSide } from '@/types'
 
 export async function GET() {
-  const { userId } = auth()
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const user = await db.user.findUnique({
@@ -36,7 +36,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = auth()
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { symbol, assetType, side, triggerPrice, condition, quantity } = await req.json()

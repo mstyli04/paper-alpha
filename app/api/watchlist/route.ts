@@ -6,7 +6,7 @@ import { db } from '@/lib/db'
 import type { AssetType } from '@/types'
 
 export async function GET() {
-  const { userId } = auth()
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const user = await db.user.findUnique({ where: { clerkId: userId } })
@@ -21,7 +21,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = auth()
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { symbol, assetType } = await req.json()
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const { userId } = auth()
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)

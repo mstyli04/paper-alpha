@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
-    "@clerk/nextjs": "^5.2.0",
+    "@clerk/nextjs": "^7.5.13",
     "@prisma/client": "^5.16.0",
     "clsx": "^2.1.1",
     "decimal.js": "^10.4.3",

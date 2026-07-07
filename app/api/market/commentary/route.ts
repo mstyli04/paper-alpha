@@ -7,7 +7,7 @@ import { getStockQuote, getStockCandles } from '@/lib/market-data/finnhub'
 import { getCryptoQuote, getCryptoCandles } from '@/lib/market-data/coingecko'
 
 export async function GET(req: Request) {
-  const { userId } = auth()
+  const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   if (!process.env.ANTHROPIC_API_KEY) {
