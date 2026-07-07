@@ -97,10 +97,10 @@ export default function MarketsPage() {
               <button
                 key={cat}
                 onClick={() => setPredCategory(cat)}
-                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors border-2 ${
                   predCategory === cat
-                    ? 'bg-brand/10 text-brand border border-brand/30'
-                    : 'text-text-muted border border-border hover:text-text-primary'
+                    ? 'bg-surface-2 border-brand text-brand'
+                    : 'text-text-muted border-border hover:text-text-primary'
                 }`}
               >
                 {cat}
@@ -109,13 +109,13 @@ export default function MarketsPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-2 border-b border-border">
+        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-2 table-head">
           <span className="w-6" />
           <div className="flex items-center gap-3">
             <div className="w-9" />
-            <span className="text-xs text-text-muted font-medium">Asset</span>
+            <span>Asset</span>
           </div>
-          <span className="text-xs text-text-muted font-medium text-right w-32">
+          <span className="text-right w-32">
             {tab === 'predictions' ? 'YES Price / Chg' : 'Price / Change'}
           </span>
           <span className="w-8" />

@@ -56,7 +56,7 @@ export function AlertForm({ symbol, assetType, currentPrice }: AlertFormProps) {
 
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Condition toggle */}
-        <div className="flex rounded-lg overflow-hidden border border-border text-xs font-medium">
+        <div className="flex overflow-hidden border-2 border-border text-xs font-medium">
           {(['ABOVE', 'BELOW'] as const).map(c => (
             <button
               key={c}
@@ -64,7 +64,7 @@ export function AlertForm({ symbol, assetType, currentPrice }: AlertFormProps) {
               onClick={() => setCondition(c)}
               className={`flex-1 py-2 transition-colors ${
                 condition === c
-                  ? 'bg-brand text-white'
+                  ? 'bg-brand text-[#0a0a0a]'
                   : 'text-text-muted hover:text-text-primary bg-surface-2'
               }`}
             >
@@ -83,17 +83,17 @@ export function AlertForm({ symbol, assetType, currentPrice }: AlertFormProps) {
             placeholder="Target price"
             value={targetPrice}
             onChange={e => setTargetPrice(e.target.value)}
-            className="w-full bg-surface-2 border border-border rounded-lg pl-7 pr-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-brand"
+            className="input-base w-full pl-7 pr-3"
           />
         </div>
 
-        {error && <p className="text-xs text-red-400">{error}</p>}
-        {success && <p className="text-xs text-green-400">Alert created!</p>}
+        {error && <p className="text-xs text-red">{error}</p>}
+        {success && <p className="text-xs text-green">Alert created!</p>}
 
         <button
           type="submit"
           disabled={loading || !targetPrice}
-          className="w-full bg-brand hover:bg-brand/90 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+          className="btn-primary w-full"
         >
           {loading ? 'Creating...' : 'Set Alert'}
         </button>

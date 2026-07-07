@@ -20,9 +20,9 @@ interface NewsItem {
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 const sentimentStyles = {
-  positive: 'bg-green/10 text-green',
-  negative: 'bg-red/10 text-red',
-  neutral: 'bg-text-muted/10 text-text-muted',
+  positive: 'bg-green text-[#0a0a0a]',
+  negative: 'bg-red text-[#0a0a0a]',
+  neutral: 'border-2 border-border bg-transparent text-text-secondary',
 }
 
 const sentimentLabel = {
@@ -74,14 +74,14 @@ export function NewsFeed({ symbol, assetType }: NewsFeedProps) {
           No recent news available
         </div>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="p-4 space-y-2">
           {news.map(item => (
             <a
               key={item.id}
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex gap-3 px-5 py-3.5 hover:bg-surface-2/50 transition-colors group"
+              className="row-boxed flex gap-3 group"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 mb-1">
@@ -91,7 +91,7 @@ export function NewsFeed({ symbol, assetType }: NewsFeedProps) {
                   <ExternalLink className="w-3 h-3 text-text-muted flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${sentimentStyles[item.sentiment]}`}>
+                  <span className={`text-xs font-medium px-1.5 py-0.5 ${sentimentStyles[item.sentiment]}`}>
                     {sentimentLabel[item.sentiment]}
                   </span>
                   <span className="text-xs text-text-muted">{item.source}</span>

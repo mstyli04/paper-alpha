@@ -67,35 +67,35 @@ export function EarningsCalendar() {
           No upcoming earnings found.
         </div>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="p-4 space-y-4">
           {grouped.map(([date, events]) => (
-            <div key={date}>
-              <div className="px-4 py-2 bg-surface-2 border-b border-border">
-                <span className="text-xs font-semibold text-text-secondary">{formatDate(date)}</span>
-              </div>
-              {events.map(ev => (
-                <div key={ev.symbol} className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-2 transition-colors border-b border-border last:border-0">
-                  <Link
-                    href={`/markets/${ev.symbol}?type=STOCK`}
-                    className="font-medium text-sm text-text-primary hover:text-brand transition-colors w-16 flex-shrink-0"
-                  >
-                    {ev.symbol}
-                  </Link>
-                  <div className="flex-1 flex items-center gap-3 text-xs text-text-muted flex-wrap">
-                    {ev.epsEstimate !== null && (
-                      <span>EPS est. <span className="text-text-secondary font-mono">${ev.epsEstimate.toFixed(2)}</span></span>
-                    )}
-                    {ev.revenueEstimate !== null && ev.revenueEstimate > 0 && (
-                      <span>Rev est. <span className="text-text-secondary font-mono">{formatRevenue(ev.revenueEstimate)}</span></span>
+            <div key={date} className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-text-secondary">{formatDate(date)}</span>
+              <div className="space-y-2">
+                {events.map(ev => (
+                  <div key={ev.symbol} className="row-boxed flex items-center gap-3">
+                    <Link
+                      href={`/markets/${ev.symbol}?type=STOCK`}
+                      className="font-medium text-sm text-text-primary hover:text-brand transition-colors w-16 flex-shrink-0"
+                    >
+                      {ev.symbol}
+                    </Link>
+                    <div className="flex-1 flex items-center gap-3 text-xs text-text-muted flex-wrap">
+                      {ev.epsEstimate !== null && (
+                        <span>EPS est. <span className="text-text-secondary font-mono">${ev.epsEstimate.toFixed(2)}</span></span>
+                      )}
+                      {ev.revenueEstimate !== null && ev.revenueEstimate > 0 && (
+                        <span>Rev est. <span className="text-text-secondary font-mono">{formatRevenue(ev.revenueEstimate)}</span></span>
+                      )}
+                    </div>
+                    {hourLabel(ev.hour) && (
+                      <span className="text-xs text-text-muted bg-surface-2 border border-border px-2 py-0.5 rounded-full flex-shrink-0">
+                        {hourLabel(ev.hour)}
+                      </span>
                     )}
                   </div>
-                  {hourLabel(ev.hour) && (
-                    <span className="text-xs text-text-muted bg-surface-2 border border-border px-2 py-0.5 rounded-full flex-shrink-0">
-                      {hourLabel(ev.hour)}
-                    </span>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ))}
         </div>

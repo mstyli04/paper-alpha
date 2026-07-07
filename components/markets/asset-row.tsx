@@ -17,7 +17,7 @@ export function AssetRow({ asset, rank, watched, onToggleWatch }: AssetRowProps)
   return (
     <Link
       href={`/markets/${asset.symbol}?type=${asset.assetType}`}
-      className="flex items-center gap-4 px-4 py-3 hover:bg-surface-2 transition-colors border-b border-border last:border-0"
+      className="flex items-center gap-4 px-4 py-3 table-row last:border-0"
     >
       {rank !== undefined && (
         <span className="w-6 text-xs text-text-muted text-center">{rank}</span>
@@ -51,7 +51,7 @@ export function AssetRow({ asset, rank, watched, onToggleWatch }: AssetRowProps)
       {onToggleWatch !== undefined && (
         <button
           onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleWatch(e) }}
-          className="p-1.5 rounded-lg hover:bg-surface-2 transition-colors flex-shrink-0"
+          className="p-1.5 hover:bg-surface-2 transition-colors flex-shrink-0"
           aria-label={watched ? 'Remove from watchlist' : 'Add to watchlist'}
         >
           <Star

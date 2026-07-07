@@ -70,7 +70,7 @@ export default function AssetDetailPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-text-primary">{symbol}</h1>
-              <span className="text-xs px-2 py-0.5 rounded bg-surface-2 border border-border text-text-muted">
+              <span className="text-xs px-2 py-0.5 bg-surface-2 border border-border text-text-muted">
                 {assetType === 'CRYPTO' ? 'Crypto' : assetType === 'PREDICTION' ? 'Prediction Market' : 'Stock'}
               </span>
             </div>
@@ -84,7 +84,7 @@ export default function AssetDetailPage() {
 
         <button
           onClick={() => toggleWatchlist(symbol, assetType)}
-          className="flex items-center gap-1.5 text-sm text-text-muted hover:text-brand transition-colors px-3 py-2 rounded-lg border border-border hover:border-brand"
+          className="flex items-center gap-1.5 text-sm text-text-muted hover:text-brand transition-colors px-3 py-2 border-2 border-border hover:border-brand"
         >
           {inWatchlist ? <Star className="w-4 h-4 fill-brand text-brand" /> : <StarOff className="w-4 h-4" />}
           {inWatchlist ? 'Watching' : 'Watch'}
@@ -119,8 +119,8 @@ export default function AssetDetailPage() {
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  range === r ? 'bg-brand/10 text-brand' : 'text-text-muted hover:text-text-primary'
+                className={`px-3 py-1 text-xs font-medium transition-colors border-2 ${
+                  range === r ? 'bg-surface-2 border-brand text-brand' : 'border-transparent text-text-muted hover:text-text-primary'
                 }`}
               >
                 {r}
@@ -136,8 +136,8 @@ export default function AssetDetailPage() {
                 <button
                   key={t}
                   onClick={() => setChartType(t)}
-                  className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
-                    chartType === t ? 'bg-brand/10 text-brand' : 'text-text-muted hover:text-text-primary'
+                  className={`px-2 py-1 text-xs font-medium transition-colors border-2 ${
+                    chartType === t ? 'bg-surface-2 border-brand text-brand' : 'border-transparent text-text-muted hover:text-text-primary'
                   }`}
                 >
                   {t === 'area' ? 'Area' : 'Candles'}
@@ -170,7 +170,7 @@ export default function AssetDetailPage() {
               <OrderForm symbol={symbol} assetType={assetType} currentPrice={quote.price} />
             )
           ) : (
-            <Skeleton className="h-80 w-full rounded-xl" />
+            <Skeleton className="h-80 w-full" />
           )}
 
           {/* Price Alert — not supported for prediction markets */}

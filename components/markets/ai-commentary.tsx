@@ -36,7 +36,7 @@ export function AICommentary({ symbol, assetType }: AICommentaryProps) {
         <button
           onClick={() => setRefreshKey(k => k + 1)}
           disabled={isLoading}
-          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors disabled:opacity-40"
+          className="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors disabled:opacity-40"
           title="Refresh"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -45,9 +45,9 @@ export function AICommentary({ symbol, assetType }: AICommentaryProps) {
 
       {isLoading ? (
         <div className="space-y-2">
-          <div className="h-3 bg-surface-2 rounded animate-pulse w-full" />
-          <div className="h-3 bg-surface-2 rounded animate-pulse w-5/6" />
-          <div className="h-3 bg-surface-2 rounded animate-pulse w-4/6" />
+          <div className="h-3 bg-surface-2 animate-pulse w-full" />
+          <div className="h-3 bg-surface-2 animate-pulse w-5/6" />
+          <div className="h-3 bg-surface-2 animate-pulse w-4/6" />
         </div>
       ) : error || data?.error ? (
         <p className="text-xs text-text-muted">Error: {data?.error || 'Request failed'}</p>

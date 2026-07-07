@@ -77,18 +77,18 @@ export function Screener() {
               placeholder="Search..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bg-surface-2 border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand w-32"
+              className="input-base pl-8 pr-3 py-1.5 text-xs w-32"
             />
           </div>
 
           {/* Direction filter */}
-          <div className="flex rounded-lg border border-border overflow-hidden text-xs">
+          <div className="flex border-2 border-border overflow-hidden text-xs">
             {(['all', 'up', 'down'] as const).map(d => (
               <button
                 key={d}
                 onClick={() => setDirection(d)}
                 className={`px-3 py-1.5 font-medium transition-colors ${
-                  direction === d ? 'bg-brand text-white' : 'text-text-muted hover:text-text-primary'
+                  direction === d ? 'bg-brand text-[#0a0a0a]' : 'text-text-muted hover:text-text-primary'
                 }`}
               >
                 {d === 'all' ? 'All' : d === 'up' ? '↑ Up' : '↓ Down'}
@@ -102,10 +102,10 @@ export function Screener() {
               <button
                 key={s}
                 onClick={() => setSector(s)}
-                className={`px-2.5 py-1 text-xs rounded-full font-medium transition-colors ${
+                className={`px-2.5 py-1 text-xs rounded-full font-medium transition-colors border-2 ${
                   sector === s
-                    ? 'bg-brand/10 text-brand border border-brand/30'
-                    : 'text-text-muted border border-border hover:text-text-primary'
+                    ? 'bg-surface-2 border-brand text-brand'
+                    : 'text-text-muted border-border hover:text-text-primary'
                 }`}
               >
                 {s}
@@ -119,7 +119,7 @@ export function Screener() {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border">
+            <tr className="table-head">
               <th className="px-4 py-2.5 text-left">
                 <button onClick={() => handleSort('symbol')} className="flex items-center gap-1 text-xs font-medium text-text-muted hover:text-text-primary">
                   Symbol <SortIcon k="symbol" />
@@ -164,7 +164,7 @@ export function Screener() {
               </tr>
             ) : (
               filtered.map(stock => (
-                <tr key={stock.symbol} className="border-b border-border last:border-0 hover:bg-surface-2 transition-colors">
+                <tr key={stock.symbol} className="table-row last:border-0">
                   <td className="px-4 py-3">
                     <Link href={`/markets/${stock.symbol}?type=STOCK`} className="hover:text-brand transition-colors">
                       <p className="font-medium text-text-primary">{stock.symbol}</p>

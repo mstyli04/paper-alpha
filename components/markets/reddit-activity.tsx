@@ -48,9 +48,9 @@ export function RedditActivity({ symbol }: { symbol: string }) {
               <span className="text-xs text-text-muted w-20 flex-shrink-0">
                 {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </span>
-              <div className="flex-1 h-5 bg-surface-2 rounded overflow-hidden">
+              <div className="flex-1 h-5 bg-surface-2 overflow-hidden">
                 <div
-                  className="h-full bg-brand/70 rounded transition-all"
+                  className="h-full bg-brand/70 transition-all"
                   style={{ width: `${(day.mentions / maxMentions) * 100}%` }}
                 />
               </div>

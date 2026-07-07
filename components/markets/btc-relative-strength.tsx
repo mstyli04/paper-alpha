@@ -63,11 +63,11 @@ export function BtcRelativeStrength({ symbol }: Props) {
               <SignedPct value={row.btcReturn} />
               <div className="flex items-center justify-center">
                 {row.relativeStrength !== null ? (
-                  <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold font-mono ${
+                  <span className={`px-1.5 py-0.5 text-[11px] font-bold font-mono ${
                     row.relativeStrength > 0
-                      ? 'bg-green/15 text-green'
+                      ? 'bg-green text-[#0a0a0a]'
                       : row.relativeStrength < 0
-                      ? 'bg-red/15 text-red'
+                      ? 'bg-red text-[#0a0a0a]'
                       : 'bg-surface-2 text-text-muted'
                   }`}>
                     {row.relativeStrength >= 0 ? '+' : ''}{row.relativeStrength.toFixed(2)}%

@@ -48,14 +48,14 @@ export function InsiderFeed({ symbol }: InsiderFeedProps) {
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
         </div>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="p-4 space-y-2">
           {data!.map((t, i) => {
             const isBuy = t.transactionCode === 'P'
             const totalValue = Math.abs(t.change) * t.transactionPrice
             return (
-              <div key={i} className="flex items-center gap-3 px-5 py-3">
-                <span className={`text-xs font-bold px-2 py-0.5 rounded flex-shrink-0 ${
-                  isBuy ? 'bg-green/10 text-green' : 'bg-red/10 text-red'
+              <div key={i} className="row-boxed flex items-center gap-3">
+                <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 flex-shrink-0 ${
+                  isBuy ? 'bg-green text-[#0a0a0a]' : 'bg-red text-[#0a0a0a]'
                 }`}>
                   {isBuy ? 'BUY' : 'SELL'}
                 </span>
