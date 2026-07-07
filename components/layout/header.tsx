@@ -53,7 +53,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   }
 
   return (
-    <header className="h-14 bg-surface border-b border-border flex items-center px-4 gap-3 sticky top-0 z-20">
+    <header className="h-14 bg-surface border-b-2 border-border flex items-center px-4 gap-3 sticky top-0 z-20">
       {/* Hamburger — mobile only */}
       <button
         onClick={onMenuClick}
@@ -73,10 +73,10 @@ export function Header({ onMenuClick }: HeaderProps) {
           onChange={e => { setQuery(e.target.value); setOpen(true) }}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           onFocus={() => query && setOpen(true)}
-          className="w-full bg-surface-2 border border-border rounded-lg pl-8 pr-4 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand transition-colors"
+          className="w-full bg-surface-2 border-2 border-border pl-8 pr-4 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-green transition-colors"
         />
         {open && query.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden z-50">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-surface border-2 border-border overflow-hidden z-50">
             {loading ? (
               <div className="px-4 py-3 text-xs text-text-muted">Searching...</div>
             ) : results.length === 0 ? (
