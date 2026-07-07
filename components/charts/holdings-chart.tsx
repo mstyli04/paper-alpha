@@ -127,6 +127,14 @@ function addIndicatorSeries(
   return series
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyPeriodRange(chart: any, p: '1W' | '1M' | '3M' | 'ALL') {
+  if (p === 'ALL') { chart.timeScale().fitContent(); return }
+  const days = p === '1W' ? 7 : p === '1M' ? 30 : 90
+  const now  = Math.floor(Date.now() / 1000)
+  chart.timeScale().setVisibleRange({ from: now - days * 86400, to: now + 86400 })
+}
+
 export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
   // ── Refs ──────────────────────────────────────────────────────────────────
   const containerRef          = useRef<HTMLDivElement>(null)
@@ -151,6 +159,8 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
   const [hidden,               setHidden]              = useState<Set<string>>(new Set())
   const [activeIndicatorSymbol, setActiveIndicatorSymbol] = useState<string | null>(null)
   const [activeIndicator,      setActiveIndicator]     = useState<'RSI' | 'MACD'>('RSI')
+  const [period,               setPeriod]              = useState<'1W' | '1M' | '3M' | 'ALL'>('ALL')
+  const periodRef                                       = useRef<'1W' | '1M' | '3M' | 'ALL'>('ALL')
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -279,6 +289,7 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
       }
 
       chart.timeScale().fitContent()
+      applyPeriodRange(chart, periodRef.current)
 
       // Indicator chart
       const indicatorChart = createChart(indicatorContainerRef.current!, {
@@ -356,6 +367,12 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeIndicator, activeIndicatorSymbol])
 
+  // ── Effect 3: apply time-range when period changes ────────────────────────
+  useEffect(() => {
+    periodRef.current = period
+    if (chartRef.current) applyPeriodRange(chartRef.current, period)
+  }, [period])
+
   // ── Render ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -377,6 +394,24 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
 
   return (
     <div>
+      {/* Period filter */}
+      <div className="flex items-center gap-1 mb-3">
+        {(['1W', '1M', '3M', 'ALL'] as const).map(p => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => setPeriod(p)}
+            className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${
+              period === p
+                ? 'border-brand/40 text-brand bg-brand/10'
+                : 'border-border text-text-muted hover:text-text-primary'
+            }`}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+
       {/* Legend / toggle buttons */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {symbols.map(sym => {
