@@ -112,7 +112,7 @@ export function StopOrderForm({ symbol, assetType, currentPrice, holdingQty }: S
           <ShieldAlert className="w-4 h-4 text-brand" />
           <span className="text-sm font-semibold text-text-primary">Stop-Loss / Take-Profit</span>
           {symbolOrders.length > 0 && (
-            <span className="text-xs bg-brand/10 text-brand px-1.5 py-0.5 rounded-full">
+            <span className="badge-brand">
               {symbolOrders.length} active
             </span>
           )}
@@ -126,13 +126,13 @@ export function StopOrderForm({ symbol, assetType, currentPrice, holdingQty }: S
           {symbolOrders.length > 0 && (
             <div className="space-y-2">
               {symbolOrders.map(o => (
-                <div key={o.id} className="flex items-center justify-between text-xs bg-surface-2 rounded-lg px-3 py-2">
+                <div key={o.id} className="row-boxed flex items-center justify-between text-xs">
                   <span className="text-text-muted">
                     {o.side === 'SELL' ? (o.condition === 'BELOW' ? 'Stop-loss' : 'Take-profit') : (o.condition === 'ABOVE' ? 'Stop-loss' : 'Take-profit')}
-                    {' '}— {o.condition === 'ABOVE' ? '↑' : '↓'} {formatCurrency(o.triggerPrice)}
+                    {' '}— {o.condition === 'ABOVE' ? '↑' : '↓'} <span className="font-mono tabular-nums">{formatCurrency(o.triggerPrice)}</span>
                   </span>
                   <span className="text-text-muted mx-2">·</span>
-                  <span className="text-text-secondary font-medium">{o.quantity} shares</span>
+                  <span className="text-text-secondary font-medium font-mono tabular-nums">{o.quantity} shares</span>
                   <button
                     onClick={() => cancelOrder(o.id)}
                     className="ml-3 p-0.5 text-text-muted hover:text-red transition-colors"
@@ -147,18 +147,18 @@ export function StopOrderForm({ symbol, assetType, currentPrice, holdingQty }: S
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3">
             {/* Type toggle */}
-            <div className="flex rounded-lg overflow-hidden border border-border text-xs font-medium">
+            <div className="flex gap-2 text-xs font-bold uppercase tracking-wide">
               <button
                 type="button"
                 onClick={() => setType('stop-loss')}
-                className={`flex-1 py-2 transition-colors ${type === 'stop-loss' ? 'bg-red/10 text-red' : 'text-text-muted hover:text-text-primary'}`}
+                className={`flex-1 py-2 border-2 border-border transition-colors ${type === 'stop-loss' ? 'bg-red text-[#0a0a0a]' : 'bg-transparent text-text-secondary hover:text-red'}`}
               >
                 Stop-Loss
               </button>
               <button
                 type="button"
                 onClick={() => setType('take-profit')}
-                className={`flex-1 py-2 transition-colors ${type === 'take-profit' ? 'bg-green/10 text-green' : 'text-text-muted hover:text-text-primary'}`}
+                className={`flex-1 py-2 border-2 border-border transition-colors ${type === 'take-profit' ? 'bg-green text-[#0a0a0a]' : 'bg-transparent text-text-secondary hover:text-green'}`}
               >
                 Take-Profit
               </button>
@@ -198,13 +198,13 @@ export function StopOrderForm({ symbol, assetType, currentPrice, holdingQty }: S
               </div>
             </div>
 
-            {error && <p className="text-xs text-red bg-red/10 rounded px-2 py-1">{error}</p>}
-            {success && <p className="text-xs text-green bg-green/10 rounded px-2 py-1">{success}</p>}
+            {error && <p className="text-xs text-red">{error}</p>}
+            {success && <p className="text-xs text-green">{success}</p>}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2 text-sm font-medium rounded-lg bg-brand/10 text-brand hover:bg-brand/20 transition-colors disabled:opacity-50"
+              className={`w-full ${type === 'stop-loss' ? 'btn-red' : 'btn-green'}`}
             >
               {loading ? 'Setting...' : `Set ${type === 'stop-loss' ? 'Stop-Loss' : 'Take-Profit'}`}
             </button>

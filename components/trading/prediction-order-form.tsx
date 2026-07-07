@@ -30,23 +30,23 @@ export function PredictionOrderForm({
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setOutcome('YES')}
-            className={`py-2.5 rounded-lg text-sm font-semibold transition-colors border ${
+            className={`py-2.5 text-sm font-bold uppercase tracking-wide transition-colors border-2 border-border ${
               outcome === 'YES'
-                ? 'bg-green/10 text-green border-green/40'
-                : 'text-text-muted border-border hover:text-green hover:border-green/40'
+                ? 'bg-green text-[#0a0a0a]'
+                : 'bg-transparent text-text-secondary hover:text-green'
             }`}
           >
-            YES <span className="font-mono ml-1">{(yesPrice * 100).toFixed(0)}¢</span>
+            YES <span className="font-mono tabular-nums ml-1">{(yesPrice * 100).toFixed(0)}¢</span>
           </button>
           <button
             onClick={() => setOutcome('NO')}
-            className={`py-2.5 rounded-lg text-sm font-semibold transition-colors border ${
+            className={`py-2.5 text-sm font-bold uppercase tracking-wide transition-colors border-2 border-border ${
               outcome === 'NO'
-                ? 'bg-red/10 text-red border-red/40'
-                : 'text-text-muted border-border hover:text-red hover:border-red/40'
+                ? 'bg-red text-[#0a0a0a]'
+                : 'bg-transparent text-text-secondary hover:text-red'
             }`}
           >
-            NO <span className="font-mono ml-1">{(noPrice * 100).toFixed(0)}¢</span>
+            NO <span className="font-mono tabular-nums ml-1">{(noPrice * 100).toFixed(0)}¢</span>
           </button>
         </div>
       </div>

@@ -121,10 +121,10 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
   }
 
   const tabs: { id: Tab; label: string; color: string; activeColor: string }[] = [
-    { id: 'BUY', label: 'Buy', color: 'hover:text-green', activeColor: 'bg-green text-white' },
-    { id: 'SELL', label: 'Sell', color: 'hover:text-red', activeColor: 'bg-red text-white' },
-    { id: 'SHORT', label: 'Short', color: 'hover:text-orange-400', activeColor: 'bg-orange-500 text-white' },
-    { id: 'COVER', label: 'Cover', color: 'hover:text-blue-400', activeColor: 'bg-blue-500 text-white' },
+    { id: 'BUY', label: 'Buy', color: 'hover:text-green', activeColor: 'bg-green text-[#0a0a0a]' },
+    { id: 'SELL', label: 'Sell', color: 'hover:text-red', activeColor: 'bg-red text-[#0a0a0a]' },
+    { id: 'SHORT', label: 'Short', color: 'hover:text-orange-400', activeColor: 'bg-orange-500 text-[#0a0a0a]' },
+    { id: 'COVER', label: 'Cover', color: 'hover:text-blue-400', activeColor: 'bg-blue-500 text-[#0a0a0a]' },
   ]
 
   const activeTab = tabs.find(t => t.id === tab)!
@@ -134,13 +134,13 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
       <h3 className="text-sm font-semibold text-text-primary mb-4">Place Order</h3>
 
       {/* Tab bar */}
-      <div className="flex rounded-lg overflow-hidden border border-border mb-4 text-sm font-medium">
+      <div className="flex gap-2 mb-4 text-sm font-bold uppercase tracking-wide">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => switchTab(t.id)}
-            className={`flex-1 py-2 transition-colors ${
-              tab === t.id ? t.activeColor : `text-text-muted ${t.color}`
+            className={`flex-1 py-2 border-2 border-border transition-colors ${
+              tab === t.id ? t.activeColor : `bg-transparent text-text-secondary ${t.color}`
             }`}
           >
             {t.label}
@@ -150,17 +150,17 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
 
       {/* Short/Cover info banners */}
       {tab === 'SHORT' && (
-        <div className="text-xs text-orange-400 bg-orange-500/10 rounded-lg px-3 py-2 mb-4">
+        <div className="text-xs text-orange-400 border-2 border-border bg-transparent px-3 py-2 mb-4">
           Short selling: you profit if the price falls. You receive cash now and must buy back later.
         </div>
       )}
       {tab === 'COVER' && shortQty === 0 && (
-        <div className="text-xs text-text-muted bg-surface-2 rounded-lg px-3 py-2 mb-4">
+        <div className="card-inset text-xs text-text-muted px-3 py-2 mb-4">
           You don&apos;t have an open short position in {symbol}.
         </div>
       )}
       {tab === 'COVER' && shortQty > 0 && (
-        <div className="text-xs text-blue-400 bg-blue-500/10 rounded-lg px-3 py-2 mb-4">
+        <div className="text-xs text-blue-400 border-2 border-border bg-transparent px-3 py-2 mb-4">
           Short position: {formatQuantity(shortQty, assetType)} {symbol} @ avg {formatCurrency(holding?.avgCostBasis ?? 0)}
         </div>
       )}
@@ -168,7 +168,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex justify-between text-sm">
           <span className="text-text-muted">Market Price</span>
-          <span className="text-text-primary font-mono font-medium">{formatCurrency(currentPrice)}</span>
+          <span className="text-text-primary font-mono font-medium tabular-nums">{formatCurrency(currentPrice)}</span>
         </div>
 
         <div>
@@ -177,18 +177,18 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
             <label className="text-xs text-text-muted">
               {inputMode === 'qty' ? 'Quantity' : 'Amount (USD)'}
             </label>
-            <div className="flex rounded overflow-hidden border border-border text-[10px] font-semibold">
+            <div className="flex overflow-hidden border-2 border-border text-[10px] font-semibold">
               <button
                 type="button"
                 onClick={() => switchInputMode('qty')}
-                className={`px-2 py-0.5 transition-colors ${inputMode === 'qty' ? 'bg-brand text-white' : 'text-text-muted hover:text-text-primary'}`}
+                className={`px-2 py-0.5 transition-colors ${inputMode === 'qty' ? 'bg-brand text-[#0a0a0a]' : 'text-text-muted hover:text-text-primary'}`}
               >
                 Qty
               </button>
               <button
                 type="button"
                 onClick={() => switchInputMode('usd')}
-                className={`px-2 py-0.5 transition-colors ${inputMode === 'usd' ? 'bg-brand text-white' : 'text-text-muted hover:text-text-primary'}`}
+                className={`px-2 py-0.5 transition-colors ${inputMode === 'usd' ? 'bg-brand text-[#0a0a0a]' : 'text-text-muted hover:text-text-primary'}`}
               >
                 $
               </button>
@@ -205,7 +205,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
           />
           {/* Show computed qty when in USD mode */}
           {inputMode === 'usd' && qty > 0 && (
-            <p className="text-[10px] text-text-muted mt-1 font-mono">
+            <p className="text-[10px] text-text-muted mt-1 font-mono tabular-nums">
               ≈ {formatQuantity(qty, assetType)} {symbol}
             </p>
           )}
@@ -217,7 +217,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
               key={f}
               type="button"
               onClick={() => setQuickAmount(f)}
-              className="flex-1 py-1 text-xs font-medium text-text-muted hover:text-brand border border-border hover:border-brand rounded transition-colors"
+              className="flex-1 py-1 text-xs font-medium text-text-muted hover:text-brand border-2 border-border hover:border-brand transition-colors"
             >
               {f === 1 ? 'Max' : `${f * 100}%`}
             </button>
@@ -226,16 +226,16 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
 
         <div className="flex justify-between text-sm py-3 border-t border-border">
           <span className="text-text-muted">{tab === 'SHORT' ? 'You Receive' : tab === 'COVER' ? 'You Pay' : 'Order Total'}</span>
-          <span className="font-medium text-text-primary font-mono">{formatCurrency(total)}</span>
+          <span className="font-medium text-text-primary font-mono tabular-nums">{formatCurrency(total)}</span>
         </div>
 
         <div className="flex justify-between text-xs text-text-muted">
           {tab === 'BUY' || tab === 'COVER' ? (
-            <><span>Buying Power</span><span>{formatCurrency(cashBalance)}</span></>
+            <><span>Buying Power</span><span className="font-mono tabular-nums">{formatCurrency(cashBalance)}</span></>
           ) : tab === 'SELL' ? (
-            <><span>Available to Sell</span><span>{formatQuantity(longQty, assetType)} {symbol}</span></>
+            <><span>Available to Sell</span><span className="font-mono tabular-nums">{formatQuantity(longQty, assetType)} {symbol}</span></>
           ) : (
-            <><span>Short with</span><span>{formatCurrency(cashBalance)}</span></>
+            <><span>Short with</span><span className="font-mono tabular-nums">{formatCurrency(cashBalance)}</span></>
           )}
         </div>
 
@@ -251,12 +251,12 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
           />
         </div>
 
-        {error && <div className="text-xs text-red bg-red/10 rounded-lg px-3 py-2">{error}</div>}
-        {success && <div className="text-xs text-green bg-green/10 rounded-lg px-3 py-2">{success}</div>}
+        {error && <p className="text-xs text-red">{error}</p>}
+        {success && <p className="text-xs text-green">{success}</p>}
 
         {showConfirm ? (
-          <div className="rounded-lg border border-border bg-surface-2 p-4 space-y-3">
-            <p className="text-xs font-semibold text-text-primary uppercase tracking-wide">Confirm Order</p>
+          <div className="card-inset p-4 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-text-secondary">Confirm Order</p>
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-text-muted">Side</span>
@@ -273,22 +273,22 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Quantity</span>
-                <span className="text-text-primary font-mono">{formatQuantity(qty, assetType)}</span>
+                <span className="text-text-primary font-mono tabular-nums">{formatQuantity(qty, assetType)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Est. Price</span>
-                <span className="text-text-primary font-mono">{formatCurrency(currentPrice)}</span>
+                <span className="text-text-primary font-mono tabular-nums">{formatCurrency(currentPrice)}</span>
               </div>
               <div className="flex justify-between border-t border-border pt-1.5 mt-1.5">
                 <span className="text-text-muted font-medium">Total Value</span>
-                <span className="text-text-primary font-mono font-semibold">{formatCurrency(total)}</span>
+                <span className="text-text-primary font-mono tabular-nums font-semibold">{formatCurrency(total)}</span>
               </div>
             </div>
             <div className="flex gap-2 pt-1">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="flex-1 py-2 text-xs font-semibold rounded-lg border border-border text-text-muted hover:text-text-primary hover:border-border-2 transition-colors"
+                className="flex-1 py-2 text-xs font-bold uppercase tracking-wide border-2 border-border text-text-muted hover:text-text-primary hover:border-border-2 transition-colors"
               >
                 Cancel
               </button>
@@ -296,7 +296,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
                 type="button"
                 onClick={handleConfirm}
                 disabled={loading}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${activeTab.activeColor}`}
+                className={`flex-1 py-2 text-xs font-bold uppercase tracking-wide border-2 border-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${activeTab.activeColor}`}
               >
                 {loading ? 'Processing...' : 'Confirm'}
               </button>
@@ -306,7 +306,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
           <button
             type="submit"
             disabled={loading || !qty}
-            className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white ${activeTab.activeColor}`}
+            className={`w-full py-2.5 text-sm font-bold uppercase tracking-wide border-2 border-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${activeTab.activeColor}`}
           >
             {loading ? 'Processing...' : `${activeTab.label} ${symbol}`}
           </button>
