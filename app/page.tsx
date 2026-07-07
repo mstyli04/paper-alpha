@@ -111,7 +111,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="card p-6 hover:border-border-2 transition-colors">
+              <div key={title} className="card p-6 hover:bg-surface-2 transition-colors">
                 <div className="w-10 h-10 border-2 border-border flex items-center justify-center mb-4">
                   <Icon className="w-5 h-5 text-brand" />
                 </div>

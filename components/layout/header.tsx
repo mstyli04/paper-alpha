@@ -57,7 +57,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       {/* Hamburger — mobile only */}
       <button
         onClick={onMenuClick}
-        className="lg:hidden p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors flex-shrink-0"
+        className="lg:hidden p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors flex-shrink-0"
         aria-label="Open menu"
       >
         <Menu className="w-4 h-4" />
@@ -125,7 +125,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         {/* Theme toggle */}
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
+          className="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
           aria-label="Toggle theme"
         >
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
