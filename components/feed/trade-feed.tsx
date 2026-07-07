@@ -26,10 +26,10 @@ interface FeedTrade {
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 const sideStyles: Record<string, string> = {
-  BUY:   'bg-green/10 text-green',
-  SELL:  'bg-red/10 text-red',
-  SHORT: 'bg-orange-500/10 text-orange-500',
-  COVER: 'bg-blue-500/10 text-blue-500',
+  BUY:   'bg-green text-[#0a0a0a]',
+  SELL:  'bg-red text-[#0a0a0a]',
+  SHORT: 'bg-orange-500 text-[#0a0a0a]',
+  COVER: 'bg-blue-500 text-[#0a0a0a]',
 }
 
 export function TradeFeed() {
@@ -63,9 +63,9 @@ export function TradeFeed() {
           No trades yet. Be the first!
         </div>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="p-4 space-y-2">
           {data.map(trade => (
-            <div key={trade.id} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors">
+            <div key={trade.id} className="row-boxed flex items-center gap-3">
               <AvatarDisplay
                 avatarUrl={trade.avatarUrl}
                 username={trade.username}
@@ -83,7 +83,7 @@ export function TradeFeed() {
                   >
                     {trade.username}
                   </Link>
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${sideStyles[trade.side]}`}>
+                  <span className={`text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 ${sideStyles[trade.side]}`}>
                     {trade.side}
                   </span>
                   <Link

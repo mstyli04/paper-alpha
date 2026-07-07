@@ -165,8 +165,8 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
   }
 
   return (
-    <tr className={`${isShort ? 'bg-blue-500/5' : 'bg-red/5'}`}>
-      <td colSpan={7} className="px-4 py-3">
+    <tr className="bg-surface-2">
+      <td colSpan={7} className={`px-4 py-3 border-l-2 ${isShort ? 'border-blue-500' : 'border-red'}`}>
         <div className="flex flex-col sm:flex-row gap-3 items-end">
           {/* Input */}
           <div className="flex flex-col gap-1 min-w-[180px]">
@@ -174,18 +174,18 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
               <label className="text-[10px] text-text-muted font-medium uppercase tracking-wide">
                 {inputMode === 'qty' ? 'Quantity' : 'Amount (USD)'}
               </label>
-              <div className="flex rounded overflow-hidden border border-border text-[10px] font-semibold">
+              <div className="flex overflow-hidden border border-border text-[10px] font-semibold">
                 <button
                   type="button"
                   onClick={() => switchInputMode('qty')}
-                  className={`px-2 py-0.5 transition-colors ${inputMode === 'qty' ? 'bg-brand text-white' : 'text-text-muted hover:text-text-primary'}`}
+                  className={`px-2 py-0.5 transition-colors ${inputMode === 'qty' ? 'bg-brand text-[#0a0a0a]' : 'text-text-muted hover:text-text-primary'}`}
                 >
                   Qty
                 </button>
                 <button
                   type="button"
                   onClick={() => switchInputMode('usd')}
-                  className={`px-2 py-0.5 transition-colors ${inputMode === 'usd' ? 'bg-brand text-white' : 'text-text-muted hover:text-text-primary'}`}
+                  className={`px-2 py-0.5 transition-colors ${inputMode === 'usd' ? 'bg-brand text-[#0a0a0a]' : 'text-text-muted hover:text-text-primary'}`}
                 >
                   $
                 </button>
@@ -231,7 +231,7 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
             <button
               type="button"
               onClick={onClose}
-              className="py-1.5 px-3 text-xs font-medium rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors"
+              className="py-1.5 px-3 text-xs font-medium border-2 border-border text-text-muted hover:text-text-primary transition-colors"
             >
               Cancel
             </button>
@@ -240,7 +240,7 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
                 type="button"
                 onClick={handleConfirm}
                 disabled={loading || qty <= 0 || qty > maxQty}
-                className={`py-1.5 px-4 text-xs font-semibold rounded-lg text-white transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500' : 'bg-red'}`}
+                className={`py-1.5 px-4 text-xs font-semibold transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500 text-white' : 'bg-red text-[#0a0a0a]'}`}
               >
                 {loading ? 'Processing...' : 'Confirm'}
               </button>
@@ -249,7 +249,7 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
                 type="button"
                 onClick={() => { setError(''); setConfirm(true) }}
                 disabled={qty <= 0 || qty > maxQty}
-                className={`py-1.5 px-4 text-xs font-semibold rounded-lg text-white transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500' : 'bg-red'}`}
+                className={`py-1.5 px-4 text-xs font-semibold transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500 text-white' : 'bg-red text-[#0a0a0a]'}`}
               >
                 {isShort ? 'Cover' : 'Sell'} {holding.symbol}
               </button>
@@ -298,13 +298,13 @@ export function HoldingsTable({ holdings, loading, onTradeSuccess }: HoldingsTab
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border">
-            <th className="text-left text-xs text-text-muted font-medium py-3 px-4">Asset</th>
-            <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Quantity</th>
-            <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Avg Entry</th>
-            <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Current Price</th>
-            <th className="text-right text-xs text-text-muted font-medium py-3 px-4">Value</th>
-            <th className="text-right text-xs text-text-muted font-medium py-3 px-4">P&L</th>
+          <tr className="table-head">
+            <th className="text-left py-3 px-4">Asset</th>
+            <th className="text-right py-3 px-4">Quantity</th>
+            <th className="text-right py-3 px-4">Avg Entry</th>
+            <th className="text-right py-3 px-4">Current Price</th>
+            <th className="text-right py-3 px-4">Value</th>
+            <th className="text-right py-3 px-4">P&L</th>
             <th className="py-3 px-4" />
           </tr>
         </thead>
@@ -338,7 +338,7 @@ export function HoldingsTable({ holdings, loading, onTradeSuccess }: HoldingsTab
                               : h.symbol}
                           </p>
                           {isShort && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 font-semibold border border-orange-500/20">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-orange-500 text-[#0a0a0a] font-bold uppercase tracking-wide">
                               SHORT
                             </span>
                           )}
@@ -383,11 +383,11 @@ export function HoldingsTable({ holdings, loading, onTradeSuccess }: HoldingsTab
                   <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => openSell(h.symbol)}
-                      className={`text-xs font-medium px-2.5 py-1 rounded-md border transition-colors ${
+                      className={`text-xs font-medium px-2.5 py-1 border transition-colors ${
                         isSelling
                           ? isShort
                             ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-red text-white border-red'
+                            : 'bg-red text-[#0a0a0a] border-red'
                           : isShort
                             ? 'text-blue-400 border-blue-400/40 hover:bg-blue-500/10'
                             : 'text-red border-red/40 hover:bg-red/10'

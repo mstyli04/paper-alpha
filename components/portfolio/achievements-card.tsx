@@ -3,11 +3,26 @@
 import useSWR from 'swr'
 import { Trophy } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RARITY_STYLES } from '@/lib/achievements'
 import { cn } from '@/lib/utils'
 import type { EarnedAchievement } from '@/lib/achievements'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
+
+// Brutalist solid-block badge per rarity tier (overrides lib/achievements.ts
+// tint-pill styles, which stay in place for any other consumers).
+const RARITY_BADGE: Record<EarnedAchievement['rarity'], string> = {
+  common: 'bg-surface-2 text-text-secondary',
+  rare: 'bg-blue-500 text-[#0a0a0a]',
+  epic: 'bg-purple-500 text-[#0a0a0a]',
+  legendary: 'bg-yellow-400 text-[#0a0a0a]',
+}
+
+const RARITY_BORDER: Record<EarnedAchievement['rarity'], string> = {
+  common: 'border-border',
+  rare: 'border-blue-500/40',
+  epic: 'border-purple-500/40',
+  legendary: 'border-yellow-400/50',
+}
 
 interface AchievementsCardProps {
   apiUrl?: string // allow custom URL for viewing other users in future
@@ -38,7 +53,7 @@ export function AchievementsCard({ apiUrl = '/api/portfolio/achievements' }: Ach
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-lg" />
+            <Skeleton key={i} className="h-24" />
           ))}
         </div>
       ) : (
@@ -46,27 +61,23 @@ export function AchievementsCard({ apiUrl = '/api/portfolio/achievements' }: Ach
           {/* Earned */}
           {earned.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Unlocked</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-2">Unlocked</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {earned.map(a => {
-                  const style = RARITY_STYLES[a.rarity]
-                  return (
-                    <div
-                      key={a.id}
-                      className={cn(
-                        'rounded-lg border p-3 flex flex-col items-center text-center gap-1 shadow',
-                        style.border,
-                        style.glow && `shadow-lg ${style.glow}`
-                      )}
-                    >
-                      <span className="text-2xl">{a.emoji}</span>
-                      <p className="text-xs font-semibold text-text-primary leading-tight">{a.title}</p>
-                      <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium', style.badge)}>
-                        {a.rarity}
-                      </span>
-                    </div>
-                  )
-                })}
+                {earned.map(a => (
+                  <div
+                    key={a.id}
+                    className={cn(
+                      'border-2 p-3 flex flex-col items-center text-center gap-1',
+                      RARITY_BORDER[a.rarity]
+                    )}
+                  >
+                    <span className="text-2xl">{a.emoji}</span>
+                    <p className="text-xs font-semibold text-text-primary leading-tight">{a.title}</p>
+                    <span className={cn('text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wide', RARITY_BADGE[a.rarity])}>
+                      {a.rarity}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -74,12 +85,12 @@ export function AchievementsCard({ apiUrl = '/api/portfolio/achievements' }: Ach
           {/* Locked */}
           {locked.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">Locked</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-2">Locked</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {locked.map(a => (
                   <div
                     key={a.id}
-                    className="rounded-lg border border-border p-3 flex flex-col items-center text-center gap-1 opacity-40"
+                    className="border-2 border-border p-3 flex flex-col items-center text-center gap-1 opacity-40"
                     title={a.description}
                   >
                     <span className="text-2xl grayscale">{a.emoji}</span>
