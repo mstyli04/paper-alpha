@@ -8,6 +8,7 @@ import {
   Coins,
   ArrowRight,
 } from 'lucide-react'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
 
 const features = [
   {
@@ -55,6 +56,7 @@ export default function LandingPage() {
             <span className="font-bold text-text-primary text-lg uppercase tracking-tight">Paper Alpha</span>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Link href="/sign-in" className="text-sm font-bold uppercase tracking-wide text-text-secondary hover:text-text-primary transition-colors px-4 py-2">
               Sign In
             </Link>

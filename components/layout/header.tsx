@@ -2,11 +2,11 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { Search, Menu, Sun, Moon } from 'lucide-react'
+import { Search, Menu } from 'lucide-react'
 import { UserButton } from '@clerk/nextjs'
-import { useTheme } from 'next-themes'
 import { useSearch } from '@/hooks/use-search'
 import { AlertsDropdown } from '@/components/alerts/alerts-dropdown'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
 import type { SearchResult } from '@/types'
 
 interface HeaderProps {
@@ -43,7 +43,6 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [open, setOpen] = useState(false)
   const { results, loading } = useSearch(query)
   const router = useRouter()
-  const { theme, setTheme } = useTheme()
   const { isOpen: marketOpen, utcTime } = useMarketStatus()
 
   function handleSelect(result: SearchResult) {
@@ -123,13 +122,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
       <div className="flex items-center gap-2 ml-auto">
         {/* Theme toggle */}
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
-          aria-label="Toggle theme"
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
+        <ThemeToggle />
 
         <AlertsDropdown />
         <UserButton afterSignOutUrl="/" />
