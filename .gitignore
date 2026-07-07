@@ -19,3 +19,7 @@ prisma/migrations/
 .vercel
 .worktrees/
 .gstack/
+
+# build caches & agent scratch
+tsconfig.tsbuildinfo
+.superpowers/
