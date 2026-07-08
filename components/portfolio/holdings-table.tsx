@@ -240,7 +240,7 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
                 type="button"
                 onClick={handleConfirm}
                 disabled={loading || qty <= 0 || qty > maxQty}
-                className={`py-1.5 px-4 text-xs font-semibold transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500 text-white' : 'bg-red text-[#0a0a0a]'}`}
+                className={`py-1.5 px-4 text-xs font-semibold transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500 text-[#0a0a0a]' : 'bg-red text-[#0a0a0a]'}`}
               >
                 {loading ? 'Processing...' : 'Confirm'}
               </button>
@@ -249,7 +249,7 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
                 type="button"
                 onClick={() => { setError(''); setConfirm(true) }}
                 disabled={qty <= 0 || qty > maxQty}
-                className={`py-1.5 px-4 text-xs font-semibold transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500 text-white' : 'bg-red text-[#0a0a0a]'}`}
+                className={`py-1.5 px-4 text-xs font-semibold transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500 text-[#0a0a0a]' : 'bg-red text-[#0a0a0a]'}`}
               >
                 {isShort ? 'Cover' : 'Sell'} {holding.symbol}
               </button>
@@ -386,7 +386,7 @@ export function HoldingsTable({ holdings, loading, onTradeSuccess }: HoldingsTab
                       className={`text-xs font-medium px-2.5 py-1 border transition-colors ${
                         isSelling
                           ? isShort
-                            ? 'bg-blue-500 text-white border-blue-500'
+                            ? 'bg-blue-500 text-[#0a0a0a] border-blue-500'
                             : 'bg-red text-[#0a0a0a] border-red'
                           : isShort
                             ? 'text-blue-400 border-blue-400/40 hover:bg-blue-500/10'
