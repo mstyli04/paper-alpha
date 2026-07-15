@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import useSWR from 'swr'
 import { usePortfolio } from '@/hooks/use-portfolio'
@@ -13,6 +14,42 @@ import { OWNER_USERNAME } from '@/lib/avatars'
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 interface DbUser { username: string; avatarUrl?: string; createdAt: string; email: string }
+
+const THEME_OPTIONS = [
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+  { value: 'system', label: 'System' },
+] as const
+
+function ThemePicker() {
+  const { theme, setTheme } = useTheme()
+  // `theme` is unknown until after hydration — render neutral buttons first
+  // to avoid a server/client mismatch (same pattern as ThemeToggle).
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-text-muted font-medium">Theme</p>
+      <div className="flex gap-2">
+        {THEME_OPTIONS.map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => setTheme(value)}
+            className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wide border-2 transition-colors ${
+              mounted && theme === value
+                ? 'bg-brand text-[#0a0a0a] border-border'
+                : 'border-border text-text-muted hover:text-text-primary'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-text-muted">System follows your device&apos;s appearance setting.</p>
+    </div>
+  )
+}
 
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -184,25 +221,7 @@ export default function SettingsPage() {
 
       {/* Appearance */}
       <Section title="Appearance" icon={<Palette className="w-4 h-4" />}>
-        <div className="space-y-3">
-          <p className="text-xs text-text-muted font-medium">Theme</p>
-          <div className="flex gap-2">
-            {(['Dark', 'Light', 'System'] as const).map(label => (
-              <button
-                key={label}
-                disabled={label !== 'Dark'}
-                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wide border-2 transition-colors ${
-                  label === 'Dark'
-                    ? 'bg-brand text-[#0a0a0a] border-border'
-                    : 'border-border text-text-muted opacity-40 cursor-not-allowed'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-text-muted">Light and system themes coming soon.</p>
-        </div>
+        <ThemePicker />
       </Section>
 
       {/* Security */}

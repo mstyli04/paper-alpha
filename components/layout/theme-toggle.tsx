@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes'
 const defaultButtonClassName = 'p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors'
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   // next-themes can't know the real theme during server rendering, so
   // `theme` is undefined on the server and on the client's first render —
   // rendering an icon based on it before mount causes a server/client
@@ -24,11 +24,11 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   return (
     <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
       className={className ?? defaultButtonClassName}
       aria-label="Toggle theme"
     >
-      {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
     </button>
   )
 }
