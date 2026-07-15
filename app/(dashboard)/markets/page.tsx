@@ -97,7 +97,7 @@ export default function MarketsPage() {
               <button
                 key={cat}
                 onClick={() => setPredCategory(cat)}
-                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors border-2 ${
+                className={`px-3 py-1 text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-colors border-2 ${
                   predCategory === cat
                     ? 'bg-surface-2 border-brand text-brand'
                     : 'text-text-muted border-border hover:text-text-primary'
@@ -109,16 +109,14 @@ export default function MarketsPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-2 table-head">
-          <span className="w-6" />
-          <div className="flex items-center gap-3">
-            <div className="w-9" />
-            <span>Asset</span>
-          </div>
-          <span className="text-right w-32">
+        <div className="grid grid-cols-[1.5rem_2.25rem_minmax(0,1fr)_8rem_2rem] items-center gap-3 px-4 py-2 table-head">
+          <span className="text-center">#</span>
+          <span />
+          <span>Asset</span>
+          <span className="text-right">
             {tab === 'predictions' ? 'YES Price / Chg' : 'Price / Change'}
           </span>
-          <span className="w-8" />
+          <span />
         </div>
 
         {isLoading && tab !== 'watchlist' ? (
