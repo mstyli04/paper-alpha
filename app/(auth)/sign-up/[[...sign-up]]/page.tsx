@@ -12,6 +12,10 @@ export default function SignUpPage() {
         <span className="font-semibold text-text-primary text-lg">Paper Alpha</span>
       </Link>
       <SignUp />
+      <p className="mt-6 text-xs text-text-muted">
+        By signing up you agree to our{' '}
+        <Link href="/privacy" className="text-brand hover:underline">Privacy Policy</Link>.
+      </p>
     </div>
   )
 }

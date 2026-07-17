@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useClerk, useUser } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import useSWR from 'swr'
 import { usePortfolio } from '@/hooks/use-portfolio'
 import { AvatarDisplay } from '@/components/ui/avatar-display'
 import { formatCurrency } from '@/lib/utils'
-import { AlertTriangle, User, Shield, Palette, BarChart2, ExternalLink, Check } from 'lucide-react'
+import { AlertTriangle, User, Shield, Palette, BarChart2, ExternalLink, Check, Download, Lock } from 'lucide-react'
 import { OWNER_USERNAME } from '@/lib/avatars'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
@@ -65,6 +65,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 
 export default function SettingsPage() {
   const { user } = useUser()
+  const { signOut } = useClerk()
   const { portfolio, refresh } = usePortfolio()
   const { data: dbUser } = useSWR<DbUser>('/api/user', fetcher)
 
@@ -73,6 +74,10 @@ export default function SettingsPage() {
   const [saveMsg, setSaveMsg] = useState('')
   const [resetting, setResetting] = useState(false)
   const [showReset, setShowReset] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const isOwner = dbUser?.username === OWNER_USERNAME
   const memberSince = dbUser?.createdAt
@@ -105,6 +110,24 @@ export default function SettingsPage() {
       refresh()
     } finally {
       setResetting(false)
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      const res = await fetch('/api/user', { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setDeleteError(data.error || 'Failed to delete account. Please try again.')
+        return
+      }
+      await signOut({ redirectUrl: '/' })
+    } catch {
+      setDeleteError('Failed to delete account. Please try again.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -235,6 +258,74 @@ export default function SettingsPage() {
         >
           Manage account security <ExternalLink className="w-3 h-3" />
         </a>
+      </Section>
+
+      {/* Privacy & Data */}
+      <Section title="Privacy & Data" icon={<Lock className="w-4 h-4" />}>
+        <div>
+          <p className="text-xs text-text-muted mb-3">
+            You control your data. Read how it&apos;s handled in our{' '}
+            <Link href="/privacy" className="text-brand hover:underline">Privacy Policy</Link>.
+          </p>
+          <a
+            href="/api/user/export"
+            download
+            className="inline-flex items-center gap-2 btn-secondary text-xs px-3 py-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Download my data (JSON)
+          </a>
+          <p className="text-xs text-text-muted mt-1.5">
+            Exports your profile, trades, holdings, portfolio history, alerts, and watchlist.
+          </p>
+        </div>
+
+        <div className="border-t border-border pt-4">
+          <button
+            onClick={() => setShowDelete(true)}
+            className="flex items-center gap-2 text-sm text-red hover:opacity-80 transition-opacity"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            Delete Account
+          </button>
+          <p className="text-xs text-text-muted mt-1">
+            Permanently deletes your account and every record we hold about you. Cannot be undone.
+          </p>
+        </div>
+
+        {showDelete && (
+          <div className="border border-red rounded-lg p-4 space-y-3">
+            <p className="text-sm font-medium text-text-primary">Delete your account permanently?</p>
+            <p className="text-xs text-text-muted">
+              This immediately and irreversibly erases your profile, portfolio, trade history,
+              alerts, and watchlist, and deletes your sign-in account. Consider downloading your
+              data first. Type <span className="font-mono text-text-primary">DELETE</span> to confirm.
+            </p>
+            <input
+              type="text"
+              value={deleteConfirm}
+              onChange={e => setDeleteConfirm(e.target.value)}
+              placeholder="DELETE"
+              className="input-base w-40 text-sm"
+            />
+            {deleteError && <p className="text-xs text-red">{deleteError}</p>}
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting || deleteConfirm !== 'DELETE'}
+                className="btn-red text-sm"
+              >
+                {deleting ? 'Deleting…' : 'Delete my account'}
+              </button>
+              <button
+                onClick={() => { setShowDelete(false); setDeleteConfirm(''); setDeleteError('') }}
+                className="btn-secondary text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </Section>
 
       {/* Disclaimer */}

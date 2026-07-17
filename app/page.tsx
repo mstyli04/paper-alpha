@@ -188,6 +188,9 @@ export default async function LandingPage() {
           <p className="text-xs text-text-muted text-center">
             Paper Alpha is a simulated trading platform for educational purposes only. Not financial advice. No real money involved.
           </p>
+          <Link href="/privacy" className="text-xs text-text-muted hover:text-text-primary transition-colors shrink-0">
+            Privacy Policy
+          </Link>
         </div>
       </footer>
     </div>

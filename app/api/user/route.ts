@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-import { auth, currentUser } from '@clerk/nextjs/server'
+import { auth, clerkClient, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
@@ -46,6 +46,21 @@ export async function GET() {
   }
 
   return NextResponse.json(user)
+}
+
+// DELETE /api/user — GDPR Art. 17: permanently delete the account and all data.
+// Removes the local records first (child tables cascade from User), then the
+// Clerk account, so erasure completes even if the user.deleted webhook is missed.
+export async function DELETE() {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  await db.user.deleteMany({ where: { clerkId: userId } })
+
+  const client = await clerkClient()
+  await client.users.deleteUser(userId)
+
+  return NextResponse.json({ deleted: true })
 }
 
 // PATCH /api/user — update username or avatarUrl

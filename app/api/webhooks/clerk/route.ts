@@ -81,5 +81,11 @@ export async function POST(req: Request) {
     })
   }
 
+  // GDPR Art. 17 (right to erasure): when the Clerk account is deleted, remove
+  // every record we hold. All child tables cascade from User in the schema.
+  if (event.type === 'user.deleted') {
+    await db.user.deleteMany({ where: { clerkId: event.data.id } })
+  }
+
   return new Response('OK', { status: 200 })
 }

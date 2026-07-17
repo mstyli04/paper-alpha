@@ -12,6 +12,9 @@ export default function SignInPage() {
         <span className="font-semibold text-text-primary text-lg">Paper Alpha</span>
       </Link>
       <SignIn />
+      <p className="mt-6 text-xs text-text-muted">
+        <Link href="/privacy" className="text-text-muted hover:text-text-primary transition-colors">Privacy Policy</Link>
+      </p>
     </div>
   )
 }
