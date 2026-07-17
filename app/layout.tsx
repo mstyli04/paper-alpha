@@ -15,14 +15,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       afterSignOutUrl="/"
       appearance={{
         variables: {
-          colorPrimary: '#22c55e',
-          borderRadius: '0px',
-          fontFamily: "'Space Grotesk', system-ui, sans-serif",
+          colorPrimary: '#4f46e5',
+          borderRadius: '0.625rem',
+          fontFamily: "'Inter', system-ui, sans-serif",
           colorBackground: 'var(--surface)',
           colorForeground: 'var(--text-primary)',
-          colorInput: 'var(--surface-2)',
+          colorInput: 'var(--surface)',
           colorInputForeground: 'var(--text-primary)',
-          colorPrimaryForeground: '#0a0a0a',
+          colorPrimaryForeground: '#ffffff',
         },
       }}
     >

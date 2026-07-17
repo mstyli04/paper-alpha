@@ -37,10 +37,14 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200, showB
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let chart: any
+    let cancelled = false
 
     async function init() {
       const { createChart, ColorType, LineStyle } = await import('lightweight-charts')
-      if (!containerRef.current) return
+      // Guard against StrictMode double-invoke: without this, the cleanup for the
+      // first run fires while the dynamic import is in flight (chart still
+      // undefined), then both runs append a chart to the same container.
+      if (cancelled || !containerRef.current) return
 
       chart = createChart(containerRef.current, {
         width: containerRef.current.clientWidth,
@@ -115,8 +119,10 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200, showB
     observer.observe(containerRef.current)
 
     return () => {
+      cancelled = true
       observer.disconnect()
       chart?.remove()
+      chart = null
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshots, startingBalance, height, showBenchmark, benchmark, mode])
@@ -138,9 +144,9 @@ export function PortfolioChart({ snapshots, startingBalance, height = 200, showB
             <button
               key={b}
               onClick={() => setActiveBenchmark(b)}
-              className={`text-xs px-2.5 py-1 border transition-colors ${
+              className={`text-xs px-2.5 py-1 border rounded-full transition-colors ${
                 activeBenchmark === b
-                  ? 'border-brand bg-brand text-[#0a0a0a] font-bold uppercase tracking-wide'
+                  ? 'border-transparent bg-text-primary text-background font-medium'
                   : 'border-border text-text-muted hover:text-text-primary'
               }`}
             >

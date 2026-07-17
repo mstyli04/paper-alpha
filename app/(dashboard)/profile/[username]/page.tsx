@@ -24,10 +24,10 @@ interface ProfileData {
 }
 
 const sideStyles: Record<string, string> = {
-  BUY:   'bg-green text-[#0a0a0a]',
-  SELL:  'bg-red text-[#0a0a0a]',
-  SHORT: 'bg-orange-500 text-[#0a0a0a]',
-  COVER: 'bg-blue-500 text-[#0a0a0a]',
+  BUY:   'bg-green/10 text-green',
+  SELL:  'bg-red/10 text-red',
+  SHORT: 'bg-orange-500 text-white',
+  COVER: 'bg-blue-500 text-white',
 }
 
 export default function ProfilePage() {
@@ -100,24 +100,24 @@ export default function ProfilePage() {
               {isOwnProfile && (
                 <button
                   onClick={() => setShowPicker(v => !v)}
-                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand flex items-center justify-center border-2 border-border hover:bg-brand-dim transition-colors"
+                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand flex items-center justify-center border border-border hover:bg-brand-dim transition-colors"
                   title="Change avatar"
                 >
-                  <Pencil className="w-3 h-3 text-[#0a0a0a]" />
+                  <Pencil className="w-3 h-3 text-white" />
                 </button>
               )}
             </div>
 
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-bold text-text-primary">@{profileUser?.username}</h1>
+                <h1 className="text-xl font-semibold text-text-primary">@{profileUser?.username}</h1>
                 {isOwner && (
-                  <span className="text-xs bg-yellow-400 text-[#0a0a0a] px-2 py-0.5 font-bold uppercase tracking-wide">
+                  <span className="text-xs bg-yellow-400 text-white px-2 py-0.5 font-medium">
                     👑 admin
                   </span>
                 )}
                 {isOwnProfile && !isOwner && (
-                  <span className="text-xs bg-brand text-[#0a0a0a] px-2 py-0.5 font-bold uppercase tracking-wide">You</span>
+                  <span className="text-xs bg-text-primary text-background px-2 py-0.5 font-medium">You</span>
                 )}
               </div>
               {portfolio && (
@@ -159,7 +159,7 @@ export default function ProfilePage() {
                 disabled={saving}
                 title="Captain (Owner Exclusive)"
                 className={cn(
-                  'relative w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 border-2 overflow-hidden',
+                  'relative w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 border overflow-hidden',
                   profileUser?.avatarUrl === OWNER_AVATAR ? 'border-yellow-400 scale-110' : 'border-yellow-400/40 hover:border-yellow-400'
                 )}
                 style={{ backgroundColor: '#1a2540' }}
@@ -199,7 +199,7 @@ export default function ProfilePage() {
                   disabled={saving}
                   title={preset.label}
                   className={cn(
-                    'relative w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 border-2',
+                    'relative w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 border',
                     isSelected ? 'border-brand scale-110' : 'border-transparent hover:border-border'
                   )}
                   style={{ backgroundColor: preset.bg }}
@@ -264,7 +264,7 @@ export default function ProfilePage() {
             <div className="p-4 space-y-2">
               {trades.map(trade => (
                 <div key={trade.id} className="row-boxed flex items-center gap-3">
-                  <span className={`text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 flex-shrink-0 ${sideStyles[trade.side]}`}>
+                  <span className={`text-xs font-medium px-1.5 py-0.5 flex-shrink-0 ${sideStyles[trade.side]}`}>
                     {trade.side}
                   </span>
                   <div className="flex-1 min-w-0">

@@ -69,7 +69,7 @@ export default function MarketsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Markets</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Markets</h1>
         <p className="text-text-muted text-sm mt-1">Live prices for stocks, crypto, commodities and prediction markets</p>
       </div>
 
@@ -79,7 +79,7 @@ export default function MarketsPage() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
+              className={`px-4 py-3.5 text-sm font-medium transition-colors border-b -mb-px whitespace-nowrap ${
                 tab === t
                   ? 'text-brand border-brand'
                   : 'text-text-muted border-transparent hover:text-text-primary'
@@ -97,7 +97,7 @@ export default function MarketsPage() {
               <button
                 key={cat}
                 onClick={() => setPredCategory(cat)}
-                className={`px-3 py-1 text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-colors border-2 ${
+                className={`px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors border ${
                   predCategory === cat
                     ? 'bg-surface-2 border-brand text-brand'
                     : 'text-text-muted border-border hover:text-text-primary'

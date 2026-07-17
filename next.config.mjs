@@ -2,7 +2,7 @@ const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: https://img.clerk.com https://assets.coingecko.com https://static2.finnhub.io",
+  "img-src 'self' data: https://img.clerk.com https://assets.coingecko.com https://coin-images.coingecko.com https://static2.finnhub.io",
   "font-src 'self' data: https://fonts.gstatic.com",
   "connect-src 'self' https://*.clerk.accounts.dev https://clerk-telemetry.com",
   "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
@@ -27,6 +27,7 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'img.clerk.com' },
       { protocol: 'https', hostname: 'assets.coingecko.com' },
+      { protocol: 'https', hostname: 'coin-images.coingecko.com' },
       { protocol: 'https', hostname: 'static2.finnhub.io' },
     ],
   },

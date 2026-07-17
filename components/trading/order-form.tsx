@@ -121,10 +121,10 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
   }
 
   const tabs: { id: Tab; label: string; color: string; activeColor: string }[] = [
-    { id: 'BUY', label: 'Buy', color: 'hover:text-green', activeColor: 'bg-green text-[#0a0a0a]' },
-    { id: 'SELL', label: 'Sell', color: 'hover:text-red', activeColor: 'bg-red text-[#0a0a0a]' },
-    { id: 'SHORT', label: 'Short', color: 'hover:text-orange-400', activeColor: 'bg-orange-500 text-[#0a0a0a]' },
-    { id: 'COVER', label: 'Cover', color: 'hover:text-blue-400', activeColor: 'bg-blue-500 text-[#0a0a0a]' },
+    { id: 'BUY', label: 'Buy', color: 'hover:text-green', activeColor: 'bg-green/10 text-green' },
+    { id: 'SELL', label: 'Sell', color: 'hover:text-red', activeColor: 'bg-red/10 text-red' },
+    { id: 'SHORT', label: 'Short', color: 'hover:text-orange-400', activeColor: 'bg-orange-500/10 text-orange-500' },
+    { id: 'COVER', label: 'Cover', color: 'hover:text-blue-400', activeColor: 'bg-blue-500/10 text-blue-500' },
   ]
 
   const activeTab = tabs.find(t => t.id === tab)!
@@ -134,12 +134,12 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
       <h3 className="text-sm font-semibold text-text-primary mb-4">Place Order</h3>
 
       {/* Tab bar */}
-      <div className="flex gap-2 mb-4 text-sm font-bold uppercase tracking-wide">
+      <div className="flex gap-2 mb-4 text-sm font-medium">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => switchTab(t.id)}
-            className={`flex-1 py-2 border-2 border-border transition-colors ${
+            className={`flex-1 py-2 border border-border rounded-lg transition-colors ${
               tab === t.id ? t.activeColor : `bg-transparent text-text-secondary ${t.color}`
             }`}
           >
@@ -150,7 +150,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
 
       {/* Short/Cover info banners */}
       {tab === 'SHORT' && (
-        <div className="text-xs text-orange-400 border-2 border-border bg-transparent px-3 py-2 mb-4">
+        <div className="text-xs text-orange-400 border border-border bg-transparent px-3 py-2 mb-4">
           Short selling: you profit if the price falls. You receive cash now and must buy back later.
         </div>
       )}
@@ -160,7 +160,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
         </div>
       )}
       {tab === 'COVER' && shortQty > 0 && (
-        <div className="text-xs text-blue-400 border-2 border-border bg-transparent px-3 py-2 mb-4">
+        <div className="text-xs text-blue-400 border border-border bg-transparent px-3 py-2 mb-4">
           Short position: {formatQuantity(shortQty, assetType)} {symbol} @ avg {formatCurrency(holding?.avgCostBasis ?? 0)}
         </div>
       )}
@@ -177,18 +177,18 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
             <label className="text-xs text-text-muted">
               {inputMode === 'qty' ? 'Quantity' : 'Amount (USD)'}
             </label>
-            <div className="flex overflow-hidden border-2 border-border text-[10px] font-semibold">
+            <div className="flex overflow-hidden border border-border rounded-md text-[10px] font-semibold">
               <button
                 type="button"
                 onClick={() => switchInputMode('qty')}
-                className={`px-2 py-0.5 transition-colors ${inputMode === 'qty' ? 'bg-brand text-[#0a0a0a]' : 'text-text-muted hover:text-text-primary'}`}
+                className={`px-2 py-0.5 transition-colors ${inputMode === 'qty' ? 'bg-text-primary text-background' : 'text-text-muted hover:text-text-primary'}`}
               >
                 Qty
               </button>
               <button
                 type="button"
                 onClick={() => switchInputMode('usd')}
-                className={`px-2 py-0.5 transition-colors ${inputMode === 'usd' ? 'bg-brand text-[#0a0a0a]' : 'text-text-muted hover:text-text-primary'}`}
+                className={`px-2 py-0.5 transition-colors ${inputMode === 'usd' ? 'bg-text-primary text-background' : 'text-text-muted hover:text-text-primary'}`}
               >
                 $
               </button>
@@ -217,7 +217,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
               key={f}
               type="button"
               onClick={() => setQuickAmount(f)}
-              className="flex-1 py-1 text-xs font-medium text-text-muted hover:text-brand border-2 border-border hover:border-brand transition-colors"
+              className="flex-1 py-1 text-xs font-medium text-text-muted hover:text-brand border border-border hover:border-brand transition-colors"
             >
               {f === 1 ? 'Max' : `${f * 100}%`}
             </button>
@@ -256,7 +256,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
 
         {showConfirm ? (
           <div className="card-inset p-4 space-y-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-text-secondary">Confirm Order</p>
+            <p className="text-xs font-medium text-text-secondary">Confirm Order</p>
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-text-muted">Side</span>
@@ -288,7 +288,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
               <button
                 type="button"
                 onClick={handleCancel}
-                className="flex-1 py-2 text-xs font-bold uppercase tracking-wide border-2 border-border text-text-muted hover:text-text-primary hover:border-border-2 transition-colors"
+                className="flex-1 py-2 text-xs font-medium border border-border text-text-muted hover:text-text-primary hover:border-border-strong transition-colors"
               >
                 Cancel
               </button>
@@ -296,7 +296,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
                 type="button"
                 onClick={handleConfirm}
                 disabled={loading}
-                className={`flex-1 py-2 text-xs font-bold uppercase tracking-wide border-2 border-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${activeTab.activeColor}`}
+                className={`flex-1 py-2 text-xs font-medium border border-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${activeTab.activeColor}`}
               >
                 {loading ? 'Processing...' : 'Confirm'}
               </button>
@@ -306,7 +306,7 @@ export function OrderForm({ symbol, assetType, currentPrice, onSuccess }: OrderF
           <button
             type="submit"
             disabled={loading || !qty}
-            className={`w-full py-2.5 text-sm font-bold uppercase tracking-wide border-2 border-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${activeTab.activeColor}`}
+            className={`w-full py-2.5 text-sm font-medium border border-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${activeTab.activeColor}`}
           >
             {loading ? 'Processing...' : `${activeTab.label} ${symbol}`}
           </button>

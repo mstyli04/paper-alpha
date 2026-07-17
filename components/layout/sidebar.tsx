@@ -71,34 +71,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       )}
 
       <aside className={cn(
-        'fixed left-0 top-0 h-full w-56 bg-surface border-r-2 border-border flex flex-col z-30 transition-transform duration-300',
+        'fixed left-0 top-0 h-full w-56 bg-surface border-r border-border flex flex-col z-30 transition-transform duration-300',
         'lg:translate-x-0',
         open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}>
         {/* Logo */}
-        <div className="flex items-center justify-between px-4 h-14 border-b-2 border-border shrink-0">
+        <div className="flex items-center justify-between px-4 h-14 border-b border-border shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 overflow-hidden shrink-0 border-2 border-border">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shapeRendering="crispEdges" width="28" height="28">
-                <rect width="16" height="16" fill="#0c0f1a"/>
-                <rect x="6" y="0" width="2" height="1" fill="#22c55e"/>
-                <rect x="5" y="1" width="4" height="1" fill="#22c55e"/>
-                <rect x="5" y="2" width="1" height="1" fill="#22c55e"/>
-                <rect x="6" y="2" width="1" height="1" fill="#ffffff"/>
-                <rect x="7" y="2" width="3" height="1" fill="#22c55e"/>
-                <rect x="5" y="3" width="6" height="1" fill="#22c55e"/>
-                <rect x="3" y="4" width="7" height="1" fill="#22c55e"/>
-                <rect x="2" y="5" width="9" height="1" fill="#22c55e"/>
-                <rect x="1" y="6" width="11" height="1" fill="#22c55e"/>
-                <rect x="1" y="7" width="9" height="1" fill="#22c55e"/>
-                <rect x="2" y="8" width="6" height="1" fill="#22c55e"/>
-                <rect x="3" y="9" width="4" height="1" fill="#22c55e"/>
-                <rect x="3" y="10" width="2" height="1" fill="#22c55e"/>
-                <rect x="6" y="10" width="2" height="1" fill="#22c55e"/>
-                <rect x="3" y="11" width="2" height="1" fill="#22c55e"/>
-                <rect x="6" y="11" width="2" height="1" fill="#22c55e"/>
-                <rect x="2" y="12" width="3" height="1" fill="#22c55e"/>
-                <rect x="6" y="12" width="3" height="1" fill="#22c55e"/>
+            <div className="w-7 h-7 rounded-lg bg-brand shrink-0 flex items-center justify-center">
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 fill-white">
+                <path d="M1 12.5 6 7l3 3 6-6.5V9h-2V7.9L9 12.3 6 9.3l-3.6 4L1 12.5Z" />
               </svg>
             </div>
             <div>
@@ -121,7 +103,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
           {navGroups.map(group => (
             <div key={group.label}>
-              <p className="px-3 mb-1 text-[10px] font-semibold text-text-muted uppercase tracking-widest">
+              <p className="px-3 mb-1 text-[11px] font-medium text-text-muted">
                 {group.label}
               </p>
               <div className="space-y-0.5">
@@ -133,10 +115,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                       href={href}
                       onClick={onClose}
                       className={cn(
-                        'flex items-center gap-2.5 px-3 py-2 text-sm font-bold uppercase tracking-wide transition-all border-2',
+                        'flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors',
                         active
-                          ? 'bg-brand text-[#0a0a0a] border-border'
-                          : 'text-text-secondary hover:text-text-primary hover:bg-surface-2 border-transparent'
+                          ? 'bg-surface-2 text-text-primary'
+                          : 'text-text-secondary hover:text-text-primary hover:bg-surface-2/60'
                       )}
                     >
                       <Icon className="w-4 h-4 flex-shrink-0" />
@@ -150,10 +132,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-3 border-t-2 border-border shrink-0">
-          <div className="px-3 py-2.5 bg-surface-2 border-2 border-border">
+        <div className="p-3 border-t border-border shrink-0">
+          <div className="px-3 py-2.5 bg-surface-2 border border-border rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-semibold text-brand uppercase tracking-widest">Simulation</span>
+              <span className="text-[10px] font-medium text-brand">Simulation</span>
               <span className="text-[10px] text-text-muted">v1.0</span>
             </div>
             <p className="text-[10px] text-text-muted leading-relaxed">

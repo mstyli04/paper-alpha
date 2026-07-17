@@ -36,9 +36,9 @@ function ThemePicker() {
           <button
             key={value}
             onClick={() => setTheme(value)}
-            className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wide border-2 transition-colors ${
+            className={`px-4 py-1.5 text-xs font-medium border transition-colors ${
               mounted && theme === value
-                ? 'bg-brand text-[#0a0a0a] border-border'
+                ? 'bg-text-primary text-background'
                 : 'border-border text-text-muted hover:text-text-primary'
             }`}
           >
@@ -56,7 +56,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
     <div className="card p-6 space-y-5">
       <div className="flex items-center gap-2 border-b border-border pb-4">
         <span className="text-brand">{icon}</span>
-        <h2 className="text-xs font-bold uppercase tracking-widest text-text-secondary">{title}</h2>
+        <h2 className="text-xs font-medium text-text-secondary">{title}</h2>
       </div>
       {children}
     </div>
@@ -111,7 +111,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
       <div>
-        <h1 className="text-xl font-bold text-text-primary tracking-tight">Settings</h1>
+        <h1 className="text-xl font-semibold text-text-primary tracking-tight">Settings</h1>
         <p className="text-xs text-text-muted mt-0.5">Manage your account and preferences</p>
       </div>
 
@@ -138,7 +138,7 @@ export default function SettingsPage() {
         </div>
 
         {isOwner && (
-          <div className="flex items-center gap-2 px-3 py-2 border-2 border-yellow-400">
+          <div className="flex items-center gap-2 px-3 py-2 border border-yellow-400">
             <span className="text-sm">👑</span>
             <div>
               <p className="text-xs font-semibold text-yellow-400">Admin Account</p>
@@ -203,7 +203,7 @@ export default function SettingsPage() {
         </div>
 
         {showReset && (
-          <div className="border-2 border-red p-4 space-y-3">
+          <div className="border border-red p-4 space-y-3">
             <p className="text-sm font-medium text-text-primary">Are you sure?</p>
             <p className="text-xs text-text-muted">
               This will permanently delete all your trades and reset your balance to{' '}
@@ -239,7 +239,7 @@ export default function SettingsPage() {
 
       {/* Disclaimer */}
       <div className="card p-5 border-brand">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-brand mb-2">Disclaimer</h3>
+        <h3 className="text-xs font-medium text-brand mb-2">Disclaimer</h3>
         <p className="text-xs text-text-secondary leading-relaxed">
           Paper Alpha is a simulated trading platform for educational and entertainment purposes only.
           All trades use virtual currency with zero real monetary value. Market data may be delayed.

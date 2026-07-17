@@ -25,7 +25,7 @@ export function AssetRow({ asset, rank, watched, onToggleWatch }: AssetRowProps)
         {asset.logoUrl ? (
           <Image src={asset.logoUrl} alt={asset.symbol} width={36} height={36} className="object-cover" />
         ) : (
-          <span className="text-xs font-bold text-text-secondary">{asset.symbol.slice(0, 2)}</span>
+          <span className="text-xs font-semibold text-text-secondary">{asset.symbol.slice(0, 2)}</span>
         )}
       </div>
 

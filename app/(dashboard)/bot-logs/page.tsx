@@ -11,7 +11,7 @@ export default async function BotLogsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Bot Runs</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Bot Runs</h1>
         <p className="text-text-muted text-sm mt-1">Nightly algorithm run history — last 30 runs</p>
       </div>
 

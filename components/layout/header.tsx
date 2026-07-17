@@ -52,11 +52,11 @@ export function Header({ onMenuClick }: HeaderProps) {
   }
 
   return (
-    <header className="h-14 bg-surface border-b-2 border-border flex items-center px-4 gap-3 sticky top-0 z-20">
+    <header className="h-14 bg-surface border-b border-border flex items-center px-4 gap-3 sticky top-0 z-20">
       {/* Hamburger — mobile only */}
       <button
         onClick={onMenuClick}
-        className="lg:hidden p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors flex-shrink-0"
+        className="lg:hidden p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors flex-shrink-0"
         aria-label="Open menu"
       >
         <Menu className="w-4 h-4" />
@@ -72,10 +72,10 @@ export function Header({ onMenuClick }: HeaderProps) {
           onChange={e => { setQuery(e.target.value); setOpen(true) }}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           onFocus={() => query && setOpen(true)}
-          className="w-full bg-surface-2 border-2 border-border pl-8 pr-4 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-green transition-colors"
+          className="w-full bg-surface-2 border border-border rounded-lg pl-8 pr-4 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-strong focus:ring-2 focus:ring-brand/20 transition-colors"
         />
         {open && query.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-surface border-2 border-border overflow-hidden z-50">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-lg overflow-hidden z-50 shadow-sm">
             {loading ? (
               <div className="px-4 py-3 text-xs text-text-muted">Searching...</div>
             ) : results.length === 0 ? (

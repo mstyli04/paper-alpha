@@ -56,7 +56,7 @@ export function AlertForm({ symbol, assetType, currentPrice }: AlertFormProps) {
 
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Condition toggle */}
-        <div className="flex overflow-hidden border-2 border-border text-xs font-medium">
+        <div className="flex overflow-hidden border border-border text-xs font-medium">
           {(['ABOVE', 'BELOW'] as const).map(c => (
             <button
               key={c}
@@ -64,7 +64,7 @@ export function AlertForm({ symbol, assetType, currentPrice }: AlertFormProps) {
               onClick={() => setCondition(c)}
               className={`flex-1 py-2 transition-colors ${
                 condition === c
-                  ? 'bg-brand text-[#0a0a0a]'
+                  ? 'bg-text-primary text-background'
                   : 'text-text-muted hover:text-text-primary bg-surface-2'
               }`}
             >

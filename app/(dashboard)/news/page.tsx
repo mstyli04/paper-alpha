@@ -30,9 +30,9 @@ const CATEGORIES: { id: Category; label: string }[] = [
 ]
 
 const sentimentStyles = {
-  positive: 'bg-green text-[#0a0a0a]',
-  negative: 'bg-red text-[#0a0a0a]',
-  neutral: 'border-2 border-border text-text-secondary',
+  positive: 'bg-green/10 text-green',
+  negative: 'bg-red/10 text-red',
+  neutral: 'border border-border text-text-secondary',
 }
 
 export default function NewsPage() {
@@ -54,7 +54,7 @@ export default function NewsPage() {
     <div className="space-y-5 animate-fade-in">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold text-text-primary tracking-tight">Market News</h1>
+          <h1 className="text-xl font-semibold text-text-primary tracking-tight">Market News</h1>
           <p className="text-xs text-text-muted mt-0.5">Live financial news · Powered by Finnhub</p>
         </div>
         {sentimentCounts && (
@@ -72,9 +72,9 @@ export default function NewsPage() {
           <button
             key={c.id}
             onClick={() => setCategory(c.id)}
-            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wide border-2 transition-colors ${
+            className={`px-3 py-1.5 text-xs font-medium border transition-colors ${
               category === c.id
-                ? 'bg-brand text-[#0a0a0a] border-border'
+                ? 'bg-text-primary text-background'
                 : 'text-text-secondary border-transparent hover:text-text-primary hover:bg-surface-2'
             }`}
           >
@@ -127,7 +127,7 @@ export default function NewsPage() {
                   <p className="text-xs text-text-muted line-clamp-2 mb-2 leading-relaxed">{item.summary}</p>
                 )}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 ${sentimentStyles[item.sentiment]}`}>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 ${sentimentStyles[item.sentiment]}`}>
                     {item.sentiment}
                   </span>
                   <span className="text-[10px] text-text-muted">{item.source}</span>

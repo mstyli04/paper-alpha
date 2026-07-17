@@ -20,9 +20,9 @@ interface NewsItem {
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 const sentimentStyles = {
-  positive: 'bg-green text-[#0a0a0a]',
-  negative: 'bg-red text-[#0a0a0a]',
-  neutral: 'border-2 border-border bg-transparent text-text-secondary',
+  positive: 'bg-green/10 text-green',
+  negative: 'bg-red/10 text-red',
+  neutral: 'border border-border bg-transparent text-text-secondary',
 }
 
 const sentimentLabel = {

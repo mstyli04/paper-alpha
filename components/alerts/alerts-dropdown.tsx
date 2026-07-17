@@ -88,14 +88,14 @@ export function AlertsDropdown() {
       >
         <Bell className="w-5 h-5" />
         {badgeCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red text-[#0a0a0a] text-[10px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red/10 text-red text-[10px] font-semibold rounded-full flex items-center justify-center">
             {badgeCount > 9 ? '9+' : badgeCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-surface border-2 border-border z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-surface border border-border z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <span className="text-sm font-semibold text-text-primary">Price Alerts</span>
             <span className="text-xs text-text-muted">{active.length} active</span>
@@ -110,7 +110,7 @@ export function AlertsDropdown() {
               <>
                 {triggered.length > 0 && (
                   <div>
-                    <p className="px-4 py-2 text-xs font-bold text-text-secondary uppercase tracking-widest bg-surface-2">
+                    <p className="px-4 py-2 text-xs font-semibold text-text-secondary uppercase tracking-widest bg-surface-2">
                       Triggered
                     </p>
                     <div className="p-3 space-y-2">
@@ -123,7 +123,7 @@ export function AlertsDropdown() {
                 {active.length > 0 && (
                   <div>
                     {triggered.length > 0 && (
-                      <p className="px-4 py-2 text-xs font-bold text-text-secondary uppercase tracking-widest bg-surface-2">
+                      <p className="px-4 py-2 text-xs font-semibold text-text-secondary uppercase tracking-widest bg-surface-2">
                         Watching
                       </p>
                     )}

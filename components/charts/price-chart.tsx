@@ -281,9 +281,9 @@ export function PriceChart({
               <button
                 key={ind}
                 onClick={() => setActiveIndicator(ind)}
-                className={`px-2 py-0.5 text-xs transition-colors ${
+                className={`px-2 py-0.5 text-xs rounded-md transition-colors ${
                   activeIndicator === ind
-                    ? 'bg-brand text-[#0a0a0a] font-bold uppercase tracking-wide'
+                    ? 'bg-text-primary text-background font-medium'
                     : 'text-text-muted hover:text-text-primary'
                 }`}
               >

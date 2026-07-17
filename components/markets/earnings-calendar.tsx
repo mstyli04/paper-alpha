@@ -70,7 +70,7 @@ export function EarningsCalendar() {
         <div className="p-4 space-y-4">
           {grouped.map(([date, events]) => (
             <div key={date} className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-text-secondary">{formatDate(date)}</span>
+              <span className="text-xs font-medium text-text-secondary">{formatDate(date)}</span>
               <div className="space-y-2">
                 {events.map(ev => (
                   <div key={ev.symbol} className="row-boxed flex items-center gap-3">

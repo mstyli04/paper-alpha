@@ -46,9 +46,9 @@ function AssetTable({ assets }: { assets: BotRunAsset[] }) {
             key={t.key}
             type="button"
             onClick={() => setFilter(t.key)}
-            className={`px-3 py-1 text-xs font-bold uppercase tracking-wide border-2 transition-colors ${
+            className={`px-3 py-1 text-xs font-medium border transition-colors ${
               filter === t.key
-                ? 'bg-brand text-[#0a0a0a] border-border'
+                ? 'bg-text-primary text-background'
                 : 'text-text-secondary border-transparent hover:text-text-primary'
             }`}
           >
@@ -116,10 +116,10 @@ export function BotRunsList({ runs }: { runs: RunWithAssets[] }) {
               <span className="text-sm text-text-primary flex-1">
                 {formatRunDate(run.startedAt)}
               </span>
-              <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 ${
-                !run.finishedAt ? 'bg-yellow-500 text-[#0a0a0a]' :
-                run.status === 'ERROR' ? 'bg-red text-[#0a0a0a]' :
-                'bg-green text-[#0a0a0a]'
+              <span className={`text-xs font-medium px-2 py-0.5 ${
+                !run.finishedAt ? 'bg-yellow-500 text-white' :
+                run.status === 'ERROR' ? 'bg-red/10 text-red' :
+                'bg-green/10 text-green'
               }`}>
                 {!run.finishedAt ? 'TIMEOUT' : run.status}
               </span>
@@ -136,7 +136,7 @@ export function BotRunsList({ runs }: { runs: RunWithAssets[] }) {
             {expanded && (
               <div className="bg-surface-2/30 border-t border-border">
                 {run.errors.length > 0 && (
-                  <div className="mx-5 mt-4 p-3 border-2 border-red text-xs text-red space-y-1">
+                  <div className="mx-5 mt-4 p-3 border border-red text-xs text-red space-y-1">
                     {run.errors.map((e, i) => <p key={`${i}-${e}`} className="break-words">{e}</p>)}
                   </div>
                 )}

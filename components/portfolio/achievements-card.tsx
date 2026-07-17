@@ -12,9 +12,9 @@ const fetcher = (url: string) => fetch(url).then(r => r.json())
 // tint-pill styles, which stay in place for any other consumers).
 const RARITY_BADGE: Record<EarnedAchievement['rarity'], string> = {
   common: 'bg-surface-2 text-text-secondary',
-  rare: 'bg-blue-500 text-[#0a0a0a]',
-  epic: 'bg-purple-500 text-[#0a0a0a]',
-  legendary: 'bg-yellow-400 text-[#0a0a0a]',
+  rare: 'bg-blue-500 text-white',
+  epic: 'bg-purple-500 text-white',
+  legendary: 'bg-yellow-400 text-white',
 }
 
 const RARITY_BORDER: Record<EarnedAchievement['rarity'], string> = {
@@ -61,19 +61,19 @@ export function AchievementsCard({ apiUrl = '/api/portfolio/achievements' }: Ach
           {/* Earned */}
           {earned.length > 0 && (
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-2">Unlocked</p>
+              <p className="text-xs font-medium text-text-secondary mb-2">Unlocked</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {earned.map(a => (
                   <div
                     key={a.id}
                     className={cn(
-                      'border-2 p-3 flex flex-col items-center text-center gap-1',
+                      'border p-3 flex flex-col items-center text-center gap-1',
                       RARITY_BORDER[a.rarity]
                     )}
                   >
                     <span className="text-2xl">{a.emoji}</span>
                     <p className="text-xs font-semibold text-text-primary leading-tight">{a.title}</p>
-                    <span className={cn('text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wide', RARITY_BADGE[a.rarity])}>
+                    <span className={cn('text-[10px] px-1.5 py-0.5 font-medium', RARITY_BADGE[a.rarity])}>
                       {a.rarity}
                     </span>
                   </div>
@@ -85,12 +85,12 @@ export function AchievementsCard({ apiUrl = '/api/portfolio/achievements' }: Ach
           {/* Locked */}
           {locked.length > 0 && (
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-2">Locked</p>
+              <p className="text-xs font-medium text-text-secondary mb-2">Locked</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {locked.map(a => (
                   <div
                     key={a.id}
-                    className="border-2 border-border p-3 flex flex-col items-center text-center gap-1 opacity-40"
+                    className="border border-border p-3 flex flex-col items-center text-center gap-1 opacity-40"
                     title={a.description}
                   >
                     <span className="text-2xl grayscale">{a.emoji}</span>

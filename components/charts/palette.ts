@@ -2,18 +2,18 @@
 
 import { useTheme } from 'next-themes'
 
-// Brutalist Ledger chart palette (spec: 2026-07-07-brutalist-phase2-design.md).
+// Minimal zinc + indigo chart palette (matches DESIGN.md restyle).
 // Red is reserved for loss/sell semantics and must never appear in CATEGORICAL.
-export const SIGNAL = { up: '#22c55e', down: '#ef4444' } as const
+export const SIGNAL = { up: '#16a34a', down: '#dc2626' } as const
 
 export const CATEGORICAL = {
-  dark: ['#22c55e', '#16a34a', '#ffffff', '#a3a3a3', '#525252', '#2a2a2a'],
-  light: ['#22c55e', '#16a34a', '#0a0a0a', '#525252', '#a3a3a3', '#d4d4d4'],
+  dark: ['#6366f1', '#a1a1aa', '#818cf8', '#71717a', '#c7d2fe', '#3f3f46'],
+  light: ['#4f46e5', '#52525b', '#818cf8', '#a1a1aa', '#a5b4fc', '#d4d4d8'],
 } as const
 
 export const CHART_CHROME = {
-  dark: { grid: '#2a2a2a', text: '#a3a3a3', border: '#ffffff' },
-  light: { grid: '#d4d4d4', text: '#525252', border: '#0a0a0a' },
+  dark: { grid: '#27272a', text: '#a1a1aa', border: '#27272a' },
+  light: { grid: '#e4e4e7', text: '#52525b', border: '#e4e4e7' },
 } as const
 
 export function useChartPalette() {

@@ -30,9 +30,9 @@ export function PredictionOrderForm({
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setOutcome('YES')}
-            className={`py-2.5 text-sm font-bold uppercase tracking-wide transition-colors border-2 border-border ${
+            className={`py-2.5 text-sm font-medium transition-colors border border-border ${
               outcome === 'YES'
-                ? 'bg-green text-[#0a0a0a]'
+                ? 'bg-green/10 text-green'
                 : 'bg-transparent text-text-secondary hover:text-green'
             }`}
           >
@@ -40,9 +40,9 @@ export function PredictionOrderForm({
           </button>
           <button
             onClick={() => setOutcome('NO')}
-            className={`py-2.5 text-sm font-bold uppercase tracking-wide transition-colors border-2 border-border ${
+            className={`py-2.5 text-sm font-medium transition-colors border border-border ${
               outcome === 'NO'
-                ? 'bg-red text-[#0a0a0a]'
+                ? 'bg-red/10 text-red'
                 : 'bg-transparent text-text-secondary hover:text-red'
             }`}
           >

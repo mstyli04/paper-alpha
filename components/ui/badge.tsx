@@ -10,11 +10,11 @@ export function Badge({ children, variant = 'neutral', className }: BadgeProps) 
   return (
     <span
       className={cn(
-        'inline-flex items-center text-xs font-bold uppercase tracking-wide px-2 py-0.5',
-        variant === 'green' && 'bg-green text-[#0a0a0a]',
-        variant === 'red' && 'bg-red text-[#0a0a0a]',
-        variant === 'neutral' && 'bg-transparent text-text-secondary border-2 border-border',
-        variant === 'brand' && 'bg-brand text-[#0a0a0a]',
+        'inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full',
+        variant === 'green' && 'bg-green/10 text-green',
+        variant === 'red' && 'bg-red/10 text-red',
+        variant === 'neutral' && 'bg-transparent text-text-secondary border border-border',
+        variant === 'brand' && 'bg-brand/10 text-brand',
         className
       )}
     >

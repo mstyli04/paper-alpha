@@ -20,7 +20,7 @@ export default function LeaderboardPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Leaderboard</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Leaderboard</h1>
         <p className="text-text-muted text-sm mt-1">Ranked by total return percentage</p>
       </div>
 
@@ -35,9 +35,9 @@ export default function LeaderboardPage() {
               <Link
                 key={entry.userId}
                 href={`/profile/${entry.username}`}
-                className={`card p-5 text-center hover:border-border-2 transition-colors ${isFirst ? 'border-yellow-400' : ''}`}
+                className={`card p-5 text-center hover:border-border-strong transition-colors ${isFirst ? 'border-yellow-400' : ''}`}
               >
-                <div className={`text-2xl font-bold mb-2 ${rankColors[actualIndex]}`}>
+                <div className={`text-2xl font-semibold mb-2 ${rankColors[actualIndex]}`}>
                   {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
                 </div>
                 <div className="flex justify-center mb-2">
@@ -45,11 +45,11 @@ export default function LeaderboardPage() {
                 </div>
                 <p className="text-sm font-semibold text-text-primary truncate">{entry.username}</p>
                 {entry.isBot && (
-                  <span className="text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 bg-brand text-[#0a0a0a]">
+                  <span className="text-xs font-medium px-1.5 py-0.5 bg-text-primary text-background">
                     BOT
                   </span>
                 )}
-                <p className={`text-lg font-bold mt-1 ${entry.returnPercent >= 0 ? 'text-green' : 'text-red'}`}>
+                <p className={`text-lg font-semibold mt-1 ${entry.returnPercent >= 0 ? 'text-green' : 'text-red'}`}>
                   {formatPercent(entry.returnPercent)}
                 </p>
                 <p className="text-xs text-text-muted">{formatCurrency(entry.totalValue)}</p>
@@ -113,7 +113,7 @@ export default function LeaderboardPage() {
                           <div className="flex items-center gap-1.5">
                             {isMe && <span className="text-xs text-brand">You</span>}
                             {entry.isBot && (
-                              <span className="text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 bg-brand text-[#0a0a0a]">
+                              <span className="text-xs font-medium px-1.5 py-0.5 bg-text-primary text-background">
                                 BOT
                               </span>
                             )}

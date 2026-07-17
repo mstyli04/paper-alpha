@@ -31,18 +31,18 @@ function StatCard({ label, value, sub, subColor, icon, accent = 'brand', loading
     brand: 'border-t-brand',
     green: 'border-t-green',
     red: 'border-t-red',
-    neutral: 'border-t-border-2',
+    neutral: 'border-t-border',
   }[accent]
 
   return (
-    <div className={cn('card p-4 border-t-2', accentBorder)}>
+    <div className={cn('card p-4 border-t', accentBorder)}>
       <div className="flex items-start justify-between mb-3">
         <p className="stat-label">{label}</p>
         <div className={cn(
           'p-1.5',
-          accent === 'brand' ? 'bg-brand text-[#0a0a0a]' :
-          accent === 'green' ? 'bg-green text-[#0a0a0a]' :
-          accent === 'red' ? 'bg-red text-[#0a0a0a]' :
+          accent === 'brand' ? 'bg-text-primary text-background' :
+          accent === 'green' ? 'bg-green/10 text-green' :
+          accent === 'red' ? 'bg-red/10 text-red' :
           'bg-surface-2 text-text-muted'
         )}>
           {icon}
@@ -108,7 +108,7 @@ export default function DashboardPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-text-primary tracking-tight">Dashboard</h1>
+          <h1 className="text-xl font-semibold text-text-primary tracking-tight">Dashboard</h1>
           <p className="text-xs text-text-muted mt-0.5">Portfolio overview · Paper trading simulation</p>
         </div>
         <Link href="/markets" className="btn-secondary flex items-center gap-1.5 py-1.5 px-3 text-xs">
@@ -118,7 +118,7 @@ export default function DashboardPage() {
 
       {/* Onboarding banner */}
       {showOnboarding && (
-        <div className="card p-5 border-2 border-brand bg-surface-2 relative">
+        <div className="card p-5 border border-brand bg-surface-2 relative">
           <button
             onClick={dismissOnboarding}
             className="absolute top-3 right-3 text-text-muted hover:text-text-primary transition-colors"
@@ -135,7 +135,7 @@ export default function DashboardPage() {
               { step: '3', text: 'Place your first paper trade' },
             ].map(({ step, text }) => (
               <li key={step} className="flex items-center gap-3 text-xs text-text-secondary">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand text-[#0a0a0a] text-[10px] font-bold flex items-center justify-center">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-text-primary text-background text-[10px] font-semibold flex items-center justify-center">
                   {step}
                 </span>
                 {text}

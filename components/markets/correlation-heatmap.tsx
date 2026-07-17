@@ -13,13 +13,13 @@ const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 function correlationColor(value: number): string {
   // -1 = red, 0 = neutral, +1 = green
-  if (value >= 0.7) return 'bg-green text-[#0a0a0a]'
+  if (value >= 0.7) return 'bg-green text-white'
   if (value >= 0.4) return 'bg-green/50 text-green'
   if (value >= 0.1) return 'bg-green/20 text-green'
   if (value > -0.1) return 'bg-surface-2 text-text-muted'
   if (value > -0.4) return 'bg-red/20 text-red'
   if (value > -0.7) return 'bg-red/50 text-red'
-  return 'bg-red text-[#0a0a0a]'
+  return 'bg-red text-white'
 }
 
 const SYMBOL_PRESETS = [
@@ -69,7 +69,7 @@ export function CorrelationHeatmap() {
           <button
             key={p.label}
             onClick={() => { setSymbols(p.value); setInput(p.value) }}
-            className={`text-xs px-3 py-1.5 border-2 transition-colors ${
+            className={`text-xs px-3 py-1.5 border transition-colors ${
               symbols === p.value
                 ? 'bg-surface-2 border-brand text-brand'
                 : 'border-border text-text-muted hover:text-text-primary'
@@ -136,11 +136,11 @@ export function CorrelationHeatmap() {
           {/* Legend */}
           <div className="flex items-center justify-center gap-3 mt-4">
             {[
-              { label: '−1.0', color: 'bg-red text-[#0a0a0a]' },
+              { label: '−1.0', color: 'bg-red text-white' },
               { label: '−0.5', color: 'bg-red/50 text-red' },
               { label: '0.0', color: 'bg-surface-2 text-text-muted' },
               { label: '+0.5', color: 'bg-green/50 text-green' },
-              { label: '+1.0', color: 'bg-green text-[#0a0a0a]' },
+              { label: '+1.0', color: 'bg-green text-white' },
             ].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1">
                 <div className={`w-6 h-4 ${color} flex items-center justify-center text-xs font-mono`} />

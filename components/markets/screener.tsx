@@ -82,13 +82,13 @@ export function Screener() {
           </div>
 
           {/* Direction filter */}
-          <div className="flex border-2 border-border overflow-hidden text-xs">
+          <div className="flex border border-border overflow-hidden text-xs">
             {(['all', 'up', 'down'] as const).map(d => (
               <button
                 key={d}
                 onClick={() => setDirection(d)}
                 className={`px-3 py-1.5 font-medium transition-colors ${
-                  direction === d ? 'bg-brand text-[#0a0a0a]' : 'text-text-muted hover:text-text-primary'
+                  direction === d ? 'bg-text-primary text-background' : 'text-text-muted hover:text-text-primary'
                 }`}
               >
                 {d === 'all' ? 'All' : d === 'up' ? '↑ Up' : '↓ Down'}
@@ -102,7 +102,7 @@ export function Screener() {
               <button
                 key={s}
                 onClick={() => setSector(s)}
-                className={`px-2.5 py-1 text-xs rounded-full font-medium transition-colors border-2 ${
+                className={`px-2.5 py-1 text-xs rounded-full font-medium transition-colors border ${
                   sector === s
                     ? 'bg-surface-2 border-brand text-brand'
                     : 'text-text-muted border-border hover:text-text-primary'

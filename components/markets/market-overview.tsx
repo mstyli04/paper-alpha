@@ -8,11 +8,11 @@ import type { OverviewData, IndexData, SectorData, MoverData } from '@/lib/marke
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 function sectorColor(changePercent: number): string {
-  if (changePercent > 2)     return 'bg-green text-[#0a0a0a]'
+  if (changePercent > 2)     return 'bg-green/10 text-green'
   if (changePercent >= 0.5)  return 'bg-green/20 text-green'
   if (changePercent >= -0.5) return 'bg-surface-2 text-text-muted'
   if (changePercent > -2)    return 'bg-red/20 text-red'
-  return 'bg-red text-[#0a0a0a]'
+  return 'bg-red/10 text-red'
 }
 
 function IndicesBar({ indices }: { indices: IndexData[] }) {
@@ -46,7 +46,7 @@ function SectorHeatmap({ sectors }: { sectors: SectorData[] }) {
             className={`p-2 text-center ${sectorColor(s.changePercent)}`}
           >
             <div className="text-xs font-medium truncate">{s.name}</div>
-            <div className="text-sm font-bold mt-0.5">{formatPercent(s.changePercent)}</div>
+            <div className="text-sm font-semibold mt-0.5">{formatPercent(s.changePercent)}</div>
           </div>
         ))}
       </div>

@@ -265,7 +265,10 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
           series.createPriceLine({ price: 0, color: chrome.grid, lineWidth: 1, lineStyle: LineStyle.Dashed })
         }
 
-        // Trade markers
+        // Trade markers. Text labels overlap badly once a symbol has more than a
+        // handful of trades (the bot trades often), so past that threshold render
+        // plain arrows only.
+        const showMarkerText = sorted.length <= 8
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const markers: any[] = []
         for (const trade of sorted) {
@@ -278,8 +281,10 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
             position: isBuy ? 'belowBar' : 'aboveBar',
             color:    isBuy ? signal.up  : signal.down,
             shape:    isBuy ? 'arrowUp'  : 'arrowDown',
-            text: `${trade.side} ${trade.quantity % 1 === 0 ? trade.quantity : trade.quantity.toFixed(4)} @ $${trade.price.toFixed(2)}`,
-            size: 1,
+            ...(showMarkerText && {
+              text: `${trade.side} ${trade.quantity % 1 === 0 ? trade.quantity : trade.quantity.toFixed(4)} @ $${trade.price.toFixed(2)}`,
+            }),
+            size: showMarkerText ? 1 : 0,
           })
         }
         if (markers.length) {
@@ -404,9 +409,9 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
             key={p}
             type="button"
             onClick={() => setPeriod(p)}
-            className={`text-xs px-2.5 py-1 border transition-colors ${
+            className={`text-xs px-2.5 py-1 border rounded-full transition-colors ${
               period === p
-                ? 'border-brand bg-brand text-[#0a0a0a] font-bold uppercase tracking-wide'
+                ? 'border-transparent bg-text-primary text-background font-medium'
                 : 'border-border text-text-muted hover:text-text-primary'
             }`}
           >
@@ -432,7 +437,7 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
                   return next
                 })
               }
-              className={`flex items-center gap-1.5 text-xs px-2.5 py-1 border transition-colors ${
+              className={`flex items-center gap-1.5 text-xs px-2.5 py-1 border rounded-full transition-colors ${
                 isVisible ? 'border-border/60 text-text-primary' : 'border-border/30 text-text-muted opacity-50'
               }`}
             >
@@ -473,9 +478,9 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
               key={sym}
               type="button"
               onClick={() => { setActiveIndicatorSymbol(sym); activeSymbolRef.current = sym }}
-              className={`px-2 py-0.5 text-xs transition-colors ${
+              className={`px-2 py-0.5 text-xs rounded-md transition-colors ${
                 activeIndicatorSymbol === sym
-                  ? 'bg-brand text-[#0a0a0a] font-bold uppercase tracking-wide'
+                  ? 'bg-text-primary text-background font-medium'
                   : 'text-text-muted hover:text-text-primary'
               }`}
             >
@@ -488,9 +493,9 @@ export function HoldingsChart({ height = 280 }: HoldingsChartProps) {
             key={ind}
             type="button"
             onClick={() => { setActiveIndicator(ind); activeIndicatorRef.current = ind }}
-            className={`px-2 py-0.5 text-xs transition-colors ${
+            className={`px-2 py-0.5 text-xs rounded-md transition-colors ${
               activeIndicator === ind
-                ? 'bg-brand text-[#0a0a0a] font-bold uppercase tracking-wide'
+                ? 'bg-text-primary text-background font-medium'
                 : 'text-text-muted hover:text-text-primary'
             }`}
           >

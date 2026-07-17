@@ -20,8 +20,8 @@ function Metric({
 }) {
   return (
     <div className="space-y-0.5">
-      <p className="text-xs font-bold uppercase tracking-widest text-text-secondary">{label}</p>
-      <p className={`text-lg font-bold font-mono tabular-nums ${color ?? 'text-text-primary'}`}>{value}</p>
+      <p className="text-xs font-medium text-text-secondary">{label}</p>
+      <p className={`text-lg font-semibold font-mono tabular-nums ${color ?? 'text-text-primary'}`}>{value}</p>
       {sub && <p className="text-xs text-text-muted">{sub}</p>}
     </div>
   )

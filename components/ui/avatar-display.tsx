@@ -17,7 +17,7 @@ interface AvatarDisplayProps {
 function CaptainHatAvatar({ size, className }: { size: number; className?: string }) {
   return (
     <div
-      className={cn('rounded-full flex items-center justify-center flex-shrink-0 border-2 border-yellow-400/60 overflow-hidden', className)}
+      className={cn('rounded-full flex items-center justify-center flex-shrink-0 border border-yellow-400/60 overflow-hidden', className)}
       style={{ width: size, height: size, backgroundColor: '#1a2540' }}
     >
       <svg
@@ -70,7 +70,7 @@ function AvatarInner({ avatarUrl, username, size = 40, className }: Omit<AvatarD
     if (preset) {
       return (
         <div
-          className={cn('rounded-full flex items-center justify-center flex-shrink-0 border-2 border-border', className)}
+          className={cn('rounded-full flex items-center justify-center flex-shrink-0 border border-border', className)}
           style={{ width: size, height: size, backgroundColor: preset.bg }}
         >
           <span style={{ fontSize: size * 0.5 }} role="img" aria-label={preset.label}>
@@ -88,17 +88,17 @@ function AvatarInner({ avatarUrl, username, size = 40, className }: Omit<AvatarD
         alt={username ?? 'avatar'}
         width={size}
         height={size}
-        className={cn('rounded-full border-2 border-border flex-shrink-0 object-cover', className)}
+        className={cn('rounded-full border border-border flex-shrink-0 object-cover', className)}
       />
     )
   }
 
   return (
     <div
-      className={cn('rounded-full bg-surface-2 border-2 border-border flex items-center justify-center flex-shrink-0', className)}
+      className={cn('rounded-full bg-surface-2 border border-border flex items-center justify-center flex-shrink-0', className)}
       style={{ width: size, height: size }}
     >
-      <span className="font-bold text-text-secondary" style={{ fontSize: size * 0.38 }}>
+      <span className="font-semibold text-text-secondary" style={{ fontSize: size * 0.38 }}>
         {username?.[0]?.toUpperCase() ?? '?'}
       </span>
     </div>

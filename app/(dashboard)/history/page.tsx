@@ -28,21 +28,21 @@ export default function HistoryPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Trade History</h1>
+          <h1 className="text-2xl font-semibold text-text-primary">Trade History</h1>
           <p className="text-text-muted text-sm mt-1">
             {data?.total ? `${data.total} total trades` : 'All your executed orders'}
           </p>
         </div>
 
         {/* Filter */}
-        <div className="flex overflow-hidden border-2 border-border text-sm">
+        <div className="flex overflow-hidden border border-border text-sm">
           {(['', 'BUY', 'SELL'] as const).map(f => (
             <button
               key={f}
               onClick={() => { setSideFilter(f); setPage(1) }}
-              className={`px-4 py-2 font-bold uppercase tracking-wide transition-colors ${
+              className={`px-4 py-2 font-medium transition-colors ${
                 sideFilter === f
-                  ? 'bg-brand text-[#0a0a0a]'
+                  ? 'bg-text-primary text-background'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-2'
               }`}
             >
@@ -90,11 +90,11 @@ export default function HistoryPage() {
                       </Link>
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide px-2 py-1 ${
-                        trade.side === 'BUY' ? 'bg-green text-[#0a0a0a]' :
-                        trade.side === 'SELL' ? 'bg-red text-[#0a0a0a]' :
-                        trade.side === 'SHORT' ? 'bg-orange-500 text-[#0a0a0a]' :
-                        'bg-blue-500 text-[#0a0a0a]'
+                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 ${
+                        trade.side === 'BUY' ? 'bg-green/10 text-green' :
+                        trade.side === 'SELL' ? 'bg-red/10 text-red' :
+                        trade.side === 'SHORT' ? 'bg-orange-500 text-white' :
+                        'bg-blue-500 text-white'
                       }`}>
                         {(trade.side === 'BUY' || trade.side === 'COVER')
                           ? <ArrowUpRight className="w-3 h-3" />

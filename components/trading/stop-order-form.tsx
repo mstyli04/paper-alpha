@@ -147,18 +147,18 @@ export function StopOrderForm({ symbol, assetType, currentPrice, holdingQty }: S
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3">
             {/* Type toggle */}
-            <div className="flex gap-2 text-xs font-bold uppercase tracking-wide">
+            <div className="flex gap-2 text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setType('stop-loss')}
-                className={`flex-1 py-2 border-2 border-border transition-colors ${type === 'stop-loss' ? 'bg-red text-[#0a0a0a]' : 'bg-transparent text-text-secondary hover:text-red'}`}
+                className={`flex-1 py-2 border border-border transition-colors ${type === 'stop-loss' ? 'bg-red/10 text-red' : 'bg-transparent text-text-secondary hover:text-red'}`}
               >
                 Stop-Loss
               </button>
               <button
                 type="button"
                 onClick={() => setType('take-profit')}
-                className={`flex-1 py-2 border-2 border-border transition-colors ${type === 'take-profit' ? 'bg-green text-[#0a0a0a]' : 'bg-transparent text-text-secondary hover:text-green'}`}
+                className={`flex-1 py-2 border border-border transition-colors ${type === 'take-profit' ? 'bg-green/10 text-green' : 'bg-transparent text-text-secondary hover:text-green'}`}
               >
                 Take-Profit
               </button>

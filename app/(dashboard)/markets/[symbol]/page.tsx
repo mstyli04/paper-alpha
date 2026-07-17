@@ -69,7 +69,7 @@ export default function AssetDetailPage() {
           )}
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-text-primary">{symbol}</h1>
+              <h1 className="text-2xl font-semibold text-text-primary">{symbol}</h1>
               <span className="text-xs px-2 py-0.5 bg-surface-2 border border-border text-text-muted">
                 {assetType === 'CRYPTO' ? 'Crypto' : assetType === 'PREDICTION' ? 'Prediction Market' : 'Stock'}
               </span>
@@ -84,7 +84,7 @@ export default function AssetDetailPage() {
 
         <button
           onClick={() => toggleWatchlist(symbol, assetType)}
-          className="flex items-center gap-1.5 text-sm text-text-muted hover:text-brand transition-colors px-3 py-2 border-2 border-border hover:border-brand"
+          className="flex items-center gap-1.5 text-sm text-text-muted hover:text-brand transition-colors px-3 py-2 border border-border hover:border-brand"
         >
           {inWatchlist ? <Star className="w-4 h-4 fill-brand text-brand" /> : <StarOff className="w-4 h-4" />}
           {inWatchlist ? 'Watching' : 'Watch'}
@@ -99,7 +99,7 @@ export default function AssetDetailPage() {
         </div>
       ) : quote ? (
         <div>
-          <p className="text-4xl font-bold text-text-primary font-mono">{formatCurrency(quote.price)}</p>
+          <p className="text-4xl font-semibold text-text-primary font-mono">{formatCurrency(quote.price)}</p>
           <div className="flex items-center gap-2 mt-1.5">
             <span className={`flex items-center gap-1 text-sm font-medium ${pnlColor(quote.change)}`}>
               {quote.change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
@@ -119,7 +119,7 @@ export default function AssetDetailPage() {
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={`px-3 py-1 text-xs font-medium transition-colors border-2 ${
+                className={`px-3 py-1 text-xs font-medium transition-colors border ${
                   range === r ? 'bg-surface-2 border-brand text-brand' : 'border-transparent text-text-muted hover:text-text-primary'
                 }`}
               >
@@ -136,7 +136,7 @@ export default function AssetDetailPage() {
                 <button
                   key={t}
                   onClick={() => setChartType(t)}
-                  className={`px-2 py-1 text-xs font-medium transition-colors border-2 ${
+                  className={`px-2 py-1 text-xs font-medium transition-colors border ${
                     chartType === t ? 'bg-surface-2 border-brand text-brand' : 'border-transparent text-text-muted hover:text-text-primary'
                   }`}
                 >

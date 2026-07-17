@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { formatCurrency, formatPercent, formatQuantity, pnlColor } from '@/lib/utils'
@@ -166,7 +166,7 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
 
   return (
     <tr className="bg-surface-2">
-      <td colSpan={7} className={`px-4 py-3 border-l-2 ${isShort ? 'border-blue-500' : 'border-red'}`}>
+      <td colSpan={7} className={`px-4 py-3 border-l ${isShort ? 'border-blue-500' : 'border-red'}`}>
         <div className="flex flex-col sm:flex-row gap-3 items-end">
           {/* Input */}
           <div className="flex flex-col gap-1 min-w-[180px]">
@@ -178,14 +178,14 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
                 <button
                   type="button"
                   onClick={() => switchInputMode('qty')}
-                  className={`px-2 py-0.5 transition-colors ${inputMode === 'qty' ? 'bg-brand text-[#0a0a0a]' : 'text-text-muted hover:text-text-primary'}`}
+                  className={`px-2 py-0.5 transition-colors ${inputMode === 'qty' ? 'bg-text-primary text-background' : 'text-text-muted hover:text-text-primary'}`}
                 >
                   Qty
                 </button>
                 <button
                   type="button"
                   onClick={() => switchInputMode('usd')}
-                  className={`px-2 py-0.5 transition-colors ${inputMode === 'usd' ? 'bg-brand text-[#0a0a0a]' : 'text-text-muted hover:text-text-primary'}`}
+                  className={`px-2 py-0.5 transition-colors ${inputMode === 'usd' ? 'bg-text-primary text-background' : 'text-text-muted hover:text-text-primary'}`}
                 >
                   $
                 </button>
@@ -231,7 +231,7 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
             <button
               type="button"
               onClick={onClose}
-              className="py-1.5 px-3 text-xs font-medium border-2 border-border text-text-muted hover:text-text-primary transition-colors"
+              className="py-1.5 px-3 text-xs font-medium border border-border text-text-muted hover:text-text-primary transition-colors"
             >
               Cancel
             </button>
@@ -240,7 +240,7 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
                 type="button"
                 onClick={handleConfirm}
                 disabled={loading || qty <= 0 || qty > maxQty}
-                className={`py-1.5 px-4 text-xs font-semibold transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500 text-[#0a0a0a]' : 'bg-red text-[#0a0a0a]'}`}
+                className={`py-1.5 px-4 text-xs font-semibold transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500 text-white' : 'bg-red/10 text-red'}`}
               >
                 {loading ? 'Processing...' : 'Confirm'}
               </button>
@@ -249,7 +249,7 @@ function SellRow({ holding, onClose, onSuccess }: SellRowProps) {
                 type="button"
                 onClick={() => { setError(''); setConfirm(true) }}
                 disabled={qty <= 0 || qty > maxQty}
-                className={`py-1.5 px-4 text-xs font-semibold transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500 text-[#0a0a0a]' : 'bg-red text-[#0a0a0a]'}`}
+                className={`py-1.5 px-4 text-xs font-semibold transition-colors disabled:opacity-50 ${isShort ? 'bg-blue-500 text-white' : 'bg-red/10 text-red'}`}
               >
                 {isShort ? 'Cover' : 'Sell'} {holding.symbol}
               </button>
@@ -314,9 +314,8 @@ export function HoldingsTable({ holdings, loading, onTradeSuccess }: HoldingsTab
             const isExpanded = expandedSymbol === h.symbol
             const isSelling = sellSymbol === h.symbol
             return (
-              <>
+              <Fragment key={h.symbol}>
                 <tr
-                  key={h.symbol}
                   className="table-row cursor-pointer"
                   onClick={() => toggleExpand(h.symbol)}
                 >
@@ -338,7 +337,7 @@ export function HoldingsTable({ holdings, loading, onTradeSuccess }: HoldingsTab
                               : h.symbol}
                           </p>
                           {isShort && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-orange-500 text-[#0a0a0a] font-bold uppercase tracking-wide">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-500/10 text-orange-500 font-medium">
                               SHORT
                             </span>
                           )}
@@ -386,8 +385,8 @@ export function HoldingsTable({ holdings, loading, onTradeSuccess }: HoldingsTab
                       className={`text-xs font-medium px-2.5 py-1 border transition-colors ${
                         isSelling
                           ? isShort
-                            ? 'bg-blue-500 text-[#0a0a0a] border-blue-500'
-                            : 'bg-red text-[#0a0a0a] border-red'
+                            ? 'bg-blue-500 text-white border-blue-500'
+                            : 'bg-red/10 text-red border-red'
                           : isShort
                             ? 'text-blue-400 border-blue-400/40 hover:bg-blue-500/10'
                             : 'text-red border-red/40 hover:bg-red/10'
@@ -412,7 +411,7 @@ export function HoldingsTable({ holdings, loading, onTradeSuccess }: HoldingsTab
                     onSuccess={() => { setSellSymbol(null); onTradeSuccess?.() }}
                   />
                 )}
-              </>
+              </Fragment>
             )
           })}
         </tbody>

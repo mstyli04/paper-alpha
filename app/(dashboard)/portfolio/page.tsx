@@ -21,7 +21,7 @@ export default function PortfolioPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Portfolio</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Portfolio</h1>
         <p className="text-text-muted text-sm mt-1">Your holdings and performance</p>
       </div>
 
@@ -94,7 +94,7 @@ export default function PortfolioPage() {
                 )}
                 {allocationData.map((h, i) => {
                   const pct = portfolio ? ((h.currentValue ?? 0) / portfolio.totalValue) * 100 : 0
-                  const colors = ['bg-green', 'bg-red', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-cyan-500', 'bg-orange-500', 'bg-teal-500']
+                  const colors = ['bg-brand', 'bg-indigo-400', 'bg-zinc-400', 'bg-indigo-300', 'bg-zinc-500', 'bg-indigo-200', 'bg-zinc-600', 'bg-zinc-300']
                   return (
                     <div key={h.symbol} className="space-y-1">
                       <div className="flex justify-between text-xs">

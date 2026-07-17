@@ -1,35 +1,39 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design system: zinc neutrals + single indigo accent ──
+   Clean/minimal (Linear/Vercel): hairline borders instead of
+   shadows, Inter, generous whitespace. See DESIGN.md. */
+
 /* ─── Dark theme (default) ──────────────────────────────── */
 :root {
-  --background:   #0a0a0a;
-  --surface:      #0a0a0a;
-  --surface-2:    #141414;
-  --border:       #ffffff;
-  --border-2:     #2a2a2a;
-  --text-primary:   #ffffff;
-  --text-secondary: #a3a3a3;
-  --text-muted:     #525252;
-  --scrollbar:    #2a2a2a;
-  --scrollbar-hover: #3a3a3a;
+  --background:   #09090b;
+  --surface:      #09090b;
+  --surface-2:    #18181b;
+  --border:       #27272a;
+  --border-strong: #3f3f46;
+  --text-primary:   #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted:     #71717a;
+  --scrollbar:    #3f3f46;
+  --scrollbar-hover: #52525b;
 }
 
 /* ─── Light theme ────────────────────────────────────────── */
 .light {
   --background:   #ffffff;
   --surface:      #ffffff;
-  --surface-2:    #f0f0f0;
-  --border:       #0a0a0a;
-  --border-2:     #d4d4d4;
-  --text-primary:   #0a0a0a;
-  --text-secondary: #525252;
-  --text-muted:     #a3a3a3;
-  --scrollbar:    #d4d4d4;
-  --scrollbar-hover: #a3a3a3;
+  --surface-2:    #fafafa;
+  --border:       #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text-primary:   #09090b;
+  --text-secondary: #52525b;
+  --text-muted:     #a1a1aa;
+  --scrollbar:    #d4d4d8;
+  --scrollbar-hover: #a1a1aa;
 }
 
 @layer base {
@@ -44,12 +48,13 @@
     overflow-x: hidden;
     background-color: var(--background);
     color: var(--text-primary);
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
   }
 
   ::selection {
-    background-color: rgba(34, 197, 94, 0.25);
+    background-color: rgba(79, 70, 229, 0.2);
   }
 
   ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -60,20 +65,20 @@
 
 @layer components {
   .card {
-    @apply bg-surface border-2 border-border;
+    @apply bg-surface border border-border rounded-xl;
   }
 
   .card-inset {
-    @apply bg-surface-2 border-2 border-border;
+    @apply bg-surface-2 border border-border rounded-lg;
   }
 
   .stat-value {
-    @apply text-2xl font-semibold text-text-primary tabular-nums;
+    @apply text-2xl font-semibold text-text-primary tabular-nums tracking-tight;
     font-family: 'JetBrains Mono', monospace;
   }
 
   .stat-label {
-    @apply text-xs font-medium text-text-muted uppercase tracking-widest;
+    @apply text-xs font-medium text-text-muted;
   }
 
   .data-value {
@@ -82,39 +87,39 @@
   }
 
   .badge-green {
-    @apply bg-green text-[#0a0a0a] text-xs font-bold uppercase tracking-wide px-2 py-0.5;
+    @apply bg-green/10 text-green text-xs font-medium px-2 py-0.5 rounded-full;
   }
 
   .badge-red {
-    @apply bg-red text-[#0a0a0a] text-xs font-bold uppercase tracking-wide px-2 py-0.5;
+    @apply bg-red/10 text-red text-xs font-medium px-2 py-0.5 rounded-full;
   }
 
   .badge-neutral {
-    @apply bg-transparent text-text-secondary border-2 border-border text-xs font-bold uppercase tracking-wide px-2 py-0.5;
+    @apply bg-transparent text-text-secondary border border-border text-xs font-medium px-2 py-0.5 rounded-full;
   }
 
   .badge-brand {
-    @apply bg-brand text-[#0a0a0a] text-xs font-bold uppercase tracking-wide px-2 py-0.5;
+    @apply bg-brand/10 text-brand text-xs font-medium px-2 py-0.5 rounded-full;
   }
 
   .input-base {
-    @apply bg-surface-2 border-2 border-border px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-green transition-colors;
+    @apply bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-strong focus:ring-2 focus:ring-brand/20 transition-colors;
   }
 
   .btn-primary {
-    @apply bg-brand hover:bg-brand-dim text-[#0a0a0a] font-bold uppercase tracking-wide px-4 py-2 border-2 border-border transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm;
+    @apply bg-text-primary hover:opacity-90 text-background font-medium rounded-lg px-4 py-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-sm;
   }
 
   .btn-secondary {
-    @apply bg-transparent hover:bg-surface-2 text-text-primary font-bold uppercase tracking-wide px-4 py-2 border-2 border-border transition-colors text-sm;
+    @apply bg-transparent hover:bg-surface-2 text-text-primary font-medium rounded-lg px-4 py-2 border border-border transition-colors text-sm;
   }
 
   .btn-green {
-    @apply bg-green hover:bg-green-dim text-[#0a0a0a] font-bold uppercase tracking-wide px-4 py-2 border-2 border-border transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm;
+    @apply bg-green hover:bg-green-dim text-white font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm;
   }
 
   .btn-red {
-    @apply bg-red hover:bg-red-dim text-[#0a0a0a] font-bold uppercase tracking-wide px-4 py-2 border-2 border-border transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm;
+    @apply bg-red hover:bg-red-dim text-white font-medium rounded-lg px-4 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm;
   }
 
   .table-row {
@@ -132,15 +137,15 @@
 
   /* Phase 2: hybrid list patterns */
   .row-boxed {
-    @apply border-2 border-border bg-surface px-3 py-2 hover:bg-surface-2 transition-colors;
+    @apply border border-border rounded-lg bg-surface px-3 py-2 hover:bg-surface-2 transition-colors;
   }
 
   .table-head {
-    @apply border-b-2 border-border text-xs font-bold uppercase tracking-widest text-text-secondary;
+    @apply border-b border-border text-xs font-medium text-text-muted;
   }
 }
 
 /* Lightweight charts override */
 .tv-lightweight-charts {
-  border-radius: 0;
+  border-radius: 0.5rem;
 }
