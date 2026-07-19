@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from '@/components/layout/theme-provider'
 import { SessionRecoveryBanner } from '@/components/layout/session-recovery-banner'
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
   description: 'Trade stocks and crypto with $100,000 in virtual cash. Real prices, zero risk. Compete on leaderboards.',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   return (
     <ClerkProvider
       afterSignOutUrl="/"
@@ -28,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <html lang="en" suppressHydrationWarning>
         <body className="bg-background text-text-primary antialiased">
-          <ThemeProvider>
+          <ThemeProvider nonce={nonce}>
             {children}
             <SessionRecoveryBanner />
           </ThemeProvider>

@@ -1,19 +1,6 @@
-const csp = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: https://img.clerk.com https://assets.coingecko.com https://coin-images.coingecko.com https://static2.finnhub.io",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://*.clerk.accounts.dev https://clerk-telemetry.com",
-  "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
-  "worker-src 'self' blob:",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-].join('; ')
-
+// Content-Security-Policy is set per-request in middleware.ts (needs a fresh
+// nonce each time for next-themes' inline theme-flash script) — not here.
 const securityHeaders = [
-  { key: 'Content-Security-Policy', value: csp },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
