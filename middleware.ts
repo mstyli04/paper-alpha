@@ -79,11 +79,17 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   const nonce = generateNonce()
+  const csp = buildCsp(nonce)
+
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-nonce', nonce)
+  // Next.js only nonces its own inline hydration/bootstrap scripts when it can
+  // read the CSP off the *request* — setting it only on the response (as
+  // before) left those framework-injected scripts unnoticed and blockable.
+  requestHeaders.set('Content-Security-Policy', csp)
 
   const response = NextResponse.next({ request: { headers: requestHeaders } })
-  response.headers.set('Content-Security-Policy', buildCsp(nonce))
+  response.headers.set('Content-Security-Policy', csp)
   return response
 })
 

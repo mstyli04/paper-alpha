@@ -2,8 +2,17 @@ export const dynamic = 'force-dynamic'
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { db } from '@/lib/db'
-import type { AssetType, TradeSide } from '@/types'
+
+const StopOrderSchema = z.object({
+  symbol: z.string().min(1).max(100).transform((s) => (s.includes(':') ? s : s.toUpperCase())),
+  assetType: z.enum(['STOCK', 'CRYPTO', 'COMMODITY', 'PREDICTION']),
+  side: z.enum(['BUY', 'SELL', 'SHORT', 'COVER']),
+  triggerPrice: z.number().positive(),
+  condition: z.enum(['ABOVE', 'BELOW']),
+  quantity: z.number().positive(),
+})
 
 export async function GET() {
   const { userId } = await auth()
@@ -39,9 +48,10 @@ export async function POST(req: Request) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { symbol, assetType, side, triggerPrice, condition, quantity } = await req.json()
-  if (!symbol || !assetType || !side || !triggerPrice || !condition || !quantity) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  const body = await req.json().catch(() => null)
+  const parsed = StopOrderSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 })
   }
 
   const user = await db.user.findUnique({
@@ -53,12 +63,12 @@ export async function POST(req: Request) {
   const order = await db.stopOrder.create({
     data: {
       accountId: user.account.id,
-      symbol: symbol.toUpperCase(),
-      assetType: assetType as AssetType,
-      side: side as TradeSide,
-      triggerPrice,
-      condition,
-      quantity,
+      symbol: parsed.data.symbol,
+      assetType: parsed.data.assetType,
+      side: parsed.data.side,
+      triggerPrice: parsed.data.triggerPrice,
+      condition: parsed.data.condition,
+      quantity: parsed.data.quantity,
     },
   })
 
