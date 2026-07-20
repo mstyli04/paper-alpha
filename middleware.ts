@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { checkRateLimit, resolveRateLimitTier } from '@/lib/rate-limit'
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -51,6 +52,30 @@ function buildCsp(nonce: string): string {
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
     await auth.protect()
+  }
+
+  // API rate limiting — scoped to /api/* only so page navigations never hit
+  // Redis. cron/admin/webhooks are excluded (see resolveRateLimitTier).
+  const tier = resolveRateLimitTier(req.nextUrl.pathname, req.method)
+  if (tier) {
+    const { userId } = await auth()
+    const forwardedFor = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    const identity = userId ?? forwardedFor ?? 'anonymous'
+
+    const { success, limit, remaining, reset } = await checkRateLimit(tier, identity)
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Too many requests' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': Math.max(0, Math.ceil((reset - Date.now()) / 1000)).toString(),
+            'X-RateLimit-Limit': limit.toString(),
+            'X-RateLimit-Remaining': remaining.toString(),
+          },
+        }
+      )
+    }
   }
 
   const nonce = generateNonce()
