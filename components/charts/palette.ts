@@ -2,18 +2,18 @@
 
 import { useTheme } from 'next-themes'
 
-// Minimal zinc + indigo chart palette (matches DESIGN.md restyle).
+// Navy Ledger + Gold Signal chart palette.
 // Red is reserved for loss/sell semantics and must never appear in CATEGORICAL.
 export const SIGNAL = { up: '#16a34a', down: '#dc2626' } as const
 
 export const CATEGORICAL = {
-  dark: ['#6366f1', '#a1a1aa', '#818cf8', '#71717a', '#c7d2fe', '#3f3f46'],
-  light: ['#4f46e5', '#52525b', '#818cf8', '#a1a1aa', '#a5b4fc', '#d4d4d8'],
+  dark: ['#c9974a', '#8c9bb0', '#e0b876', '#5a6779', '#f2dfb0', '#2c3a4d'],
+  light: ['#a97b38', '#52596b', '#c9974a', '#8a90a0', '#dcb877', '#d4cfc0'],
 } as const
 
 export const CHART_CHROME = {
-  dark: { grid: '#27272a', text: '#a1a1aa', border: '#27272a' },
-  light: { grid: '#e4e4e7', text: '#52525b', border: '#e4e4e7' },
+  dark: { grid: '#1c2433', text: '#8c9bb0', border: '#1c2433' },
+  light: { grid: '#e2ddd0', text: '#52596b', border: '#e2ddd0' },
 } as const
 
 export function useChartPalette() {
