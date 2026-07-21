@@ -45,13 +45,24 @@ const features = [
   },
 ]
 
+const tickers = [
+  { symbol: 'AAPL', change: '+1.24%', up: true },
+  { symbol: 'BTC', change: '-0.38%', up: false },
+  { symbol: 'TSLA', change: '+2.05%', up: true },
+  { symbol: 'ETH', change: '+0.91%', up: true },
+  { symbol: 'NVDA', change: '-0.62%', up: false },
+  { symbol: 'SOL', change: '+3.14%', up: true },
+]
+
 function LogoMark({ size = 'md' }: { size?: 'sm' | 'md' }) {
   const box = size === 'md' ? 'w-7 h-7' : 'w-6 h-6'
   const glyph = size === 'md' ? 'w-3.5 h-3.5' : 'w-3 h-3'
   return (
     <div className={`${box} rounded-lg bg-brand flex items-center justify-center`}>
       <svg viewBox="0 0 16 16" className={`${glyph} fill-white`}>
-        <path d="M1 12.5 6 7l3 3 6-6.5V9h-2V7.9L9 12.3 6 9.3l-3.6 4L1 12.5Z" />
+        <rect x="2" y="9" width="3" height="5" rx="0.5" />
+        <rect x="6.5" y="6" width="3" height="8" rx="0.5" />
+        <rect x="11" y="2" width="3" height="12" rx="0.5" />
       </svg>
     </div>
   )
@@ -84,40 +95,49 @@ export default async function LandingPage() {
         </div>
       </nav>
 
+      {/* Ticker strip */}
+      <div className="border-b border-border bg-surface-2/40 overflow-x-auto">
+        <div className="max-w-6xl mx-auto px-6 py-2 flex items-center gap-6 w-max">
+          {tickers.map(({ symbol, change, up }) => (
+            <span key={symbol} className="flex items-center gap-1.5 text-xs font-mono tabular-nums whitespace-nowrap">
+              <span className="text-text-secondary">{symbol}</span>
+              <span className={up ? 'text-green' : 'text-red'}>{change}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Hero */}
-      <section className="relative overflow-hidden py-24 px-6 md:py-32">
+      <section className="relative overflow-hidden py-20 px-6 md:py-28">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-hero-glow" />
-        <div className="relative max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-surface-2 text-text-secondary text-xs font-medium px-3 py-1 rounded-full border border-border mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse-slow" />
-            Live market data · No real money required
+        <div className="relative max-w-6xl mx-auto">
+          <div className="max-w-2xl">
+            <h1 className="text-5xl md:text-6xl font-semibold text-text-primary tracking-tighter text-balance mb-6">
+              Trade the markets.
+              <br />
+              Risk nothing.
+            </h1>
+
+            <p className="text-lg text-text-secondary max-w-xl mb-8 leading-relaxed text-balance">
+              Practice trading stocks and crypto with{' '}
+              <span className="text-text-primary font-medium">$100,000 in virtual cash</span>.
+              Real prices, real strategies, zero financial risk.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-start gap-3">
+              <Link href="/sign-up" className="btn-primary text-sm px-5 py-2.5 flex items-center gap-2">
+                Start paper trading
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link href="/sign-in" className="btn-secondary text-sm px-5 py-2.5">
+                Sign in
+              </Link>
+            </div>
+
+            <p className="text-xs text-text-muted mt-5">
+              Free to use · Simulated environment only · Not financial advice
+            </p>
           </div>
-
-          <h1 className="text-5xl md:text-6xl font-semibold text-text-primary tracking-tighter text-balance mb-6">
-            Trade the markets.
-            <br />
-            Risk nothing.
-          </h1>
-
-          <p className="text-lg text-text-secondary max-w-xl mx-auto mb-8 leading-relaxed text-balance">
-            Practice trading stocks and crypto with{' '}
-            <span className="text-text-primary font-medium">$100,000 in virtual cash</span>.
-            Real prices, real strategies, zero financial risk.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/sign-up" className="btn-primary text-sm px-5 py-2.5 flex items-center gap-2">
-              Start paper trading
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link href="/sign-in" className="btn-secondary text-sm px-5 py-2.5">
-              Sign in
-            </Link>
-          </div>
-
-          <p className="text-xs text-text-muted mt-5">
-            Free to use · Simulated environment only · Not financial advice
-          </p>
         </div>
       </section>
 
@@ -133,10 +153,11 @@ export default async function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map(({ icon: Icon, title, desc }) => (
+            {features.map(({ icon: Icon, title, desc }, i) => (
               <div key={title} className="card p-6">
-                <div className="w-9 h-9 rounded-lg border border-border bg-surface-2 flex items-center justify-center mb-4">
-                  <Icon className="w-4 h-4 text-text-primary" strokeWidth={1.5} />
+                <div className="flex items-baseline gap-3 mb-4">
+                  <span className="font-mono text-xs text-brand">{String(i + 1).padStart(2, '0')}</span>
+                  <Icon className="w-5 h-5 text-text-primary" strokeWidth={1.5} />
                 </div>
                 <h3 className="font-medium text-text-primary mb-2">{title}</h3>
                 <p className="text-sm text-text-secondary leading-relaxed">{desc}</p>
