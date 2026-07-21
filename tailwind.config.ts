@@ -14,8 +14,8 @@ const config: Config = {
         'surface-2': 'var(--surface-2)',
         border: 'var(--border)',
         'border-strong': 'var(--border-strong)',
-        brand: '#4f46e5',
-        'brand-dim': '#4338ca',
+        brand: '#c9974a',
+        'brand-dim': '#a97b38',
         green: '#16a34a',
         'green-dim': '#15803d',
         red: '#dc2626',
@@ -30,7 +30,7 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'hero-glow': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(79,70,229,0.08), transparent)',
+        'hero-glow': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,151,74,0.10), transparent)',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',

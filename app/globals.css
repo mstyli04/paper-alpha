@@ -10,30 +10,30 @@
 
 /* ─── Dark theme (default) ──────────────────────────────── */
 :root {
-  --background:   #09090b;
-  --surface:      #09090b;
-  --surface-2:    #18181b;
-  --border:       #27272a;
-  --border-strong: #3f3f46;
-  --text-primary:   #fafafa;
-  --text-secondary: #a1a1aa;
-  --text-muted:     #71717a;
-  --scrollbar:    #3f3f46;
-  --scrollbar-hover: #52525b;
+  --background:   #05070c;
+  --surface:      #080b12;
+  --surface-2:    #101623;
+  --border:       #1c2433;
+  --border-strong: #2c3a4d;
+  --text-primary:   #f2f5fa;
+  --text-secondary: #8c9bb0;
+  --text-muted:     #5a6779;
+  --scrollbar:    #2c3a4d;
+  --scrollbar-hover: #3f4f66;
 }
 
 /* ─── Light theme ────────────────────────────────────────── */
 .light {
-  --background:   #ffffff;
-  --surface:      #ffffff;
-  --surface-2:    #fafafa;
-  --border:       #e4e4e7;
-  --border-strong: #d4d4d8;
-  --text-primary:   #09090b;
-  --text-secondary: #52525b;
-  --text-muted:     #a1a1aa;
-  --scrollbar:    #d4d4d8;
-  --scrollbar-hover: #a1a1aa;
+  --background:   #faf8f2;
+  --surface:      #faf8f2;
+  --surface-2:    #f2efe6;
+  --border:       #e2ddd0;
+  --border-strong: #cfc7b4;
+  --text-primary:   #12161f;
+  --text-secondary: #52596b;
+  --text-muted:     #8a90a0;
+  --scrollbar:    #cfc7b4;
+  --scrollbar-hover: #a89f8a;
 }
 
 @layer base {
@@ -54,7 +54,7 @@
   }
 
   ::selection {
-    background-color: rgba(79, 70, 229, 0.2);
+    background-color: rgba(201, 151, 74, 0.2);
   }
 
   ::-webkit-scrollbar { width: 4px; height: 4px; }
