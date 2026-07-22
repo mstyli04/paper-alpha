@@ -19,7 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         variables: {
           colorPrimary: '#4f46e5',
           borderRadius: '0.625rem',
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: "'Space Grotesk', system-ui, sans-serif",
           colorBackground: 'var(--surface)',
           colorForeground: 'var(--text-primary)',
           colorInput: 'var(--surface)',
